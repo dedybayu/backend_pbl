@@ -44,6 +44,7 @@ func main() {
 	wargaController := controllers.NewWargaController(db)
 	rumahController := controllers.NewRumahController(db)
 	kegiatanController := controllers.NewKegiatanController(db)
+	broadcastController := controllers.NewBroadcastController(db)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtUtils)
@@ -77,6 +78,7 @@ func main() {
 		WargaController:    wargaController,
 		RumahController:    rumahController,
 		KegiatanController: kegiatanController,
+		BroadcastController: broadcastController,
 		AuthMiddleware:     authMiddleware,
 	}
 
