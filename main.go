@@ -44,7 +44,13 @@ func main() {
 	wargaController := controllers.NewWargaController(db)
 	rumahController := controllers.NewRumahController(db)
 	kegiatanController := controllers.NewKegiatanController(db)
+	mutasiKeluargaController := controllers.NewMutasiKeluargaController(db)
 	broadcastController := controllers.NewBroadcastController(db)
+	kategoriPengeluaranController := controllers.NewKategoriPengeluaranController(db)
+	pengeluaranController := controllers.NewPengeluaranController(db)
+	kategoriPemasukanController := controllers.NewKategoriPemasukanController(db)
+	pemasukanController := controllers.NewPemasukanController(db)
+	tagihanIuranController := controllers.NewTagihanIuranController(db)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtUtils)
@@ -79,6 +85,12 @@ func main() {
 		RumahController:    rumahController,
 		KegiatanController: kegiatanController,
 		BroadcastController: broadcastController,
+		MutasiKeluargaController: mutasiKeluargaController,
+		KategoriPengeluaranController: kategoriPengeluaranController,
+		PengeluaranController: pengeluaranController,
+		KategoriPemasukanController: kategoriPemasukanController,
+		PemasukanController: pemasukanController,
+		TagihanIuranController: tagihanIuranController,
 		AuthMiddleware:     authMiddleware,
 	}
 

@@ -9,15 +9,21 @@ import (
 )
 
 type RouteConfig struct {
-	AuthController      *controllers.AuthController
-	UserController      *controllers.UserController
-	LevelController     *controllers.LevelController
-	KeluargaController  *controllers.KeluargaController
-	WargaController     *controllers.WargaController
-	RumahController     *controllers.RumahController
-	KegiatanController  *controllers.KegiatanController
-	BroadcastController *controllers.BroadcastController
-	AuthMiddleware      *middleware.AuthMiddleware
+	AuthController                *controllers.AuthController
+	UserController                *controllers.UserController
+	LevelController               *controllers.LevelController
+	KeluargaController            *controllers.KeluargaController
+	WargaController               *controllers.WargaController
+	RumahController               *controllers.RumahController
+	KegiatanController            *controllers.KegiatanController
+	BroadcastController           *controllers.BroadcastController
+	MutasiKeluargaController      *controllers.MutasiKeluargaController
+	KategoriPengeluaranController *controllers.KategoriPengeluaranController
+	PengeluaranController         *controllers.PengeluaranController
+	KategoriPemasukanController   *controllers.KategoriPemasukanController
+	PemasukanController           *controllers.PemasukanController
+	TagihanIuranController        *controllers.TagihanIuranController
+	AuthMiddleware                *middleware.AuthMiddleware
 }
 
 func SetupRoutes(router *gin.Engine, config *RouteConfig) {
@@ -71,5 +77,23 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 
 		// Setup broadcast routes
 		SetupBroadcastRoutes(api, config.BroadcastController, config.AuthMiddleware)
+
+		// Setup mutasi keluarga routes
+		SetupMutasiKeluargaRoutes(api, config.MutasiKeluargaController, config.AuthMiddleware)
+
+		// Setup kategori pengeluaran routes
+		SetupKategoriPengeluaranRoutes(api, config.KategoriPengeluaranController, config.AuthMiddleware)
+
+		// Setup pengeluaran routes
+		SetupPengeluaranRoutes(api, config.PengeluaranController, config.AuthMiddleware)
+
+		// Setup kategori pemasukan routes
+		SetupKategoriPemasukanRoutes(api, config.KategoriPemasukanController, config.AuthMiddleware)
+
+		// Setup pemasukan routes
+		SetupPemasukanRoutes(api, config.PemasukanController, config.AuthMiddleware)
+
+		// Setup tagihan iuran routes
+		SetupTagihanIuranRoutes(api, config.TagihanIuranController, config.AuthMiddleware)
 	}
 }
