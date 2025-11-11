@@ -14,6 +14,7 @@ type RouteConfig struct {
 	LevelController    *controllers.LevelController
 	KeluargaController *controllers.KeluargaController
 	WargaController    *controllers.WargaController
+	RumahController    *controllers.RumahController
 	AuthMiddleware     *middleware.AuthMiddleware
 }
 
@@ -59,5 +60,8 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 
 		// Setup warga routes
 		SetupWargaRoutes(api, config.WargaController, config.AuthMiddleware)
+
+		// Setup rumah routes
+		SetupRumahRoutes(api, config.RumahController, config.AuthMiddleware)
 	}
 }
