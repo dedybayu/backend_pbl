@@ -23,8 +23,8 @@ func NewAuthController(db *gorm.DB, jwtUtils *utils.JWTUtils) *AuthController {
 }
 
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" form:"username" xml:"username" binding:"required"`
+	Password string `json:"password" form:"password" xml:"password" binding:"required"`
 }
 
 type LoginResponse struct {
@@ -42,11 +42,104 @@ type ProfileResponse struct {
 	Level models.Level `json:"level"`
 }
 
-// Login handles user authentication
+// Login handles user authentication - Support multiple content types
 func (ac *AuthController) Login(c *gin.Context) {
 	var req LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	
+	// Deteksi content type dan bind sesuai
+	contentType := c.GetHeader("Content-Type")
+	
+	var err error
+	if strings.Contains(contentType, "application/json") {
+		// Handle JSON
+		err = c.ShouldBindJSON(&req)
+	} else if strings.Contains(contentType, "multipart/form-data") || 
+	          strings.Contains(contentType, "application/x-www-form-urlencoded") {
+		// Handle form-data dan x-www-form-urlencoded
+		err = c.ShouldBind(&req)
+	} else {
+		// Default: try both
+		err = c.ShouldBind(&req)
+		if err != nil {
+			err = c.ShouldBindJSON(&req)
+		}
+	}
+	
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request data",
+			"details": err.Error(),
+			"supported_formats": []string{
+				"application/json",
+				"multipart/form-data", 
+				"application/x-www-form-urlencoded",
+			},
+		})
+		return
+	}
+
+	// Sanitize input
+	req.Username = strings.TrimSpace(req.Username)
+	req.Password = strings.TrimSpace(req.Password)
+
+	// Validasi input
+	if req.Username == "" || req.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username and password are required"})
+		return
+	}
+
+	var user models.User
+	if err := ac.db.Preload("Level").Where("username = ?", req.Username).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	token, err := ac.jwtUtils.GenerateToken(user.UserID, user.Username, user.LevelID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	response := LoginResponse{
+		Token: token,
+		User:  user,
+		Level: user.Level,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// UniversalLogin - Alternatif: menggunakan ShouldBind yang support semua format
+func (ac *AuthController) UniversalLogin(c *gin.Context) {
+	var req LoginRequest
+	
+	// Gunakan ShouldBind yang support multiple content types
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request data",
+			"details": err.Error(),
+			"supported_content_types": []string{
+				"application/json",
+				"multipart/form-data",
+				"application/x-www-form-urlencoded",
+				"application/xml",
+			},
+		})
+		return
+	}
+
+	// Sanitize input
+	req.Username = strings.TrimSpace(req.Username)
+	req.Password = strings.TrimSpace(req.Password)
+
+	// Validasi input
+	if req.Username == "" || req.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username and password are required"})
 		return
 	}
 
@@ -162,5 +255,35 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
 		"message": "Token refreshed successfully",
+	})
+}
+
+// CheckAuthStatus - Check if user is authenticated
+func (ac *AuthController) CheckAuthStatus(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"authenticated": false,
+			"message": "Not authenticated",
+		})
+		return
+	}
+
+	var user models.User
+	if err := ac.db.Preload("Level").First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"authenticated": false,
+			"message": "User not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"authenticated": true,
+		"user": gin.H{
+			"user_id":  user.UserID,
+			"username": user.Username,
+			"level":    user.Level,
+		},
 	})
 }
