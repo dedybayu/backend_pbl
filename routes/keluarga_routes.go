@@ -19,6 +19,7 @@ func SetupKeluargaRoutes(api *gin.RouterGroup, keluargaController *controllers.K
 		keluarga.GET("/search", authMiddleware.RequireLevel(1, 2), keluargaController.SearchKeluarga)
 		keluarga.GET("/:id", authMiddleware.RequireLevel(1, 2), keluargaController.GetKeluargaByID)
 		keluarga.GET("/:id/details", authMiddleware.RequireLevel(1, 2), keluargaController.GetKeluargaWithDetails)
+		keluarga.GET("/total", authMiddleware.RequireLevel(1, 2), keluargaController.GetTotalKeluarga)
 		
 		// Admin only routes
 		adminKeluarga := keluarga.Group("")

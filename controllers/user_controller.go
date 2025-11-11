@@ -423,3 +423,22 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 		"data": user,
 	})
 }
+
+
+// GetTotalUser returns total number of users
+func (uc *UserController) GetTotalUser(c *gin.Context) {
+	var total int64
+	
+	// ✅ SAFE: Parameterized query
+	if err := uc.db.Model(&models.User{}).Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch total users",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_users": total,
+		"message":     "Total users retrieved successfully",
+	})
+}

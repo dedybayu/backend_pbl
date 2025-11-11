@@ -13,6 +13,7 @@ type RouteConfig struct {
 	UserController     *controllers.UserController
 	LevelController    *controllers.LevelController
 	KeluargaController *controllers.KeluargaController
+	WargaController    *controllers.WargaController
 	AuthMiddleware     *middleware.AuthMiddleware
 }
 
@@ -55,5 +56,8 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 
 		// Setup keluarga routes
 		SetupKeluargaRoutes(api, config.KeluargaController, config.AuthMiddleware)
+
+		// Setup warga routes
+		SetupWargaRoutes(api, config.WargaController, config.AuthMiddleware)
 	}
 }

@@ -2,12 +2,12 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"regexp"
+	"rt-management/models"
 	"strconv"
 	"strings"
-	"rt-management/models"
-	"log"
 
 	"gorm.io/gorm"
 
@@ -70,9 +70,9 @@ func sanitizeSearchQuery(query string) string {
 // GetAllKeluarga returns all keluarga dengan security checks
 func (kc *KeluargaController) GetAllKeluarga(c *gin.Context) {
 	var families []models.Keluarga
-	
+
 	log.Println("🔄 Fetching all families from database...")
-	
+
 	// ✅ SAFE: GORM menggunakan parameterized queries
 	if err := kc.db.Preload("Wargas").Find(&families).Error; err != nil {
 		log.Printf("❌ Error fetching families: %v", err)
@@ -162,7 +162,7 @@ func (kc *KeluargaController) CreateKeluarga(c *gin.Context) {
 	var req CreateKeluargaRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
+			"error":   "Invalid request data",
 			"details": err.Error(),
 		})
 		return
@@ -233,7 +233,7 @@ func (kc *KeluargaController) UpdateKeluarga(c *gin.Context) {
 	var req UpdateKeluargaRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
+			"error":   "Invalid request data",
 			"details": err.Error(),
 		})
 		return
@@ -341,7 +341,7 @@ func (kc *KeluargaController) DeleteKeluarga(c *gin.Context) {
 
 	if wargaCount > 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Cannot delete family that still has members",
+			"error":        "Cannot delete family that still has members",
 			"member_count": wargaCount,
 		})
 		return
@@ -358,7 +358,7 @@ func (kc *KeluargaController) DeleteKeluarga(c *gin.Context) {
 
 	log.Printf("✅ Successfully deleted family: %s (ID: %d)", keluarga.KeluargaNama, keluarga.KeluargaID)
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Family deleted successfully",
+		"message":           "Family deleted successfully",
 		"deleted_family_id": keluarga.KeluargaID,
 	})
 }
@@ -378,7 +378,7 @@ func (kc *KeluargaController) GetKeluargaStats(c *gin.Context) {
 	kc.db.Model(&models.Keluarga{}).Where("keluarga_status = ?", "nonaktif").Count(&stats.KeluargaNonaktif)
 	kc.db.Model(&models.Warga{}).Count(&stats.TotalWarga)
 
-	log.Printf("📊 Family stats: Total=%d, Active=%d, Inactive=%d, Members=%d", 
+	log.Printf("📊 Family stats: Total=%d, Active=%d, Inactive=%d, Members=%d",
 		stats.TotalKeluarga, stats.KeluargaAktif, stats.KeluargaNonaktif, stats.TotalWarga)
 
 	c.JSON(http.StatusOK, stats)
@@ -386,57 +386,57 @@ func (kc *KeluargaController) GetKeluargaStats(c *gin.Context) {
 
 // SearchKeluarga searches families by name dengan security enhancements
 func (kc *KeluargaController) SearchKeluarga(c *gin.Context) {
-    query := c.Query("q")
-    if query == "" {
-        c.JSON(http.StatusBadRequest, gin.H{
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Query parameter 'q' is required",
 		})
-        return
-    }
+		return
+	}
 
-    // ✅ Sanitize search query
-    query = sanitizeSearchQuery(query)
-    if query == "" {
-        c.JSON(http.StatusBadRequest, gin.H{
+	// ✅ Sanitize search query
+	query = sanitizeSearchQuery(query)
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid search query",
 		})
-        return
-    }
+		return
+	}
 
-    // ✅ Limit query length untuk prevent abuse
-    if len(query) > 50 {
-        query = query[:50]
-    }
+	// ✅ Limit query length untuk prevent abuse
+	if len(query) > 50 {
+		query = query[:50]
+	}
 
-    log.Printf("🔍 Searching families with query: %s", query)
+	log.Printf("🔍 Searching families with query: %s", query)
 
-    var families []models.Keluarga
-    
-    // ✅ SAFE: Gunakan parameterized query
-    if err := kc.db.
-        Preload("Wargas").
-        Where("keluarga_nama LIKE ?", "%"+query+"%").
-        Find(&families).Error; err != nil {
-        log.Printf("❌ Error searching families: %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{
+	var families []models.Keluarga
+
+	// ✅ SAFE: Gunakan parameterized query
+	if err := kc.db.
+		Preload("Wargas").
+		Where("keluarga_nama LIKE ?", "%"+query+"%").
+		Find(&families).Error; err != nil {
+		log.Printf("❌ Error searching families: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to search families",
 		})
-        return
-    }
+		return
+	}
 
-    log.Printf("✅ Search completed: found %d families for query '%s'", len(families), query)
+	log.Printf("✅ Search completed: found %d families for query '%s'", len(families), query)
 
-    c.JSON(http.StatusOK, gin.H{
-        "query":   query,
-        "results": families,
-        "count":   len(families),
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"query":   query,
+		"results": families,
+		"count":   len(families),
+	})
 }
 
 // GetKeluargaAktif returns only active families
 func (kc *KeluargaController) GetKeluargaAktif(c *gin.Context) {
 	var families []models.Keluarga
-	
+
 	// ✅ SAFE: Parameterized query
 	if err := kc.db.
 		Preload("Wargas").
@@ -453,5 +453,24 @@ func (kc *KeluargaController) GetKeluargaAktif(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data":  families,
 		"count": len(families),
+	})
+}
+
+// GetTotalKeluarga returns the total number of families
+func (kc *KeluargaController) GetTotalKeluarga(c *gin.Context) {
+	var total int64
+	// ✅ SAFE: Parameterized query
+	if err := kc.db.Model(&models.Keluarga{}).Count(&total).Error; err != nil {
+		log.Printf("❌ Error fetching total families: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to fetch total families",
+		})
+		return
+	}
+
+	log.Printf("✅ Fetched total families: %d", total)
+	c.JSON(http.StatusOK, gin.H{
+		"data":  total,
+		"count": total,
 	})
 }

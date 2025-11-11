@@ -15,6 +15,7 @@ func SetupUserRoutes(api *gin.RouterGroup, userController *controllers.UserContr
 		users.GET("", authMiddleware.RequireLevel(1, 2), userController.GetAllUsers)
 		users.GET("/profile", authMiddleware.Auth(), userController.GetUserProfile) // ✅ NEW: Get current user profile
 		users.GET("/:id", authMiddleware.RequireLevel(1, 2), userController.GetUserByID)
+
 		
 		// Admin only routes
 		adminUsers := users.Group("")
@@ -23,6 +24,7 @@ func SetupUserRoutes(api *gin.RouterGroup, userController *controllers.UserContr
 			adminUsers.POST("", userController.CreateUser)
 			adminUsers.PUT("/:id", userController.UpdateUser)
 			adminUsers.DELETE("/:id", userController.DeleteUser)
+			
 		}
 	}
 }
