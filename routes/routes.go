@@ -9,22 +9,23 @@ import (
 )
 
 type RouteConfig struct {
-	AuthController     *controllers.AuthController
-	UserController     *controllers.UserController
-	LevelController    *controllers.LevelController
-	KeluargaController *controllers.KeluargaController
-	WargaController    *controllers.WargaController
-	RumahController    *controllers.RumahController
-	KegiatanController *controllers.KegiatanController
-	AuthMiddleware     *middleware.AuthMiddleware
+	AuthController      *controllers.AuthController
+	UserController      *controllers.UserController
+	LevelController     *controllers.LevelController
+	KeluargaController  *controllers.KeluargaController
+	WargaController     *controllers.WargaController
+	RumahController     *controllers.RumahController
+	KegiatanController  *controllers.KegiatanController
+	BroadcastController *controllers.BroadcastController
+	AuthMiddleware      *middleware.AuthMiddleware
 }
 
 func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 	// Health check route
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"status":  "OK",
-			"message": "RT Management API is running",
+			"status":   "OK",
+			"message":  "RT Management API is running",
 			"security": "SQL Injection Protection Enabled",
 		})
 	})
@@ -67,5 +68,8 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 
 		// Setup kegiatan routes
 		SetupKegiatanRoutes(api, config.KegiatanController, config.AuthMiddleware)
+
+		// Setup broadcast routes
+		SetupBroadcastRoutes(api, config.BroadcastController, config.AuthMiddleware)
 	}
 }
