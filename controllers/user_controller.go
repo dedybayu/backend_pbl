@@ -2,11 +2,15 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
+	"rt-management/helper"
+	"rt-management/models"
 	"strconv"
 	"strings"
-	"rt-management/models"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -23,15 +27,17 @@ func NewUserController(db *gorm.DB) *UserController {
 }
 
 type CreateUserRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	LevelID  uint   `json:"level_id" binding:"required"`
+	Username    string `form:"username" binding:"required"`
+	Password    string `form:"password" binding:"required"`
+	LevelID     uint   `form:"level_id" binding:"required"`
+	FotoProfile string `form:"foto_profile"` // Tetap string untuk filename
 }
 
 type UpdateUserRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	LevelID  uint   `json:"level_id"`
+	Username    string `form:"username"`
+	Password    string `form:"password"`
+	LevelID     uint   `form:"level_id"`
+	FotoProfile string `form:"foto_profile"`
 }
 
 // ✅ Security validation functions
@@ -67,7 +73,7 @@ func isValidUserID(id string) bool {
 // GetAllUsers returns all users with security checks
 func (uc *UserController) GetAllUsers(c *gin.Context) {
 	var users []models.User
-	
+
 	// ✅ SAFE: GORM menggunakan parameterized queries internally
 	if err := uc.db.Preload("Level").Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -122,21 +128,30 @@ func (uc *UserController) GetUserByID(c *gin.Context) {
 
 // CreateUser creates new user with comprehensive security checks
 func (uc *UserController) CreateUser(c *gin.Context) {
-	var req CreateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// Binding manual untuk form data
+	username := sanitizeInput(strings.TrimSpace(c.PostForm("username")))
+	password := strings.TrimSpace(c.PostForm("password"))
+	levelIDStr := c.PostForm("level_id")
+
+	// Validasi required fields
+	if username == "" || password == "" || levelIDStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
-			"details": err.Error(),
+			"error": "Semua field wajib harus diisi",
 		})
 		return
 	}
 
-	// ✅ Sanitize input
-	req.Username = sanitizeInput(req.Username)
-	req.Password = strings.TrimSpace(req.Password) // Password tidak di-sanitize berlebihan
+	// Convert level_id to uint
+	levelID, err := strconv.ParseUint(levelIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Level ID tidak valid",
+		})
+		return
+	}
 
 	// ✅ Validasi username format
-	if !isValidUsername(req.Username) {
+	if !isValidUsername(username) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Username must be 3-20 characters and contain only letters, numbers, and underscores",
 		})
@@ -144,7 +159,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	}
 
 	// ✅ Validasi password strength
-	if !isValidPassword(req.Password) {
+	if !isValidPassword(password) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Password must be at least 8 characters and contain both letters and numbers",
 		})
@@ -152,7 +167,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	}
 
 	// ✅ Validasi level ID (prevent invalid level injection)
-	if req.LevelID == 0 {
+	if levelID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Level ID is required",
 		})
@@ -161,7 +176,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 
 	// ✅ Check if level exists - SAFE: parameterized query
 	var level models.Level
-	if err := uc.db.First(&level, req.LevelID).Error; err != nil {
+	if err := uc.db.First(&level, uint(levelID)).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Level not found",
@@ -176,7 +191,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 
 	// ✅ Check if username already exists - SAFE: parameterized query
 	var existingUser models.User
-	if err := uc.db.Where("username = ?", req.Username).First(&existingUser).Error; err == nil {
+	if err := uc.db.Where("username = ?", username).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Username already exists",
 		})
@@ -184,7 +199,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 	}
 
 	// ✅ Hash password dengan cost yang aman
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to secure password",
@@ -192,14 +207,34 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Handle file upload untuk foto_profile
+	fotoProfileFilename := ""
+	if _, header, err := c.Request.FormFile("foto_profile"); err == nil && header != nil {
+		// Gunakan helper untuk handle upload
+		filename, err := helper.HandleFileImageUpload(c, "foto_profile", "")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload foto profile",
+				"details": err.Error(),
+			})
+			return
+		}
+		fotoProfileFilename = filename
+	}
+
 	user := models.User{
-		Username: req.Username,
-		Password: string(hashedPassword),
-		LevelID:  req.LevelID,
+		Username:    username,
+		Password:    string(hashedPassword),
+		LevelID:     uint(levelID),
+		FotoProfile: fotoProfileFilename,
 	}
 
 	// ✅ SAFE: GORM create dengan parameterized queries
 	if err := uc.db.Create(&user).Error; err != nil {
+		// Jika gagal create, hapus file yang sudah diupload
+		if fotoProfileFilename != "" {
+			helper.DeleteOldPhoto(fotoProfileFilename, "profile_foto")
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create user",
 		})
@@ -235,20 +270,6 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	var req UpdateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// ✅ Sanitize input
-	if req.Username != "" {
-		req.Username = sanitizeInput(req.Username)
-	}
-
 	var user models.User
 	// ✅ SAFE: GORM First dengan parameterized query
 	if err := uc.db.First(&user, userID).Error; err != nil {
@@ -264,11 +285,27 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Binding manual untuk form data
+	username := sanitizeInput(strings.TrimSpace(c.PostForm("username")))
+	password := strings.TrimSpace(c.PostForm("password"))
+	levelIDStr := c.PostForm("level_id")
+
+	// Update fields
+	updates := make(map[string]interface{})
+
 	// ✅ Check if level exists if provided
-	if req.LevelID != 0 {
+	if levelIDStr != "" {
+		levelID, err := strconv.ParseUint(levelIDStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Level ID tidak valid",
+			})
+			return
+		}
+
 		var level models.Level
 		// ✅ SAFE: parameterized query
-		if err := uc.db.First(&level, req.LevelID).Error; err != nil {
+		if err := uc.db.First(&level, uint(levelID)).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": "Level not found",
@@ -280,12 +317,12 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 			}
 			return
 		}
-		user.LevelID = req.LevelID
+		updates["level_id"] = uint(levelID)
 	}
 
 	// ✅ Update username dengan validasi
-	if req.Username != "" {
-		if !isValidUsername(req.Username) {
+	if username != "" {
+		if !isValidUsername(username) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Username must be 3-20 characters and contain only letters, numbers, and underscores",
 			})
@@ -294,40 +331,64 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 
 		// ✅ Check if username already exists (excluding current user) - SAFE: parameterized query
 		var existingUser models.User
-		if err := uc.db.Where("username = ? AND user_id != ?", req.Username, userID).First(&existingUser).Error; err == nil {
+		if err := uc.db.Where("username = ? AND user_id != ?", username, userID).First(&existingUser).Error; err == nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Username already exists",
 			})
 			return
 		}
-		user.Username = req.Username
+		updates["username"] = username
 	}
 
 	// ✅ Update password dengan validasi
-	if req.Password != "" {
-		if !isValidPassword(req.Password) {
+	if password != "" {
+		if !isValidPassword(password) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Password must be at least 8 characters and contain both letters and numbers",
 			})
 			return
 		}
 
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Failed to secure password",
 			})
 			return
 		}
-		user.Password = string(hashedPassword)
+		updates["password"] = string(hashedPassword)
 	}
 
-	// ✅ SAFE: GORM Save dengan parameterized queries
-	if err := uc.db.Save(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update user",
-		})
-		return
+	// Handle file upload untuk foto_profile
+	fotoProfileFilename := user.FotoProfile // Simpan filename lama dulu
+	if _, header, err := c.Request.FormFile("foto_profile"); err == nil && header != nil {
+		// Ada file baru yang diupload
+		filename, err := helper.HandleFileImageUpload(c, "foto_profile", user.FotoProfile)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload foto profile",
+				"details": err.Error(),
+			})
+			return
+		}
+		fotoProfileFilename = filename
+	}
+	
+	// Selalu update foto_profile (bisa filename baru atau tetap yang lama)
+	updates["foto_profile"] = fotoProfileFilename
+
+	// ✅ SAFE: GORM Updates dengan parameterized queries
+	if len(updates) > 0 {
+		if err := uc.db.Model(&user).Updates(updates).Error; err != nil {
+			// Jika gagal update, hapus file baru yang sudah diupload
+			if fotoProfileFilename != user.FotoProfile {
+				helper.DeleteOldPhoto(fotoProfileFilename, "profile_foto")
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to update user",
+			})
+			return
+		}
 	}
 
 	// ✅ Reload user dengan data terbaru
@@ -391,8 +452,13 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	// ✅ Hapus foto profile jika ada
+	if user.FotoProfile != "" {
+		helper.DeleteOldPhoto(user.FotoProfile, "foto_profile")
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "User deleted successfully",
+		"message":         "User deleted successfully",
 		"deleted_user_id": user.UserID,
 	})
 }
@@ -424,11 +490,10 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 	})
 }
 
-
 // GetTotalUser returns total number of users
 func (uc *UserController) GetTotalUser(c *gin.Context) {
 	var total int64
-	
+
 	// ✅ SAFE: Parameterized query
 	if err := uc.db.Model(&models.User{}).Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -441,4 +506,51 @@ func (uc *UserController) GetTotalUser(c *gin.Context) {
 		"total_users": total,
 		"message":     "Total users retrieved successfully",
 	})
+}
+
+// ✅ GET - Mendapatkan gambar foto profile
+func (uc *UserController) GetFotoProfileImage(c *gin.Context) {
+	filename := c.Param("filename")
+	
+	if filename == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Nama file tidak valid",
+		})
+		return
+	}
+
+	// Gunakan helper function GetFileByFileName
+	file, err := helper.GetFileByFileName("profile_foto", filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "File foto profile tidak ditemukan",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal membuka file",
+				"details": err.Error(),
+			})
+		}
+		return
+	}
+	defer file.Close()
+
+	// Dapatkan file info untuk Content-Type
+	fileInfo, err := file.Stat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal mendapatkan info file",
+		})
+		return
+	}
+
+	// Set header yang sesuai
+	ext := filepath.Ext(filename)
+	contentType := helper.GetContentType(ext)
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
+
+	// Serve file
+	http.ServeContent(c.Writer, c.Request, filename, fileInfo.ModTime(), file)
 }
