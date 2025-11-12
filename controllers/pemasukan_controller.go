@@ -1,11 +1,15 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"rt-management/helper"
 	"rt-management/models"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +30,7 @@ type CreatePemasukanRequest struct {
 	PemasukanNama       string  `form:"pemasukan_nama" binding:"required"`
 	PemasukanTanggal    string  `form:"pemasukan_tanggal" binding:"required"`
 	PemasukanNominal    float64 `form:"pemasukan_nominal" binding:"required"`
-	PemasukanBukti      string  `form:"pemasukan_bukti"`
+	PemasukanBukti      string  `form:"pemasukan_bukti"` // Tetap string untuk filename
 }
 
 type UpdatePemasukanRequest struct {
@@ -34,35 +38,45 @@ type UpdatePemasukanRequest struct {
 	PemasukanNama       string  `form:"pemasukan_nama"`
 	PemasukanTanggal    string  `form:"pemasukan_tanggal"`
 	PemasukanNominal    float64 `form:"pemasukan_nominal"`
-	PemasukanBukti      string  `form:"pemasukan_bukti"`
+	PemasukanBukti      string  `form:"pemasukan_bukti"` // Tetap string untuk filename
 }
 
 // ✅ CREATE - Membuat pemasukan baru
 func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
-	var req CreatePemasukanRequest
-	if err := c.ShouldBind(&req); err != nil {
+	// Binding manual untuk form data
+	kategoriPemasukanIDStr := c.PostForm("kategori_pemasukan_id")
+	pemasukanNama := strings.TrimSpace(c.PostForm("pemasukan_nama"))
+	pemasukanTanggalStr := strings.TrimSpace(c.PostForm("pemasukan_tanggal"))
+	pemasukanNominalStr := c.PostForm("pemasukan_nominal")
+
+	// Validasi required fields
+	if kategoriPemasukanIDStr == "" || pemasukanNama == "" || pemasukanTanggalStr == "" || pemasukanNominalStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
-			"details": err.Error(),
+			"error": "Semua field wajib harus diisi",
 		})
 		return
 	}
 
-	// Sanitize input
-	req.PemasukanNama = strings.TrimSpace(req.PemasukanNama)
-	req.PemasukanBukti = strings.TrimSpace(req.PemasukanBukti)
-	req.PemasukanTanggal = strings.TrimSpace(req.PemasukanTanggal)
-
-	// Validasi required fields
-	if req.PemasukanNama == "" {
+	// Convert kategori_pemasukan_id to uint
+	kategoriPemasukanID, err := strconv.ParseUint(kategoriPemasukanIDStr, 10, 32)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Nama pemasukan harus diisi",
+			"error": "Kategori pemasukan ID tidak valid",
+		})
+		return
+	}
+
+	// Convert nominal to float64
+	pemasukanNominal, err := strconv.ParseFloat(pemasukanNominalStr, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Nominal pemasukan tidak valid",
 		})
 		return
 	}
 
 	// Validasi nominal
-	if req.PemasukanNominal <= 0 {
+	if pemasukanNominal <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Nominal pemasukan harus lebih dari 0",
 		})
@@ -70,7 +84,7 @@ func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 	}
 
 	// Parsing tanggal dari string ke time.Time
-	pemasukanTanggal, err := time.Parse("2006-01-02", req.PemasukanTanggal)
+	pemasukanTanggal, err := time.Parse("2006-01-02", pemasukanTanggalStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Format tanggal tidak valid. Gunakan format YYYY-MM-DD",
@@ -88,7 +102,7 @@ func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 
 	// Check if kategori pemasukan exists
 	var kategori models.KategoriPemasukan
-	if err := pc.db.First(&kategori, req.KategoriPemasukanID).Error; err != nil {
+	if err := pc.db.First(&kategori, uint(kategoriPemasukanID)).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Kategori pemasukan tidak ditemukan",
@@ -101,18 +115,37 @@ func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 		return
 	}
 
+	// Handle file upload untuk pemasukan_bukti
+	pemasukanBuktiFilename := ""
+	if _, header, err := c.Request.FormFile("pemasukan_bukti"); err == nil && header != nil {
+		// Gunakan helper untuk handle upload
+		filename, err := helper.HandleFileImageUpload(c, "pemasukan_bukti", "")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload bukti pemasukan",
+				"details": err.Error(),
+			})
+			return
+		}
+		pemasukanBuktiFilename = filename
+	}
+
 	// Buat pemasukan baru
 	pemasukan := models.Pemasukan{
-		KategoriPemasukanID: req.KategoriPemasukanID,
-		PemasukanNama:       req.PemasukanNama,
-		PemasukanTanggal:    pemasukanTanggal, // Gunakan yang sudah diparsing
-		PemasukanNominal:    req.PemasukanNominal,
-		PemasukanBukti:      req.PemasukanBukti,
+		KategoriPemasukanID: uint(kategoriPemasukanID),
+		PemasukanNama:       pemasukanNama,
+		PemasukanTanggal:    pemasukanTanggal,
+		PemasukanNominal:    pemasukanNominal,
+		PemasukanBukti:      pemasukanBuktiFilename,
 		CreatedAt:           time.Now(),
 		UpdatedAt:           time.Now(),
 	}
 
 	if err := pc.db.Create(&pemasukan).Error; err != nil {
+		// Jika gagal create, hapus file yang sudah diupload
+		if pemasukanBuktiFilename != "" {
+			helper.DeleteOldPhoto(pemasukanBuktiFilename, "pemasukan_bukti")
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal membuat pemasukan",
 			"details": err.Error(),
@@ -133,7 +166,6 @@ func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 		"data":    pemasukan,
 	})
 }
-
 // ✅ READ - Mendapatkan semua pemasukan
 func (pc *PemasukanController) GetAllPemasukan(c *gin.Context) {
 	var pemasukan []models.Pemasukan
@@ -261,46 +293,51 @@ func (pc *PemasukanController) UpdatePemasukan(c *gin.Context) {
 		return
 	}
 
-	var req UpdatePemasukanRequest
-	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Sanitize input
-	if req.PemasukanNama != "" {
-		req.PemasukanNama = strings.TrimSpace(req.PemasukanNama)
-	}
-	if req.PemasukanBukti != "" {
-		req.PemasukanBukti = strings.TrimSpace(req.PemasukanBukti)
-	}
-	if req.PemasukanTanggal != "" {
-		req.PemasukanTanggal = strings.TrimSpace(req.PemasukanTanggal)
-	}
-
-	// Validasi nominal jika diupdate
-	if req.PemasukanNominal != 0 && req.PemasukanNominal <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Nominal pemasukan harus lebih dari 0",
-		})
-		return
-	}
+	// Binding manual untuk form data
+	kategoriPemasukanIDStr := c.PostForm("kategori_pemasukan_id")
+	pemasukanNama := strings.TrimSpace(c.PostForm("pemasukan_nama"))
+	pemasukanTanggalStr := strings.TrimSpace(c.PostForm("pemasukan_tanggal"))
+	pemasukanNominalStr := c.PostForm("pemasukan_nominal")
 
 	// Update fields menggunakan map
 	updates := make(map[string]interface{})
 
-	if req.KategoriPemasukanID != 0 {
-		updates["kategori_pemasukan_id"] = req.KategoriPemasukanID
+	// Handle kategori_pemasukan_id jika diupdate
+	if kategoriPemasukanIDStr != "" {
+		kategoriPemasukanID, err := strconv.ParseUint(kategoriPemasukanIDStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Kategori pemasukan ID tidak valid",
+			})
+			return
+		}
+
+		// Validasi kategori pemasukan jika diupdate
+		var kategori models.KategoriPemasukan
+		if err := pc.db.First(&kategori, uint(kategoriPemasukanID)).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "Kategori pemasukan tidak ditemukan",
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Gagal memvalidasi kategori pemasukan",
+				})
+			}
+			return
+		}
+		updates["kategori_pemasukan_id"] = uint(kategoriPemasukanID)
 	}
-	if req.PemasukanNama != "" {
-		updates["pemasukan_nama"] = req.PemasukanNama
+
+	// Handle pemasukan_nama jika diupdate
+	if pemasukanNama != "" {
+		updates["pemasukan_nama"] = pemasukanNama
 	}
-	if req.PemasukanTanggal != "" {
+
+	// Handle pemasukan_tanggal jika diupdate
+	if pemasukanTanggalStr != "" {
 		// Parsing tanggal dari string ke time.Time
-		pemasukanTanggal, err := time.Parse("2006-01-02", req.PemasukanTanggal)
+		pemasukanTanggal, err := time.Parse("2006-01-02", pemasukanTanggalStr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Format tanggal tidak valid. Gunakan format YYYY-MM-DD",
@@ -318,38 +355,59 @@ func (pc *PemasukanController) UpdatePemasukan(c *gin.Context) {
 
 		updates["pemasukan_tanggal"] = pemasukanTanggal
 	}
-	if req.PemasukanNominal != 0 {
-		updates["pemasukan_nominal"] = req.PemasukanNominal
-	}
-	if req.PemasukanBukti != "" {
-		updates["pemasukan_bukti"] = req.PemasukanBukti
-	}
 
-	updates["updated_at"] = time.Now()
-
-	// Validasi kategori pemasukan jika diupdate
-	if req.KategoriPemasukanID != 0 {
-		var kategori models.KategoriPemasukan
-		if err := pc.db.First(&kategori, req.KategoriPemasukanID).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"error": "Kategori pemasukan tidak ditemukan",
-				})
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Gagal memvalidasi kategori pemasukan",
-				})
-			}
+	// Handle pemasukan_nominal jika diupdate
+	if pemasukanNominalStr != "" {
+		pemasukanNominal, err := strconv.ParseFloat(pemasukanNominalStr, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Nominal pemasukan tidak valid",
+			})
 			return
 		}
+
+		// Validasi nominal jika diupdate
+		if pemasukanNominal <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Nominal pemasukan harus lebih dari 0",
+			})
+			return
+		}
+		updates["pemasukan_nominal"] = pemasukanNominal
 	}
 
-	if err := pc.db.Model(&pemasukan).Updates(updates).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Gagal mengupdate pemasukan",
-			"details": err.Error(),
-		})
-		return
+	// Handle file upload untuk pemasukan_bukti
+	pemasukanBuktiFilename := pemasukan.PemasukanBukti // Simpan filename lama dulu
+	if _, header, err := c.Request.FormFile("pemasukan_bukti"); err == nil && header != nil {
+		// Ada file baru yang diupload
+		filename, err := helper.HandleFileImageUpload(c, "pemasukan_bukti", pemasukan.PemasukanBukti)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload bukti pemasukan",
+				"details": err.Error(),
+			})
+			return
+		}
+		pemasukanBuktiFilename = filename
+	}
+	
+	// Selalu update pemasukan_bukti (bisa filename baru atau tetap yang lama)
+	updates["pemasukan_bukti"] = pemasukanBuktiFilename
+	updates["updated_at"] = time.Now()
+
+	// Eksekusi update hanya jika ada field yang diupdate
+	if len(updates) > 0 {
+		if err := pc.db.Model(&pemasukan).Updates(updates).Error; err != nil {
+			// Jika gagal update, hapus file baru yang sudah diupload
+			if pemasukanBuktiFilename != pemasukan.PemasukanBukti {
+				helper.DeleteOldPhoto(pemasukanBuktiFilename, "pemasukan_bukti")
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Gagal mengupdate pemasukan",
+				"details": err.Error(),
+			})
+			return
+		}
 	}
 
 	// Reload dengan data terbaru termasuk kategori
@@ -543,4 +601,52 @@ func (pc *PemasukanController) GetLaporanPemasukanBulanan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": laporan,
 	})
+}
+
+
+
+func (pc *PemasukanController) GetPemasukanBuktiImage(c *gin.Context) {
+	filename := c.Param("filename")
+	
+	if filename == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Nama file tidak valid",
+		})
+		return
+	}
+
+	// Gunakan helper function GetFileByFileName
+	file, err := helper.GetFileByFileName("pemasukan_bukti", filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "File foto tidak ditemukan",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal membuka file",
+				"details": err.Error(),
+			})
+		}
+		return
+	}
+	defer file.Close()
+
+	// Dapatkan file info untuk Content-Type
+	fileInfo, err := file.Stat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal mendapatkan info file",
+		})
+		return
+	}
+
+	// Set header yang sesuai
+	ext := filepath.Ext(filename)
+	contentType := helper.GetContentType(ext)
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
+
+	// Serve file
+	http.ServeContent(c.Writer, c.Request, filename, fileInfo.ModTime(), file)
 }

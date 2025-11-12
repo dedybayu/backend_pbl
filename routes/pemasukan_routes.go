@@ -17,6 +17,8 @@ func SetupPemasukanRoutes(api *gin.RouterGroup, pemasukanController *controllers
 		pemasukan.GET("/laporan", authMiddleware.RequireLevel(1, 2), pemasukanController.GetLaporanPemasukanBulanan)
 		pemasukan.GET("/total-kategori", authMiddleware.RequireLevel(1, 2), pemasukanController.GetTotalNominalPerKategori)
 		pemasukan.GET("/:id", authMiddleware.RequireLevel(1, 2), pemasukanController.GetPemasukanByID)
+		pemasukan.GET("/image/:filename", authMiddleware.RequireLevel(1, 2), pemasukanController.GetPemasukanBuktiImage)
+		
 		
 		// Admin only routes
 		adminPemasukan := pemasukan.Group("")

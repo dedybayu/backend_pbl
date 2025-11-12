@@ -27,31 +27,31 @@ func NewWargaController(db *gorm.DB) *WargaController {
 }
 
 type CreateWargaRequest struct {
-	KeluargaID        uint      `json:"keluarga_id" binding:"required"`
-	WargaNama         string    `json:"warga_nama" binding:"required"`
-	WargaNIK          string    `json:"warga_nik" binding:"required"`
-	WargaNoTlp        string    `json:"warga_no_tlp"`
-	WargaTempatLahir  string    `json:"warga_tempat_lahir"`
-	WargaTanggalLahir time.Time `json:"warga_tanggal_lahir"`
-	WargaJenisKelamin string    `json:"warga_jenis_kelamin" binding:"required"`
-	WargaStatusAktif  string    `json:"warga_status_aktif"`
-	WargaStatusHidup  string    `json:"warga_status_hidup"`
-	AgamaID           uint      `json:"agama_id"`
-	PekerjaanID       uint      `json:"pekerjaan_id"`
+	KeluargaID        uint      `form:"keluarga_id" binding:"required"`
+	WargaNama         string    `form:"warga_nama" binding:"required"`
+	WargaNIK          string    `form:"warga_nik" binding:"required"`
+	WargaNoTlp        string    `form:"warga_no_tlp"`
+	WargaTempatLahir  string    `form:"warga_tempat_lahir"`
+	WargaTanggalLahir string `form:"warga_tanggal_lahir"`
+	WargaJenisKelamin string    `form:"warga_jenis_kelamin" binding:"required"`
+	WargaStatusAktif  string    `form:"warga_status_aktif"`
+	WargaStatusHidup  string    `form:"warga_status_hidup"`
+	AgamaID           uint      `form:"agama_id"`
+	PekerjaanID       uint      `form:"pekerjaan_id"`
 }
 
 type UpdateWargaRequest struct {
-	KeluargaID        uint      `json:"keluarga_id"`
-	WargaNama         string    `json:"warga_nama"`
-	WargaNIK          string    `json:"warga_nik"`
-	WargaNoTlp        string    `json:"warga_no_tlp"`
-	WargaTempatLahir  string    `json:"warga_tempat_lahir"`
-	WargaTanggalLahir time.Time `json:"warga_tanggal_lahir"`
-	WargaJenisKelamin string    `json:"warga_jenis_kelamin"`
-	WargaStatusAktif  string    `json:"warga_status_aktif"`
-	WargaStatusHidup  string    `json:"warga_status_hidup"`
-	AgamaID           uint      `json:"agama_id"`
-	PekerjaanID       uint      `json:"pekerjaan_id"`
+	KeluargaID        uint      `form:"keluarga_id"`
+	WargaNama         string    `form:"warga_nama"`
+	WargaNIK          string    `form:"warga_nik"`
+	WargaNoTlp        string    `form:"warga_no_tlp"`
+	WargaTempatLahir  string    `form:"warga_tempat_lahir"`
+	WargaTanggalLahir string `form:"warga_tanggal_lahir"`
+	WargaJenisKelamin string    `form:"warga_jenis_kelamin"`
+	WargaStatusAktif  string    `form:"warga_status_aktif"`
+	WargaStatusHidup  string    `form:"warga_status_hidup"`
+	AgamaID           uint      `form:"agama_id"`
+	PekerjaanID       uint      `form:"pekerjaan_id"`
 }
 
 // ✅ Security validation functions
@@ -246,7 +246,7 @@ func (wc *WargaController) GetWargaByKeluarga(c *gin.Context) {
 // CreateWarga creates new warga dengan comprehensive security checks
 func (wc *WargaController) CreateWarga(c *gin.Context) {
 	var req CreateWargaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request data",
 			"details": err.Error(),
@@ -259,6 +259,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 	req.WargaNIK = strings.TrimSpace(req.WargaNIK)
 	req.WargaNoTlp = strings.TrimSpace(req.WargaNoTlp)
 	req.WargaTempatLahir = sanitizeString(req.WargaTempatLahir)
+	req.WargaTanggalLahir = strings.TrimSpace(req.WargaTanggalLahir)
 
 	// ✅ Validasi nama
 	if !isValidName(req.WargaNama) {
@@ -277,7 +278,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 	}
 
 	// ✅ Validasi nomor telepon
-	if !isValidPhoneNumber(req.WargaNoTlp) {
+	if req.WargaNoTlp != "" && !isValidPhoneNumber(req.WargaNoTlp) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid phone number format",
 		})
@@ -288,6 +289,23 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 	if !isValidGender(req.WargaJenisKelamin) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Gender must be 'L' or 'P'",
+		})
+		return
+	}
+
+	// ✅ Parsing tanggal lahir
+	wargaTanggalLahir, err := time.Parse("2006-01-02", req.WargaTanggalLahir)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid date format. Use YYYY-MM-DD format",
+		})
+		return
+	}
+
+	// ✅ Validasi tanggal lahir (tidak boleh lebih dari hari ini)
+	if wargaTanggalLahir.After(time.Now()) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Date of birth cannot be in the future",
 		})
 		return
 	}
@@ -380,7 +398,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 		WargaNIK:          req.WargaNIK,
 		WargaNoTlp:        req.WargaNoTlp,
 		WargaTempatLahir:  req.WargaTempatLahir,
-		WargaTanggalLahir: req.WargaTanggalLahir,
+		WargaTanggalLahir: wargaTanggalLahir, // Gunakan yang sudah diparsing
 		WargaJenisKelamin: req.WargaJenisKelamin,
 		WargaStatusAktif:  req.WargaStatusAktif,
 		WargaStatusHidup:  req.WargaStatusHidup,
@@ -431,7 +449,7 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 	log.Printf("🔄 Updating resident with ID: %s", wargaID)
 
 	var req UpdateWargaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request data",
 			"details": err.Error(),
@@ -451,6 +469,9 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 	}
 	if req.WargaTempatLahir != "" {
 		req.WargaTempatLahir = sanitizeString(req.WargaTempatLahir)
+	}
+	if req.WargaTanggalLahir != "" {
+		req.WargaTanggalLahir = strings.TrimSpace(req.WargaTanggalLahir)
 	}
 
 	var warga models.Warga
@@ -528,8 +549,25 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 		warga.WargaTempatLahir = req.WargaTempatLahir
 	}
 
-	if !req.WargaTanggalLahir.IsZero() {
-		warga.WargaTanggalLahir = req.WargaTanggalLahir
+	if req.WargaTanggalLahir != "" {
+		// Parsing tanggal lahir
+		wargaTanggalLahir, err := time.Parse("2006-01-02", req.WargaTanggalLahir)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid date format. Use YYYY-MM-DD format",
+			})
+			return
+		}
+		
+		// Validasi tanggal lahir (tidak boleh lebih dari hari ini)
+		if wargaTanggalLahir.After(time.Now()) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Date of birth cannot be in the future",
+			})
+			return
+		}
+		
+		warga.WargaTanggalLahir = wargaTanggalLahir
 	}
 
 	if req.WargaJenisKelamin != "" {
@@ -624,7 +662,6 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 		"data":    warga,
 	})
 }
-
 // DeleteWarga deletes warga dengan security checks
 func (wc *WargaController) DeleteWarga(c *gin.Context) {
 	wargaID := c.Param("id")
