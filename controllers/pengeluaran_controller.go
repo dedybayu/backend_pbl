@@ -1,11 +1,15 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"rt-management/helper"
 	"rt-management/models"
 
 	"github.com/gin-gonic/gin"
@@ -22,54 +26,74 @@ func NewPengeluaranController(db *gorm.DB) *PengeluaranController {
 
 // Request structs
 type CreatePengeluaranRequest struct {
-	KategoriPengeluaranID uint      `json:"kategori_pengeluaran_id" binding:"required"`
-	PengeluaranNama       string    `json:"pengeluaran_nama" binding:"required"`
-	PengeluaranTanggal    time.Time `json:"pengeluaran_tanggal" binding:"required"`
-	PengeluaranNominal    float64   `json:"pengeluaran_nominal" binding:"required"`
-	PengeluaranBukti      string    `json:"pengeluaran_bukti"`
+	KategoriPengeluaranID uint      `form:"kategori_pengeluaran_id" binding:"required"`
+	PengeluaranNama       string    `form:"pengeluaran_nama" binding:"required"`
+	PengeluaranTanggal    string `form:"pengeluaran_tanggal" binding:"required"`
+	PengeluaranNominal    float64   `form:"pengeluaran_nominal" binding:"required"`
+	PengeluaranBukti      string    `form:"pengeluaran_bukti"`
 }
 
 type UpdatePengeluaranRequest struct {
-	KategoriPengeluaranID uint      `json:"kategori_pengeluaran_id"`
-	PengeluaranNama       string    `json:"pengeluaran_nama"`
-	PengeluaranTanggal    time.Time `json:"pengeluaran_tanggal"`
-	PengeluaranNominal    float64   `json:"pengeluaran_nominal"`
-	PengeluaranBukti      string    `json:"pengeluaran_bukti"`
+	KategoriPengeluaranID uint      `form:"kategori_pengeluaran_id"`
+	PengeluaranNama       string    `form:"pengeluaran_nama"`
+	PengeluaranTanggal    string `form:"pengeluaran_tanggal"`
+	PengeluaranNominal    float64   `form:"pengeluaran_nominal"`
+	PengeluaranBukti      string    `form:"pengeluaran_bukti"`
 }
 
 // ✅ CREATE - Membuat pengeluaran baru
 func (pc *PengeluaranController) CreatePengeluaran(c *gin.Context) {
-	var req CreatePengeluaranRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// Binding manual untuk form data
+	kategoriPengeluaranIDStr := c.PostForm("kategori_pengeluaran_id")
+	pengeluaranNama := strings.TrimSpace(c.PostForm("pengeluaran_nama"))
+	pengeluaranTanggalStr := strings.TrimSpace(c.PostForm("pengeluaran_tanggal"))
+	pengeluaranNominalStr := c.PostForm("pengeluaran_nominal")
+
+	// Validasi required fields
+	if kategoriPengeluaranIDStr == "" || pengeluaranNama == "" || pengeluaranTanggalStr == "" || pengeluaranNominalStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
-			"details": err.Error(),
+			"error": "Semua field wajib harus diisi",
 		})
 		return
 	}
 
-	// Sanitize input
-	req.PengeluaranNama = strings.TrimSpace(req.PengeluaranNama)
-	req.PengeluaranBukti = strings.TrimSpace(req.PengeluaranBukti)
-
-	// Validasi required fields
-	if req.PengeluaranNama == "" {
+	// Convert kategori_pengeluaran_id to uint
+	kategoriPengeluaranID, err := strconv.ParseUint(kategoriPengeluaranIDStr, 10, 32)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Nama pengeluaran harus diisi",
+			"error": "Kategori pengeluaran ID tidak valid",
+		})
+		return
+	}
+
+	// Convert nominal to float64
+	pengeluaranNominal, err := strconv.ParseFloat(pengeluaranNominalStr, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Nominal pengeluaran tidak valid",
 		})
 		return
 	}
 
 	// Validasi nominal
-	if req.PengeluaranNominal <= 0 {
+	if pengeluaranNominal <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Nominal pengeluaran harus lebih dari 0",
 		})
 		return
 	}
 
+	// Parsing tanggal dari string ke time.Time
+	pengeluaranTanggal, err := time.Parse("2006-01-02", pengeluaranTanggalStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Format tanggal tidak valid. Gunakan format YYYY-MM-DD",
+		})
+		return
+	}
+
 	// Validasi tanggal tidak boleh lebih besar dari hari ini
-	if req.PengeluaranTanggal.After(time.Now()) {
+	if pengeluaranTanggal.After(time.Now()) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Tanggal pengeluaran tidak boleh lebih besar dari hari ini",
 		})
@@ -78,7 +102,7 @@ func (pc *PengeluaranController) CreatePengeluaran(c *gin.Context) {
 
 	// Check if kategori pengeluaran exists
 	var kategori models.KategoriPengeluaran
-	if err := pc.db.First(&kategori, req.KategoriPengeluaranID).Error; err != nil {
+	if err := pc.db.First(&kategori, uint(kategoriPengeluaranID)).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Kategori pengeluaran tidak ditemukan",
@@ -91,18 +115,37 @@ func (pc *PengeluaranController) CreatePengeluaran(c *gin.Context) {
 		return
 	}
 
+	// Handle file upload untuk pengeluaran_bukti
+	pengeluaranBuktiFilename := ""
+	if _, header, err := c.Request.FormFile("pengeluaran_bukti"); err == nil && header != nil {
+		// Gunakan helper untuk handle upload
+		filename, err := helper.HandleFileImageUpload(c, "pengeluaran_bukti", "")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload bukti pengeluaran",
+				"details": err.Error(),
+			})
+			return
+		}
+		pengeluaranBuktiFilename = filename
+	}
+
 	// Buat pengeluaran baru
 	pengeluaran := models.Pengeluaran{
-		KategoriPengeluaranID: req.KategoriPengeluaranID,
-		PengeluaranNama:       req.PengeluaranNama,
-		PengeluaranTanggal:    req.PengeluaranTanggal,
-		PengeluaranNominal:    req.PengeluaranNominal,
-		PengeluaranBukti:      req.PengeluaranBukti,
+		KategoriPengeluaranID: uint(kategoriPengeluaranID),
+		PengeluaranNama:       pengeluaranNama,
+		PengeluaranTanggal:    pengeluaranTanggal,
+		PengeluaranNominal:    pengeluaranNominal,
+		PengeluaranBukti:      pengeluaranBuktiFilename,
 		CreatedAt:             time.Now(),
 		UpdatedAt:             time.Now(),
 	}
 
 	if err := pc.db.Create(&pengeluaran).Error; err != nil {
+		// Jika gagal create, hapus file yang sudah diupload
+		if pengeluaranBuktiFilename != "" {
+			helper.DeleteOldPhoto(pengeluaranBuktiFilename, "pengeluaran_bukti")
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal membuat pengeluaran",
 			"details": err.Error(),
@@ -251,45 +294,28 @@ func (pc *PengeluaranController) UpdatePengeluaran(c *gin.Context) {
 		return
 	}
 
-	var req UpdatePengeluaranRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
-			"details": err.Error(),
-		})
-		return
-	}
+	// Binding manual untuk form data
+	kategoriPengeluaranIDStr := c.PostForm("kategori_pengeluaran_id")
+	pengeluaranNama := strings.TrimSpace(c.PostForm("pengeluaran_nama"))
+	pengeluaranTanggalStr := strings.TrimSpace(c.PostForm("pengeluaran_tanggal"))
+	pengeluaranNominalStr := c.PostForm("pengeluaran_nominal")
 
-	// Sanitize input
-	if req.PengeluaranNama != "" {
-		req.PengeluaranNama = strings.TrimSpace(req.PengeluaranNama)
-	}
-	if req.PengeluaranBukti != "" {
-		req.PengeluaranBukti = strings.TrimSpace(req.PengeluaranBukti)
-	}
+	// Update fields menggunakan map
+	updates := make(map[string]interface{})
 
-	// Validasi nominal jika diupdate
-	if req.PengeluaranNominal != 0 && req.PengeluaranNominal <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Nominal pengeluaran harus lebih dari 0",
-		})
-		return
-	}
-
-	// Validasi tanggal jika diupdate
-	if !req.PengeluaranTanggal.IsZero() {
-		if req.PengeluaranTanggal.After(time.Now()) {
+	// Handle kategori_pengeluaran_id jika diupdate
+	if kategoriPengeluaranIDStr != "" {
+		kategoriPengeluaranID, err := strconv.ParseUint(kategoriPengeluaranIDStr, 10, 32)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Tanggal pengeluaran tidak boleh lebih besar dari hari ini",
+				"error": "Kategori pengeluaran ID tidak valid",
 			})
 			return
 		}
-	}
 
-	// Validasi kategori pengeluaran jika diupdate
-	if req.KategoriPengeluaranID != 0 {
+		// Validasi kategori pengeluaran jika diupdate
 		var kategori models.KategoriPengeluaran
-		if err := pc.db.First(&kategori, req.KategoriPengeluaranID).Error; err != nil {
+		if err := pc.db.First(&kategori, uint(kategoriPengeluaranID)).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": "Kategori pengeluaran tidak ditemukan",
@@ -301,35 +327,88 @@ func (pc *PengeluaranController) UpdatePengeluaran(c *gin.Context) {
 			}
 			return
 		}
+		updates["kategori_pengeluaran_id"] = uint(kategoriPengeluaranID)
 	}
 
-	// Update fields menggunakan map (AMAN - GORM Updates dengan map)
-	updates := make(map[string]interface{})
+	// Handle pengeluaran_nama jika diupdate
+	if pengeluaranNama != "" {
+		updates["pengeluaran_nama"] = pengeluaranNama
+	}
+
+	// Handle pengeluaran_tanggal jika diupdate
+	if pengeluaranTanggalStr != "" {
+		// Parsing tanggal dari string ke time.Time
+		pengeluaranTanggal, err := time.Parse("2006-01-02", pengeluaranTanggalStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Format tanggal tidak valid. Gunakan format YYYY-MM-DD",
+			})
+			return
+		}
+
+		// Validasi tanggal jika diupdate
+		if pengeluaranTanggal.After(time.Now()) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Tanggal pengeluaran tidak boleh lebih besar dari hari ini",
+			})
+			return
+		}
+
+		updates["pengeluaran_tanggal"] = pengeluaranTanggal
+	}
+
+	// Handle pengeluaran_nominal jika diupdate
+	if pengeluaranNominalStr != "" {
+		pengeluaranNominal, err := strconv.ParseFloat(pengeluaranNominalStr, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Nominal pengeluaran tidak valid",
+			})
+			return
+		}
+
+		// Validasi nominal jika diupdate
+		if pengeluaranNominal <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Nominal pengeluaran harus lebih dari 0",
+			})
+			return
+		}
+		updates["pengeluaran_nominal"] = pengeluaranNominal
+	}
+
+	// Handle file upload untuk pengeluaran_bukti
+	pengeluaranBuktiFilename := pengeluaran.PengeluaranBukti // Simpan filename lama dulu
+	if _, header, err := c.Request.FormFile("pengeluaran_bukti"); err == nil && header != nil {
+		// Ada file baru yang diupload
+		filename, err := helper.HandleFileImageUpload(c, "pengeluaran_bukti", pengeluaran.PengeluaranBukti)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload bukti pengeluaran",
+				"details": err.Error(),
+			})
+			return
+		}
+		pengeluaranBuktiFilename = filename
+	}
 	
-	if req.KategoriPengeluaranID != 0 {
-		updates["kategori_pengeluaran_id"] = req.KategoriPengeluaranID
-	}
-	if req.PengeluaranNama != "" {
-		updates["pengeluaran_nama"] = req.PengeluaranNama
-	}
-	if !req.PengeluaranTanggal.IsZero() {
-		updates["pengeluaran_tanggal"] = req.PengeluaranTanggal
-	}
-	if req.PengeluaranNominal != 0 {
-		updates["pengeluaran_nominal"] = req.PengeluaranNominal
-	}
-	if req.PengeluaranBukti != "" {
-		updates["pengeluaran_bukti"] = req.PengeluaranBukti
-	}
-	
+	// Selalu update pengeluaran_bukti (bisa filename baru atau tetap yang lama)
+	updates["pengeluaran_bukti"] = pengeluaranBuktiFilename
 	updates["updated_at"] = time.Now()
 
-	if err := pc.db.Model(&pengeluaran).Updates(updates).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Gagal mengupdate pengeluaran",
-			"details": err.Error(),
-		})
-		return
+	// Eksekusi update hanya jika ada field yang diupdate
+	if len(updates) > 0 {
+		if err := pc.db.Model(&pengeluaran).Updates(updates).Error; err != nil {
+			// Jika gagal update, hapus file baru yang sudah diupload
+			if pengeluaranBuktiFilename != pengeluaran.PengeluaranBukti {
+				helper.DeleteOldPhoto(pengeluaranBuktiFilename, "pengeluaran_bukti")
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Gagal mengupdate pengeluaran",
+				"details": err.Error(),
+			})
+			return
+		}
 	}
 
 	// Reload dengan data terbaru termasuk kategori
@@ -380,6 +459,11 @@ func (pc *PengeluaranController) DeletePengeluaran(c *gin.Context) {
 			"details": err.Error(),
 		})
 		return
+	}
+
+	// Hapus file foto jika ada
+	if pengeluaran.PengeluaranBukti != "" {
+		helper.DeleteOldPhoto(pengeluaran.PengeluaranBukti, "pengeluaran_bukti")
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -522,4 +606,52 @@ func (pc *PengeluaranController) GetLaporanPengeluaranBulanan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": laporan,
 	})
+}
+
+
+// ✅ GET - Mendapatkan gambar bukti pengeluaran
+func (pc *PengeluaranController) GetPengeluaranBuktiImage(c *gin.Context) {
+	filename := c.Param("filename")
+	
+	if filename == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Nama file tidak valid",
+		})
+		return
+	}
+
+	// Gunakan helper function GetFileByFileName
+	file, err := helper.GetFileByFileName("pengeluaran_bukti", filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "File bukti pengeluaran tidak ditemukan",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal membuka file",
+				"details": err.Error(),
+			})
+		}
+		return
+	}
+	defer file.Close()
+
+	// Dapatkan file info untuk Content-Type
+	fileInfo, err := file.Stat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal mendapatkan info file",
+		})
+		return
+	}
+
+	// Set header yang sesuai
+	ext := filepath.Ext(filename)
+	contentType := helper.GetContentType(ext)
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
+
+	// Serve file
+	http.ServeContent(c.Writer, c.Request, filename, fileInfo.ModTime(), file)
 }

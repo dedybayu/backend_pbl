@@ -17,6 +17,7 @@ func SetupPengeluaranRoutes(api *gin.RouterGroup, pengeluaranController *control
 		pengeluaran.GET("/laporan", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetLaporanPengeluaranBulanan)
 		pengeluaran.GET("/total-kategori", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetTotalNominalPerKategori)
 		pengeluaran.GET("/:id", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetPengeluaranByID)
+		pengeluaran.GET("/image/:filename", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetPengeluaranBuktiImage)
 		
 		// Admin only routes
 		adminPengeluaran := pengeluaran.Group("")

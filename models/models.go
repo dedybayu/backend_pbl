@@ -14,13 +14,14 @@ type Level struct {
 }
 
 type User struct {
-	UserID   uint      `gorm:"primaryKey;autoIncrement" json:"user_id"`
-	Username string    `gorm:"unique;not null" json:"username"`
-	Password string    `gorm:"not null" json:"password"`
-	LevelID  uint      `gorm:"not null" json:"level_id"`
-	Level    Level     `gorm:"foreignKey:LevelID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"level"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	UserID      uint      `gorm:"primaryKey;autoIncrement" json:"user_id"`
+	Username    string    `gorm:"unique;not null" json:"username"`
+	Password    string    `gorm:"not null" json:"password"`
+	LevelID     uint      `gorm:"not null" json:"level_id"`
+	Level       Level     `gorm:"foreignKey:LevelID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"level"`
+	FotoProfile string    `gorm:"foto_profile" json:"foto_profile"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type Keluarga struct {
@@ -80,92 +81,92 @@ type Rumah struct {
 }
 
 type KategoriKegiatan struct {
-	KategoriKegiatanID   uint      `gorm:"primaryKey;autoIncrement" json:"kategori_kegiatan_id"`
-	KategoriKegiatanNama string    `gorm:"not null" json:"kategori_kegiatan_nama"`
-	CreatedAt            time.Time `json:"created_at"`
-	UpdatedAt            time.Time `json:"updated_at"`
+	KategoriKegiatanID   uint       `gorm:"primaryKey;autoIncrement" json:"kategori_kegiatan_id"`
+	KategoriKegiatanNama string     `gorm:"not null" json:"kategori_kegiatan_nama"`
+	CreatedAt            time.Time  `json:"created_at"`
+	UpdatedAt            time.Time  `json:"updated_at"`
 	Kegiatans            []Kegiatan `gorm:"foreignKey:KategoriKegiatanID" json:"kegiatans"`
 }
 
 type Kegiatan struct {
-	KegiatanID          uint              `gorm:"primaryKey;autoIncrement" json:"kegiatan_id"`
-	KegiatanNama        string            `gorm:"not null" json:"kegiatan_nama"`
-	KategoriKegiatanID  uint              `gorm:"not null" json:"kategori_kegiatan_id"`
-	KegiatanTanggal     time.Time         `json:"kegiatan_tanggal"`
-	KegiatanLokasi      string            `json:"kegiatan_lokasi"`
-	KegiatanPJ          string            `json:"kegiatan_pj"`
-	KegiatanDeskripsi   string            `json:"kegiatan_deskripsi"`
-	KategoriKegiatan    KategoriKegiatan  `gorm:"foreignKey:KategoriKegiatanID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kategori_kegiatan"`
-	CreatedAt           time.Time         `json:"created_at"`
-	UpdatedAt           time.Time         `json:"updated_at"`
+	KegiatanID         uint             `gorm:"primaryKey;autoIncrement" json:"kegiatan_id"`
+	KegiatanNama       string           `gorm:"not null" json:"kegiatan_nama"`
+	KategoriKegiatanID uint             `gorm:"not null" json:"kategori_kegiatan_id"`
+	KegiatanTanggal    time.Time        `json:"kegiatan_tanggal"`
+	KegiatanLokasi     string           `json:"kegiatan_lokasi"`
+	KegiatanPJ         string           `json:"kegiatan_pj"`
+	KegiatanDeskripsi  string           `json:"kegiatan_deskripsi"`
+	KategoriKegiatan   KategoriKegiatan `gorm:"foreignKey:KategoriKegiatanID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kategori_kegiatan"`
+	CreatedAt          time.Time        `json:"created_at"`
+	UpdatedAt          time.Time        `json:"updated_at"`
 }
 
 type Broadcast struct {
-	BroadcastID      uint      `gorm:"primaryKey;autoIncrement" json:"broadcast_id"`
-	BroadcastNama    string    `gorm:"not null" json:"broadcast_nama"`
-	BroadcastDeskripsi string  `json:"broadcast_deskripsi"`
-	BroadcastFoto    string    `json:"broadcast_foto"`
-	BroadcastDokumen string    `json:"broadcast_dokumen"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	BroadcastID        uint      `gorm:"primaryKey;autoIncrement" json:"broadcast_id"`
+	BroadcastNama      string    `gorm:"not null" json:"broadcast_nama"`
+	BroadcastDeskripsi string    `json:"broadcast_deskripsi"`
+	BroadcastFoto      string    `json:"broadcast_foto"`
+	BroadcastDokumen   string    `json:"broadcast_dokumen"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 type MutasiKeluarga struct {
-	MutasiKeluargaID    uint      `gorm:"primaryKey;autoIncrement" json:"mutasi_keluarga_id"`
-	KeluargaID          uint      `gorm:"not null" json:"keluarga_id"`
-	MutasiKeluargaJenis string    `gorm:"not null" json:"mutasi_keluarga_jenis"`
-	MutasiKeluargaAlasan string   `json:"mutasi_keluarga_alasan"`
+	MutasiKeluargaID      uint      `gorm:"primaryKey;autoIncrement" json:"mutasi_keluarga_id"`
+	KeluargaID            uint      `gorm:"not null" json:"keluarga_id"`
+	MutasiKeluargaJenis   string    `gorm:"not null" json:"mutasi_keluarga_jenis"`
+	MutasiKeluargaAlasan  string    `json:"mutasi_keluarga_alasan"`
 	MutasiKeluargaTanggal time.Time `json:"mutasi_keluarga_tanggal"`
-	Keluarga            Keluarga  `gorm:"foreignKey:KeluargaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"keluarga"`
-	CreatedAt           time.Time `json:"created_at"`
-	UpdatedAt           time.Time `json:"updated_at"`
+	Keluarga              Keluarga  `gorm:"foreignKey:KeluargaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"keluarga"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 type KategoriPengeluaran struct {
-	KategoriPengeluaranID   uint      `gorm:"primaryKey;autoIncrement" json:"kategori_pengeluaran_id"`
-	KategoriPengeluaranNama string    `gorm:"not null" json:"kategori_pengeluaran_nama"`
-	CreatedAt               time.Time `json:"created_at"`
-	UpdatedAt               time.Time `json:"updated_at"`
+	KategoriPengeluaranID   uint          `gorm:"primaryKey;autoIncrement" json:"kategori_pengeluaran_id"`
+	KategoriPengeluaranNama string        `gorm:"not null" json:"kategori_pengeluaran_nama"`
+	CreatedAt               time.Time     `json:"created_at"`
+	UpdatedAt               time.Time     `json:"updated_at"`
 	Pengeluarans            []Pengeluaran `gorm:"foreignKey:KategoriPengeluaranID" json:"pengeluarans"`
 }
 
 type Pengeluaran struct {
-	PengeluaranID          uint                 `gorm:"primaryKey;autoIncrement" json:"pengeluaran_id"`
-	KategoriPengeluaranID  uint                 `gorm:"not null" json:"kategori_pengeluaran_id"`
-	PengeluaranNama        string               `gorm:"not null" json:"pengeluaran_nama"`
-	PengeluaranTanggal     time.Time            `json:"pengeluaran_tanggal"`
-	PengeluaranNominal     float64              `gorm:"not null" json:"pengeluaran_nominal"`
-	PengeluaranBukti       string               `json:"pengeluaran_bukti"`
-	KategoriPengeluaran    KategoriPengeluaran  `gorm:"foreignKey:KategoriPengeluaranID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kategori_pengeluaran"`
-	CreatedAt              time.Time            `json:"created_at"`
-	UpdatedAt              time.Time            `json:"updated_at"`
+	PengeluaranID         uint                `gorm:"primaryKey;autoIncrement" json:"pengeluaran_id"`
+	KategoriPengeluaranID uint                `gorm:"not null" json:"kategori_pengeluaran_id"`
+	PengeluaranNama       string              `gorm:"not null" json:"pengeluaran_nama"`
+	PengeluaranTanggal    time.Time           `json:"pengeluaran_tanggal"`
+	PengeluaranNominal    float64             `gorm:"not null" json:"pengeluaran_nominal"`
+	PengeluaranBukti      string              `json:"pengeluaran_bukti"`
+	KategoriPengeluaran   KategoriPengeluaran `gorm:"foreignKey:KategoriPengeluaranID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kategori_pengeluaran"`
+	CreatedAt             time.Time           `json:"created_at"`
+	UpdatedAt             time.Time           `json:"updated_at"`
 }
 
 type KategoriPemasukan struct {
-	KategoriPemasukanID   uint      `gorm:"primaryKey;autoIncrement" json:"kategori_pemasukan_id"`
-	KategoriPemasukanNama string    `gorm:"not null" json:"kategori_pemasukan_nama"`
-	CreatedAt             time.Time `json:"created_at"`
-	UpdatedAt             time.Time `json:"updated_at"`
+	KategoriPemasukanID   uint        `gorm:"primaryKey;autoIncrement" json:"kategori_pemasukan_id"`
+	KategoriPemasukanNama string      `gorm:"not null" json:"kategori_pemasukan_nama"`
+	CreatedAt             time.Time   `json:"created_at"`
+	UpdatedAt             time.Time   `json:"updated_at"`
 	Pemasukans            []Pemasukan `gorm:"foreignKey:KategoriPemasukanID" json:"pemasukans"`
 }
 
 type Pemasukan struct {
-	PemasukanID          uint               `gorm:"primaryKey;autoIncrement" json:"pemasukan_id"`
-	KategoriPemasukanID  uint               `gorm:"not null" json:"kategori_pemasukan_id"`
-	PemasukanNama        string             `gorm:"not null" json:"pemasukan_nama"`
-	PemasukanTanggal     time.Time          `json:"pemasukan_tanggal"`
-	PemasukanNominal     float64            `gorm:"not null" json:"pemasukan_nominal"`
-	PemasukanBukti       string             `json:"pemasukan_bukti"`
-	KategoriPemasukan    KategoriPemasukan  `gorm:"foreignKey:KategoriPemasukanID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kategori_pemasukan"`
-	CreatedAt            time.Time          `json:"created_at"`
-	UpdatedAt            time.Time          `json:"updated_at"`
+	PemasukanID         uint              `gorm:"primaryKey;autoIncrement" json:"pemasukan_id"`
+	KategoriPemasukanID uint              `gorm:"not null" json:"kategori_pemasukan_id"`
+	PemasukanNama       string            `gorm:"not null" json:"pemasukan_nama"`
+	PemasukanTanggal    time.Time         `json:"pemasukan_tanggal"`
+	PemasukanNominal    float64           `gorm:"not null" json:"pemasukan_nominal"`
+	PemasukanBukti      string            `json:"pemasukan_bukti"`
+	KategoriPemasukan   KategoriPemasukan `gorm:"foreignKey:KategoriPemasukanID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"kategori_pemasukan"`
+	CreatedAt           time.Time         `json:"created_at"`
+	UpdatedAt           time.Time         `json:"updated_at"`
 }
 
 type TagihanIuran struct {
-	ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	TagihanIuran string   `gorm:"not null" json:"tagihan_iuran"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	TagihanIuran string    `gorm:"not null" json:"tagihan_iuran"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type KategoriProduk struct {

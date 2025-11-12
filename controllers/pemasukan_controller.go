@@ -460,6 +460,11 @@ func (pc *PemasukanController) DeletePemasukan(c *gin.Context) {
 		return
 	}
 
+	// Hapus file foto jika ada
+	if pemasukan.PemasukanBukti != "" {
+		helper.DeleteOldPhoto(pemasukan.PemasukanBukti, "pemasukan_bukti")
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Pemasukan berhasil dihapus",
 	})
