@@ -17,6 +17,7 @@ func SetupProdukRoutes(api *gin.RouterGroup, produkController *controllers.Produ
 		produk.GET("/stok-menipis", authMiddleware.RequireLevel(1, 2), produkController.GetProdukStokMenipis)
 		produk.GET("/statistik", authMiddleware.RequireLevel(1, 2), produkController.GetStatistikProduk)
 		produk.GET("/:id", authMiddleware.RequireLevel(1, 2), produkController.GetProdukByID)
+		produk.GET("/image/:filename", produkController.GetProdukFoto)
 		
 		// Admin only routes
 		adminProduk := produk.Group("")

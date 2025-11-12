@@ -4,6 +4,7 @@ package controllers
 import (
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -171,4 +172,85 @@ func (uc *UploadController) GetFile(c *gin.Context) {
 	}
 
 	c.File(filePath)
+}
+
+// Tambahkan method ini ke UploadController
+
+// UploadFileDirect - Upload file tanpa HTTP context (untuk dipanggil dari controller lain)
+func (uc *UploadController) UploadFileDirect(file interface{}, header interface{}) (string, error) {
+	// Type assertion untuk file dan header
+	fileReader, ok := file.(io.Reader)
+	if !ok {
+		return "", fmt.Errorf("invalid file type")
+	}
+
+	fileHeader, ok := header.(*multipart.FileHeader)
+	if !ok {
+		return "", fmt.Errorf("invalid file header type")
+	}
+
+	// Validasi tipe file
+	buffer := make([]byte, 512)
+	_, err := fileReader.Read(buffer)
+	if err != nil {
+		return "", fmt.Errorf("gagal membaca file")
+	}
+
+	fileType := http.DetectContentType(buffer)
+	allowedTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/jpg":  true,
+		"image/png":  true,
+		"image/gif":  true,
+		"image/webp": true,
+	}
+
+	if !allowedTypes[fileType] {
+		return "", fmt.Errorf("tipe file tidak diizinkan")
+	}
+
+	// Kembali ke awal file
+	if seeker, ok := fileReader.(io.Seeker); ok {
+		seeker.Seek(0, 0)
+	}
+
+	// Generate nama file unik
+	ext := filepath.Ext(fileHeader.Filename)
+	timestamp := time.Now().Format("20060102150405")
+	uniqueFilename := fmt.Sprintf("produk_%s%s", timestamp, ext)
+	filePath := filepath.Join(uc.uploadPath, uniqueFilename)
+
+	// Buat file baru
+	out, err := os.Create(filePath)
+	if err != nil {
+		return "", fmt.Errorf("gagal membuat file")
+	}
+	defer out.Close()
+
+	// Copy file ke storage
+	_, err = io.Copy(out, fileReader)
+	if err != nil {
+		return "", fmt.Errorf("gagal menyimpan file")
+	}
+
+	return uniqueFilename, nil
+}
+
+// DeleteFileByName - Menghapus file by nama
+func (uc *UploadController) DeleteFileByName(filename string) error {
+	if filename == "" {
+		return fmt.Errorf("nama file harus diisi")
+	}
+
+	filePath := filepath.Join(uc.uploadPath, filename)
+	if !strings.HasPrefix(filePath, uc.uploadPath) {
+		return fmt.Errorf("path file tidak valid")
+	}
+
+	err := os.Remove(filePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
