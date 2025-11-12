@@ -1,11 +1,15 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"rt-management/helper" // Import package helper
 	"rt-management/models"
 
 	"github.com/gin-gonic/gin"
@@ -20,27 +24,25 @@ func NewBroadcastController(db *gorm.DB) *BroadcastController {
 	return &BroadcastController{db: db}
 }
 
-// Request structs
+// Request structs untuk form-data
 type CreateBroadcastRequest struct {
-	BroadcastNama      string `json:"broadcast_nama" binding:"required"`
-	BroadcastDeskripsi string `json:"broadcast_deskripsi"`
-	BroadcastFoto      string `json:"broadcast_foto"`
-	BroadcastDokumen   string `json:"broadcast_dokumen"`
+	BroadcastNama      string `form:"broadcast_nama" binding:"required"`
+	BroadcastDeskripsi string `form:"broadcast_deskripsi"`
 }
 
 type UpdateBroadcastRequest struct {
-	BroadcastNama      string `json:"broadcast_nama"`
-	BroadcastDeskripsi string `json:"broadcast_deskripsi"`
-	BroadcastFoto      string `json:"broadcast_foto"`
-	BroadcastDokumen   string `json:"broadcast_dokumen"`
+	BroadcastNama      string `form:"broadcast_nama"`
+	BroadcastDeskripsi string `form:"broadcast_deskripsi"`
 }
 
-// ✅ CREATE - Membuat broadcast baru
+// ✅ CREATE - Membuat broadcast baru dengan form-data
 func (bc *BroadcastController) CreateBroadcast(c *gin.Context) {
 	var req CreateBroadcastRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	
+	// Bind form data
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
+			"error":   "Invalid form data",
 			"details": err.Error(),
 		})
 		return
@@ -49,8 +51,6 @@ func (bc *BroadcastController) CreateBroadcast(c *gin.Context) {
 	// Sanitize input
 	req.BroadcastNama = strings.TrimSpace(req.BroadcastNama)
 	req.BroadcastDeskripsi = strings.TrimSpace(req.BroadcastDeskripsi)
-	req.BroadcastFoto = strings.TrimSpace(req.BroadcastFoto)
-	req.BroadcastDokumen = strings.TrimSpace(req.BroadcastDokumen)
 
 	// Validasi required fields
 	if req.BroadcastNama == "" {
@@ -77,17 +77,51 @@ func (bc *BroadcastController) CreateBroadcast(c *gin.Context) {
 		return
 	}
 
+	// Handle file upload untuk foto
+	broadcastFoto, err := helper.HandleFileImageUpload(c, "broadcast_foto", "")
+	if err != nil {
+		if err != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload foto broadcast",
+				"details": err.Error(),
+			})
+			return
+		}
+		// Jika tidak ada file foto yang diupload, broadcastFoto akan kosong
+	}
+
+	// Handle file upload untuk dokumen
+	broadcastDokumen, err := helper.HandleFileDokumenUpload(c, "broadcast_dokumen", "")
+	if err != nil {
+		if err != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload dokumen broadcast",
+				"details": err.Error(),
+			})
+			return
+		}
+		// Jika tidak ada file dokumen yang diupload, broadcastDokumen akan kosong
+	}
+
 	// Buat broadcast baru
 	broadcast := models.Broadcast{
 		BroadcastNama:      req.BroadcastNama,
 		BroadcastDeskripsi: req.BroadcastDeskripsi,
-		BroadcastFoto:      req.BroadcastFoto,
-		BroadcastDokumen:   req.BroadcastDokumen,
+		BroadcastFoto:      broadcastFoto,
+		BroadcastDokumen:   broadcastDokumen,
 		CreatedAt:          time.Now(),
 		UpdatedAt:          time.Now(),
 	}
 
 	if err := bc.db.Create(&broadcast).Error; err != nil {
+		// Rollback file upload jika gagal menyimpan ke database
+		if broadcastFoto != "" {
+			helper.DeleteOldPhoto(broadcastFoto, "broadcast_foto")
+		}
+		if broadcastDokumen != "" {
+			helper.DeleteOldDocument(broadcastDokumen, "broadcast_dokumen")
+		}
+		
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal membuat broadcast",
 			"details": err.Error(),
@@ -98,6 +132,193 @@ func (bc *BroadcastController) CreateBroadcast(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Broadcast berhasil dibuat",
 		"data":    broadcast,
+	})
+}
+
+// ✅ UPDATE - Mengupdate broadcast dengan form-data
+func (bc *BroadcastController) UpdateBroadcast(c *gin.Context) {
+	id := c.Param("id")
+
+	// Validasi ID
+	broadcastID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID broadcast tidak valid",
+		})
+		return
+	}
+
+	var broadcast models.Broadcast
+	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Broadcast tidak ditemukan",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal menemukan broadcast",
+			})
+		}
+		return
+	}
+
+	var req UpdateBroadcastRequest
+	
+	// Bind form data
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid form data",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Sanitize input
+	if req.BroadcastNama != "" {
+		req.BroadcastNama = strings.TrimSpace(req.BroadcastNama)
+	}
+	if req.BroadcastDeskripsi != "" {
+		req.BroadcastDeskripsi = strings.TrimSpace(req.BroadcastDeskripsi)
+	}
+
+	// Validasi jika nama diupdate
+	if req.BroadcastNama != "" {
+		if len(req.BroadcastNama) < 2 || len(req.BroadcastNama) > 200 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Nama broadcast harus 2-200 karakter",
+			})
+			return
+		}
+
+		// Check duplicate name (exclude current)
+		var existingBroadcast models.Broadcast
+		if err := bc.db.Where("broadcast_nama = ? AND broadcast_id != ?", req.BroadcastNama, broadcastID).
+			First(&existingBroadcast).Error; err == nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Broadcast dengan nama tersebut sudah ada",
+			})
+			return
+		}
+	}
+
+	// Handle file upload untuk foto (jika ada file baru)
+	var newFoto string
+	if c.Request.MultipartForm != nil && c.Request.MultipartForm.File["broadcast_foto"] != nil {
+		newFoto, err = helper.HandleFileImageUpload(c, "broadcast_foto", broadcast.BroadcastFoto)
+		if err != nil && err != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload foto broadcast",
+				"details": err.Error(),
+			})
+			return
+		}
+	}
+
+	// Handle file upload untuk dokumen (jika ada file baru)
+	var newDokumen string
+	if c.Request.MultipartForm != nil && c.Request.MultipartForm.File["broadcast_dokumen"] != nil {
+		newDokumen, err = helper.HandleFileDokumenUpload(c, "broadcast_dokumen", broadcast.BroadcastDokumen)
+		if err != nil && err != http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload dokumen broadcast",
+				"details": err.Error(),
+			})
+			return
+		}
+	}
+
+	// Update fields menggunakan map
+	updates := make(map[string]interface{})
+	
+	if req.BroadcastNama != "" {
+		updates["broadcast_nama"] = req.BroadcastNama
+	}
+	if req.BroadcastDeskripsi != "" {
+		updates["broadcast_deskripsi"] = req.BroadcastDeskripsi
+	}
+	if newFoto != "" {
+		updates["broadcast_foto"] = newFoto
+	}
+	if newDokumen != "" {
+		updates["broadcast_dokumen"] = newDokumen
+	}
+	
+	updates["updated_at"] = time.Now()
+
+	if len(updates) > 0 {
+		if err := bc.db.Model(&broadcast).Updates(updates).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Gagal mengupdate broadcast",
+				"details": err.Error(),
+			})
+			return
+		}
+	}
+
+	// Reload dengan data terbaru
+	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal memuat data broadcast yang diupdate",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Broadcast berhasil diupdate",
+		"data":    broadcast,
+	})
+}
+
+// ✅ DELETE - Menghapus broadcast
+func (bc *BroadcastController) DeleteBroadcast(c *gin.Context) {
+	id := c.Param("id")
+
+	// Validasi ID
+	broadcastID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "ID broadcast tidak valid",
+		})
+		return
+	}
+
+	var broadcast models.Broadcast
+	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Broadcast tidak ditemukan",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal menemukan broadcast",
+			})
+		}
+		return
+	}
+
+	// Simpan nama file untuk dihapus nanti
+	fotoToDelete := broadcast.BroadcastFoto
+	dokumenToDelete := broadcast.BroadcastDokumen
+
+	// Delete dari database
+	if err := bc.db.Delete(&broadcast).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Gagal menghapus broadcast",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Hapus file dari storage setelah berhasil delete dari database
+	if fotoToDelete != "" {
+		helper.DeleteOldPhoto(fotoToDelete, "broadcast_foto")
+	}
+	if dokumenToDelete != "" {
+		helper.DeleteOldDocument(dokumenToDelete, "broadcast_dokumen")
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Broadcast berhasil dihapus",
 	})
 }
 
@@ -179,156 +400,6 @@ func (bc *BroadcastController) GetBroadcastByID(c *gin.Context) {
 	})
 }
 
-// ✅ UPDATE - Mengupdate broadcast
-func (bc *BroadcastController) UpdateBroadcast(c *gin.Context) {
-	id := c.Param("id")
-
-	// Validasi ID (AMAN - dikonversi ke uint)
-	broadcastID, err := strconv.ParseUint(id, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID broadcast tidak valid",
-		})
-		return
-	}
-
-	var broadcast models.Broadcast
-	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Broadcast tidak ditemukan",
-			})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Gagal menemukan broadcast",
-			})
-		}
-		return
-	}
-
-	var req UpdateBroadcastRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Sanitize input
-	if req.BroadcastNama != "" {
-		req.BroadcastNama = strings.TrimSpace(req.BroadcastNama)
-	}
-	if req.BroadcastDeskripsi != "" {
-		req.BroadcastDeskripsi = strings.TrimSpace(req.BroadcastDeskripsi)
-	}
-	if req.BroadcastFoto != "" {
-		req.BroadcastFoto = strings.TrimSpace(req.BroadcastFoto)
-	}
-	if req.BroadcastDokumen != "" {
-		req.BroadcastDokumen = strings.TrimSpace(req.BroadcastDokumen)
-	}
-
-	// Validasi jika nama diupdate
-	if req.BroadcastNama != "" {
-		if len(req.BroadcastNama) < 2 || len(req.BroadcastNama) > 200 {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Nama broadcast harus 2-200 karakter",
-			})
-			return
-		}
-
-		// Check duplicate name (exclude current)
-		var existingBroadcast models.Broadcast
-		if err := bc.db.Where("broadcast_nama = ? AND broadcast_id != ?", req.BroadcastNama, broadcastID).
-			First(&existingBroadcast).Error; err == nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Broadcast dengan nama tersebut sudah ada",
-			})
-			return
-		}
-	}
-
-	// Update fields menggunakan map (AMAN - GORM Updates dengan map)
-	updates := make(map[string]interface{})
-	
-	if req.BroadcastNama != "" {
-		updates["broadcast_nama"] = req.BroadcastNama
-	}
-	if req.BroadcastDeskripsi != "" {
-		updates["broadcast_deskripsi"] = req.BroadcastDeskripsi
-	}
-	if req.BroadcastFoto != "" {
-		updates["broadcast_foto"] = req.BroadcastFoto
-	}
-	if req.BroadcastDokumen != "" {
-		updates["broadcast_dokumen"] = req.BroadcastDokumen
-	}
-	
-	updates["updated_at"] = time.Now()
-
-	if err := bc.db.Model(&broadcast).Updates(updates).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Gagal mengupdate broadcast",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	// Reload dengan data terbaru
-	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal memuat data broadcast yang diupdate",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Broadcast berhasil diupdate",
-		"data":    broadcast,
-	})
-}
-
-// ✅ DELETE - Menghapus broadcast
-func (bc *BroadcastController) DeleteBroadcast(c *gin.Context) {
-	id := c.Param("id")
-
-	// Validasi ID (AMAN - dikonversi ke uint)
-	broadcastID, err := strconv.ParseUint(id, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID broadcast tidak valid",
-		})
-		return
-	}
-
-	var broadcast models.Broadcast
-	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Broadcast tidak ditemukan",
-			})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Gagal menemukan broadcast",
-			})
-		}
-		return
-	}
-
-	// Delete menggunakan GORM Delete (AMAN)
-	if err := bc.db.Delete(&broadcast).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Gagal menghapus broadcast",
-			"details": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Broadcast berhasil dihapus",
-	})
-}
 
 // ✅ GET - Mendapatkan broadcast terbaru
 func (bc *BroadcastController) GetBroadcastTerbaru(c *gin.Context) {
@@ -416,94 +487,90 @@ func (bc *BroadcastController) GetStatistikBroadcast(c *gin.Context) {
 	})
 }
 
-// ✅ PATCH - Update partial broadcast (hanya deskripsi/foto/dokumen)
-func (bc *BroadcastController) UpdatePartialBroadcast(c *gin.Context) {
-	id := c.Param("id")
 
-	// Validasi ID (AMAN - dikonversi ke uint)
-	broadcastID, err := strconv.ParseUint(id, 10, 32)
-	if err != nil {
+
+// ✅ GET - Serve file dokumen broadcast
+func (bc *BroadcastController) GetBroadcastDokumen(c *gin.Context) {
+	filename := c.Param("filename")
+	
+	if filename == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "ID broadcast tidak valid",
+			"error": "Nama file tidak valid",
 		})
 		return
 	}
 
-	var broadcast models.Broadcast
-	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	file, err := helper.GetFileByFileName("broadcast_dokumen", filename)
+	if err != nil {
+		if os.IsNotExist(err) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Broadcast tidak ditemukan",
+				"error": "File dokumen tidak ditemukan",
 			})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Gagal menemukan broadcast",
+				"error": "Gagal membuka file",
+				"details": err.Error(),
 			})
 		}
 		return
 	}
+	defer file.Close()
 
-	var req UpdateBroadcastRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
-			"details": err.Error(),
+	fileInfo, err := file.Stat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal mendapatkan info file",
 		})
 		return
 	}
 
-	// Update hanya field yang ada di request
-	updates := make(map[string]interface{})
-	updates["updated_at"] = time.Now()
+	ext := filepath.Ext(filename)
+	contentType := helper.GetContentType(ext)
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
-	if req.BroadcastNama != "" {
-		req.BroadcastNama = strings.TrimSpace(req.BroadcastNama)
-		if len(req.BroadcastNama) < 2 || len(req.BroadcastNama) > 200 {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Nama broadcast harus 2-200 karakter",
+	http.ServeContent(c.Writer, c.Request, filename, fileInfo.ModTime(), file)
+}
+
+// ✅ GET - Serve file foto broadcast
+func (bc *BroadcastController) GetBroadcastFoto(c *gin.Context) {
+	filename := c.Param("filename")
+	
+	if filename == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Nama file tidak valid",
+		})
+		return
+	}
+
+	file, err := helper.GetFileByFileName("broadcast_foto", filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "File foto tidak ditemukan",
 			})
-			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal membuka file",
+				"details": err.Error(),
+			})
 		}
-		updates["broadcast_nama"] = req.BroadcastNama
-	}
-
-	if req.BroadcastDeskripsi != "" {
-		updates["broadcast_deskripsi"] = strings.TrimSpace(req.BroadcastDeskripsi)
-	}
-
-	if req.BroadcastFoto != "" {
-		updates["broadcast_foto"] = strings.TrimSpace(req.BroadcastFoto)
-	}
-
-	if req.BroadcastDokumen != "" {
-		updates["broadcast_dokumen"] = strings.TrimSpace(req.BroadcastDokumen)
-	}
-
-	if len(updates) == 1 { // Hanya updated_at yang diupdate
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Tidak ada data yang diupdate",
-		})
 		return
 	}
+	defer file.Close()
 
-	if err := bc.db.Model(&broadcast).Updates(updates).Error; err != nil {
+	fileInfo, err := file.Stat()
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Gagal mengupdate broadcast",
-			"details": err.Error(),
+			"error": "Gagal mendapatkan info file",
 		})
 		return
 	}
 
-	// Reload dengan data terbaru
-	if err := bc.db.First(&broadcast, broadcastID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal memuat data broadcast yang diupdate",
-		})
-		return
-	}
+	ext := filepath.Ext(filename)
+	contentType := helper.GetContentType(ext)
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Broadcast berhasil diupdate",
-		"data":    broadcast,
-	})
+	http.ServeContent(c.Writer, c.Request, filename, fileInfo.ModTime(), file)
 }

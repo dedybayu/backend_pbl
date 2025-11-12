@@ -22,25 +22,25 @@ func NewPemasukanController(db *gorm.DB) *PemasukanController {
 
 // Request structs
 type CreatePemasukanRequest struct {
-	KategoriPemasukanID uint      `json:"kategori_pemasukan_id" binding:"required"`
-	PemasukanNama       string    `json:"pemasukan_nama" binding:"required"`
-	PemasukanTanggal    time.Time `json:"pemasukan_tanggal" binding:"required"`
-	PemasukanNominal    float64   `json:"pemasukan_nominal" binding:"required"`
-	PemasukanBukti      string    `json:"pemasukan_bukti"`
+	KategoriPemasukanID uint    `form:"kategori_pemasukan_id" binding:"required"`
+	PemasukanNama       string  `form:"pemasukan_nama" binding:"required"`
+	PemasukanTanggal    string  `form:"pemasukan_tanggal" binding:"required"`
+	PemasukanNominal    float64 `form:"pemasukan_nominal" binding:"required"`
+	PemasukanBukti      string  `form:"pemasukan_bukti"`
 }
 
 type UpdatePemasukanRequest struct {
-	KategoriPemasukanID uint      `json:"kategori_pemasukan_id"`
-	PemasukanNama       string    `json:"pemasukan_nama"`
-	PemasukanTanggal    time.Time `json:"pemasukan_tanggal"`
-	PemasukanNominal    float64   `json:"pemasukan_nominal"`
-	PemasukanBukti      string    `json:"pemasukan_bukti"`
+	KategoriPemasukanID uint    `form:"kategori_pemasukan_id"`
+	PemasukanNama       string  `form:"pemasukan_nama"`
+	PemasukanTanggal    string  `form:"pemasukan_tanggal"`
+	PemasukanNominal    float64 `form:"pemasukan_nominal"`
+	PemasukanBukti      string  `form:"pemasukan_bukti"`
 }
 
 // ✅ CREATE - Membuat pemasukan baru
 func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 	var req CreatePemasukanRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -51,6 +51,7 @@ func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 	// Sanitize input
 	req.PemasukanNama = strings.TrimSpace(req.PemasukanNama)
 	req.PemasukanBukti = strings.TrimSpace(req.PemasukanBukti)
+	req.PemasukanTanggal = strings.TrimSpace(req.PemasukanTanggal)
 
 	// Validasi required fields
 	if req.PemasukanNama == "" {
@@ -68,8 +69,17 @@ func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 		return
 	}
 
+	// Parsing tanggal dari string ke time.Time
+	pemasukanTanggal, err := time.Parse("2006-01-02", req.PemasukanTanggal)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Format tanggal tidak valid. Gunakan format YYYY-MM-DD",
+		})
+		return
+	}
+
 	// Validasi tanggal tidak boleh lebih besar dari hari ini
-	if req.PemasukanTanggal.After(time.Now()) {
+	if pemasukanTanggal.After(time.Now()) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Tanggal pemasukan tidak boleh lebih besar dari hari ini",
 		})
@@ -95,7 +105,7 @@ func (pc *PemasukanController) CreatePemasukan(c *gin.Context) {
 	pemasukan := models.Pemasukan{
 		KategoriPemasukanID: req.KategoriPemasukanID,
 		PemasukanNama:       req.PemasukanNama,
-		PemasukanTanggal:    req.PemasukanTanggal,
+		PemasukanTanggal:    pemasukanTanggal, // Gunakan yang sudah diparsing
 		PemasukanNominal:    req.PemasukanNominal,
 		PemasukanBukti:      req.PemasukanBukti,
 		CreatedAt:           time.Now(),
@@ -252,7 +262,7 @@ func (pc *PemasukanController) UpdatePemasukan(c *gin.Context) {
 	}
 
 	var req UpdatePemasukanRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -267,6 +277,9 @@ func (pc *PemasukanController) UpdatePemasukan(c *gin.Context) {
 	if req.PemasukanBukti != "" {
 		req.PemasukanBukti = strings.TrimSpace(req.PemasukanBukti)
 	}
+	if req.PemasukanTanggal != "" {
+		req.PemasukanTanggal = strings.TrimSpace(req.PemasukanTanggal)
+	}
 
 	// Validasi nominal jika diupdate
 	if req.PemasukanNominal != 0 && req.PemasukanNominal <= 0 {
@@ -276,15 +289,43 @@ func (pc *PemasukanController) UpdatePemasukan(c *gin.Context) {
 		return
 	}
 
-	// Validasi tanggal jika diupdate
-	if !req.PemasukanTanggal.IsZero() {
-		if req.PemasukanTanggal.After(time.Now()) {
+	// Update fields menggunakan map
+	updates := make(map[string]interface{})
+
+	if req.KategoriPemasukanID != 0 {
+		updates["kategori_pemasukan_id"] = req.KategoriPemasukanID
+	}
+	if req.PemasukanNama != "" {
+		updates["pemasukan_nama"] = req.PemasukanNama
+	}
+	if req.PemasukanTanggal != "" {
+		// Parsing tanggal dari string ke time.Time
+		pemasukanTanggal, err := time.Parse("2006-01-02", req.PemasukanTanggal)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Format tanggal tidak valid. Gunakan format YYYY-MM-DD",
+			})
+			return
+		}
+
+		// Validasi tanggal jika diupdate
+		if pemasukanTanggal.After(time.Now()) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Tanggal pemasukan tidak boleh lebih besar dari hari ini",
 			})
 			return
 		}
+
+		updates["pemasukan_tanggal"] = pemasukanTanggal
 	}
+	if req.PemasukanNominal != 0 {
+		updates["pemasukan_nominal"] = req.PemasukanNominal
+	}
+	if req.PemasukanBukti != "" {
+		updates["pemasukan_bukti"] = req.PemasukanBukti
+	}
+
+	updates["updated_at"] = time.Now()
 
 	// Validasi kategori pemasukan jika diupdate
 	if req.KategoriPemasukanID != 0 {
@@ -302,27 +343,6 @@ func (pc *PemasukanController) UpdatePemasukan(c *gin.Context) {
 			return
 		}
 	}
-
-	// Update fields menggunakan map (AMAN - GORM Updates dengan map)
-	updates := make(map[string]interface{})
-	
-	if req.KategoriPemasukanID != 0 {
-		updates["kategori_pemasukan_id"] = req.KategoriPemasukanID
-	}
-	if req.PemasukanNama != "" {
-		updates["pemasukan_nama"] = req.PemasukanNama
-	}
-	if !req.PemasukanTanggal.IsZero() {
-		updates["pemasukan_tanggal"] = req.PemasukanTanggal
-	}
-	if req.PemasukanNominal != 0 {
-		updates["pemasukan_nominal"] = req.PemasukanNominal
-	}
-	if req.PemasukanBukti != "" {
-		updates["pemasukan_bukti"] = req.PemasukanBukti
-	}
-	
-	updates["updated_at"] = time.Now()
 
 	if err := pc.db.Model(&pemasukan).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -390,11 +410,11 @@ func (pc *PemasukanController) DeletePemasukan(c *gin.Context) {
 // ✅ GET - Statistik pemasukan
 func (pc *PemasukanController) GetStatistikPemasukan(c *gin.Context) {
 	type StatistikResult struct {
-		TotalPemasukan   int64   `json:"total_pemasukan"`
-		RataRataBulanan  float64 `json:"rata_rata_bulanan"`
-		BulanIni         int64   `json:"bulan_ini"`
-		MingguIni        int64   `json:"minggu_ini"`
-		TotalNominal     float64 `json:"total_nominal"`
+		TotalPemasukan  int64   `json:"total_pemasukan"`
+		RataRataBulanan float64 `json:"rata_rata_bulanan"`
+		BulanIni        int64   `json:"bulan_ini"`
+		MingguIni       int64   `json:"minggu_ini"`
+		TotalNominal    float64 `json:"total_nominal"`
 	}
 
 	var statistik StatistikResult
@@ -435,8 +455,8 @@ func (pc *PemasukanController) GetStatistikPemasukan(c *gin.Context) {
 func (pc *PemasukanController) GetTotalNominalPerKategori(c *gin.Context) {
 	type TotalPerKategori struct {
 		KategoriPemasukanNama string  `json:"kategori_pemasukan_nama"`
-		TotalNominal         float64 `json:"total_nominal"`
-		Persentase           float64 `json:"persentase"`
+		TotalNominal          float64 `json:"total_nominal"`
+		Persentase            float64 `json:"persentase"`
 	}
 
 	var results []TotalPerKategori
@@ -469,7 +489,7 @@ func (pc *PemasukanController) GetTotalNominalPerKategori(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"data": results,
+		"data":              results,
 		"total_keseluruhan": totalKeseluruhan,
 	})
 }
@@ -477,11 +497,11 @@ func (pc *PemasukanController) GetTotalNominalPerKategori(c *gin.Context) {
 // ✅ GET - Laporan pemasukan bulanan
 func (pc *PemasukanController) GetLaporanPemasukanBulanan(c *gin.Context) {
 	type LaporanBulanan struct {
-		Bulan          string  `json:"bulan"`
-		Tahun          int     `json:"tahun"`
-		BulanAngka     int     `json:"bulan_angka"`
-		TotalPemasukan float64 `json:"total_pemasukan"`
-		JumlahTransaksi int64  `json:"jumlah_transaksi"`
+		Bulan           string  `json:"bulan"`
+		Tahun           int     `json:"tahun"`
+		BulanAngka      int     `json:"bulan_angka"`
+		TotalPemasukan  float64 `json:"total_pemasukan"`
+		JumlahTransaksi int64   `json:"jumlah_transaksi"`
 	}
 
 	var laporan []LaporanBulanan

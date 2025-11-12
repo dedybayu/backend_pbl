@@ -7,9 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	// "golang.org/x/mod/sumdb/storage"
 )
 
 // Helper function untuk membuat direktori jika belum ada
@@ -94,7 +96,7 @@ func HandleFileImageUpload(c *gin.Context, fieldName string, oldPhotoPath string
 		storageDir = "storage/images/produk"
 		filePrefix = "produk"
 	case "pengeluaran_bukti":
-		storageDir = "storage/images/pegeluaran"
+		storageDir = "storage/images/pengeluaran"
 		filePrefix = "pengeluaran"
 	case "pemasukan_bukti":
 		storageDir = "storage/images/pemasukan"
@@ -294,4 +296,74 @@ func getMimeType(extension string) string {
 		return mime
 	}
 	return "application/octet-stream"
+}
+
+// Helper function untuk menentukan Content-Type berdasarkan ekstensi
+func GetContentType(ext string) string {
+	switch strings.ToLower(ext) {
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".webp":
+		return "image/webp"
+	case ".pdf":
+		return "application/pdf"
+	case ".doc":
+		return "application/msword"
+	case ".docx":
+		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	case ".xls":
+		return "application/vnd.ms-excel"
+	case ".xlsx":
+		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case ".txt":
+		return "text/plain"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+
+// GetFileByFileName - Mendapatkan file berdasarkan fieldName dan fileName
+func GetFileByFileName(fieldName string, fileName string) (*os.File, error) {
+	var storageDir string
+
+	switch fieldName {
+	case "produk_foto":
+		storageDir = "storage/images/produk"
+	case "pengeluaran_bukti":
+		storageDir = "storage/images/pengeluaran" // Fixed typo: pegeluaran -> pengeluaran
+	case "pemasukan_bukti":
+		storageDir = "storage/images/pemasukan"
+	case "broadcast_foto":
+		storageDir = "storage/images/broadcast"
+	case "broadcast_dokumen":
+		storageDir = "storage/dokumen/broadcast"
+	case "pengeluaran_dokumen":
+		storageDir = "storage/dokumen/pengeluaran"
+	case "pemasukan_dokumen":
+		storageDir = "storage/dokumen/pemasukan"
+	case "produk_dokumen":
+		storageDir = "storage/dokumen/produk"
+	default:
+		storageDir = "storage/images/default"
+	}
+
+	filePath := filepath.Join(storageDir, fileName)
+	
+	// Validasi path untuk mencegah directory traversal
+	cleanPath := filepath.Clean(filePath)
+	expectedPrefix := filepath.Clean(storageDir)
+	if !strings.HasPrefix(cleanPath, expectedPrefix) {
+		return nil, fmt.Errorf("path file tidak valid")
+	}
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }

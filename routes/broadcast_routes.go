@@ -17,6 +17,8 @@ func SetupBroadcastRoutes(api *gin.RouterGroup, broadcastController *controllers
 		broadcast.GET("/statistik", authMiddleware.RequireLevel(1, 2), broadcastController.GetStatistikBroadcast)
 		broadcast.GET("/search", authMiddleware.RequireLevel(1, 2), broadcastController.SearchBroadcast)
 		broadcast.GET("/:id", authMiddleware.RequireLevel(1, 2), broadcastController.GetBroadcastByID)
+		broadcast.GET("/dokumen/:filename", authMiddleware.RequireLevel(1, 2), broadcastController.GetBroadcastDokumen)
+		broadcast.GET("/image/:filename", authMiddleware.RequireLevel(1, 2), broadcastController.GetBroadcastFoto)
 		
 		// Admin only routes
 		adminBroadcast := broadcast.Group("")
@@ -24,7 +26,6 @@ func SetupBroadcastRoutes(api *gin.RouterGroup, broadcastController *controllers
 		{
 			adminBroadcast.POST("", broadcastController.CreateBroadcast)
 			adminBroadcast.PUT("/:id", broadcastController.UpdateBroadcast)
-			adminBroadcast.PATCH("/:id", broadcastController.UpdatePartialBroadcast)
 			adminBroadcast.DELETE("/:id", broadcastController.DeleteBroadcast)
 		}
 	}

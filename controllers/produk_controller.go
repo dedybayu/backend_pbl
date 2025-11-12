@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -8,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"rt-management/models"
 	"rt-management/helper"
+	"rt-management/models"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -387,27 +388,40 @@ func (pc *ProdukController) GetProdukFoto(c *gin.Context) {
 		return
 	}
 
-	filePath := filepath.Join("storage", "images", "produk", filename)
+	// Gunakan helper function GetFileByFileName
+	file, err := helper.GetFileByFileName("produk_foto", filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "File foto tidak ditemukan",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal membuka file",
+				"details": err.Error(),
+			})
+		}
+		return
+	}
+	defer file.Close()
 
-	// Validasi path untuk mencegah directory traversal
-	cleanPath := filepath.Clean(filePath)
-	if !strings.HasPrefix(cleanPath, "storage/images/produk") {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Path file tidak valid",
+	// Dapatkan file info untuk Content-Type
+	fileInfo, err := file.Stat()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gagal mendapatkan info file",
 		})
 		return
 	}
 
-	// Cek apakah file exists
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "File foto tidak ditemukan",
-		})
-		return
-	}
+	// Set header yang sesuai
+	ext := filepath.Ext(filename)
+	contentType := helper.GetContentType(ext)
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
 
 	// Serve file
-	c.File(filePath)
+	http.ServeContent(c.Writer, c.Request, filename, fileInfo.ModTime(), file)
 }
 
 // ✅ READ - Mendapatkan semua produk (TETAP SAMA - GET request)
