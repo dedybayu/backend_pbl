@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,6 +9,7 @@ import (
 	"time"
 
 	"rt-management/models"
+	"rt-management/helper"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -43,94 +42,7 @@ type UpdateProdukRequest struct {
 	KategoriProdukID uint    `form:"kategori_produk_id"`
 }
 
-// Helper function untuk membuat direktori jika belum ada
-func ensureDirectory(dirPath string) error {
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		return os.MkdirAll(dirPath, 0755)
-	}
-	return nil
-}
 
-// Helper function untuk menghapus file foto lama
-func deleteOldPhoto(filePath string) error {
-	if filePath != "" {
-		fullPath := filepath.Join("storage", "images", "produk", filepath.Base(filePath))
-		if _, err := os.Stat(fullPath); err == nil {
-			return os.Remove(fullPath)
-		}
-	}
-	return nil
-}
-
-// Helper function untuk handle file upload
-func handleFileUpload(c *gin.Context, fieldName string, oldPhotoPath string) (string, error) {
-	file, header, err := c.Request.FormFile(fieldName)
-	if err != nil {
-		if err == http.ErrMissingFile {
-			// Jika tidak ada file baru diupload, return path foto lama
-			return oldPhotoPath, nil
-		}
-		return "", err
-	}
-	defer file.Close()
-
-	// Validasi tipe file
-	allowedTypes := map[string]bool{
-		"image/jpeg": true,
-		"image/jpg":  true,
-		"image/png":  true,
-		"image/gif":  true,
-		"image/webp": true,
-	}
-
-	buffer := make([]byte, 512)
-	_, err = file.Read(buffer)
-	if err != nil {
-		return "", fmt.Errorf("gagal membaca file: %v", err)
-	}
-
-	contentType := http.DetectContentType(buffer)
-	if !allowedTypes[contentType] {
-		return "", fmt.Errorf("tipe file tidak diizinkan. Hanya JPEG, JPG, PNG, GIF, dan WebP yang diperbolehkan")
-	}
-
-	// Kembali ke awal file
-	file.Seek(0, 0)
-
-	// Buat nama file unik
-	ext := filepath.Ext(header.Filename)
-	timestamp := time.Now().Format("20060102150405")
-	randomStr := strconv.FormatInt(time.Now().UnixNano(), 10)
-	filename := fmt.Sprintf("produk_%s_%s%s", timestamp, randomStr[len(randomStr)-6:], ext)
-
-	// Path penyimpanan
-	storageDir := "storage/images/produk"
-	if err := ensureDirectory(storageDir); err != nil {
-		return "", fmt.Errorf("gagal membuat direktori: %v", err)
-	}
-
-	filePath := filepath.Join(storageDir, filename)
-
-	// Buat file baru
-	out, err := os.Create(filePath)
-	if err != nil {
-		return "", fmt.Errorf("gagal membuat file: %v", err)
-	}
-	defer out.Close()
-
-	// Salin konten file
-	_, err = io.Copy(out, file)
-	if err != nil {
-		return "", fmt.Errorf("gagal menyimpan file: %v", err)
-	}
-
-	// Hapus foto lama jika ada file baru diupload dan foto lama ada
-	if oldPhotoPath != "" {
-		deleteOldPhoto(oldPhotoPath)
-	}
-
-	return filename, nil
-}
 
 // ✅ CREATE - Membuat produk baru dengan file upload
 func (pc *ProdukController) CreateProduk(c *gin.Context) {
@@ -142,22 +54,6 @@ func (pc *ProdukController) CreateProduk(c *gin.Context) {
 			"error":   "Invalid form data",
 			"details": err.Error(),
 		})
-		return
-	}
-
-	// Handle file upload
-	fotoPath, err := handleFileUpload(c, "produk_foto", "")
-	if err != nil {
-		if err == http.ErrMissingFile {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Foto produk harus diupload",
-			})
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error":   "Gagal mengupload foto",
-				"details": err.Error(),
-			})
-		}
 		return
 	}
 
@@ -213,11 +109,27 @@ func (pc *ProdukController) CreateProduk(c *gin.Context) {
 	}
 
 	// Check if produk dengan nama yang sama sudah ada
-	var existingProduk models.Produk
-	if err := pc.db.Where("produk_nama = ?", req.ProdukNama).First(&existingProduk).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Produk dengan nama tersebut sudah ada",
-		})
+	// var existingProduk models.Produk
+	// if err := pc.db.Where("produk_nama = ?", req.ProdukNama).First(&existingProduk).Error; err == nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{
+	// 		"error": "Produk dengan nama tersebut sudah ada",
+	// 	})
+	// 	return
+	// }
+
+		// Handle file upload
+	fotoPath, err := helper.HandleFileImageUpload(c, "produk_foto", "")
+	if err != nil {
+		if err == http.ErrMissingFile {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Foto produk harus diupload",
+			})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload foto",
+				"details": err.Error(),
+			})
+		}
 		return
 	}
 
@@ -235,7 +147,7 @@ func (pc *ProdukController) CreateProduk(c *gin.Context) {
 
 	if err := pc.db.Create(&produk).Error; err != nil {
 		// Hapus file yang sudah diupload jika gagal menyimpan ke database
-		deleteOldPhoto(fotoPath)
+		helper.DeleteOldPhoto(fotoPath, "produk_foto")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal membuat produk",
 			"details": err.Error(),
@@ -295,7 +207,7 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 	}
 
 	// Handle file upload (pass current photo path for potential deletion)
-	fotoPath, err := handleFileUpload(c, "produk_foto", produk.ProdukFoto)
+	fotoPath, err := helper.HandleFileImageUpload(c, "produk_foto", produk.ProdukFoto)
 	if err != nil && err != http.ErrMissingFile {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Gagal mengupload foto",
@@ -392,7 +304,7 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 	if err := pc.db.Model(&produk).Updates(updates).Error; err != nil {
 		// Hapus file baru yang sudah diupload jika gagal update database
 		if fotoPath != "" && err != http.ErrMissingFile {
-			deleteOldPhoto(fotoPath)
+			helper.DeleteOldPhoto(fotoPath, "produk_foto")
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal mengupdate produk",
@@ -456,7 +368,7 @@ func (pc *ProdukController) DeleteProduk(c *gin.Context) {
 
 	// Hapus file foto
 	if fotoPath != "" {
-		deleteOldPhoto(fotoPath)
+		helper.DeleteOldPhoto(fotoPath, "produk_foto")
 	}
 
 	c.JSON(http.StatusOK, gin.H{
