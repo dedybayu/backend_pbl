@@ -23,6 +23,9 @@ type RouteConfig struct {
 	KategoriPemasukanController   *controllers.KategoriPemasukanController
 	PemasukanController           *controllers.PemasukanController
 	TagihanIuranController        *controllers.TagihanIuranController
+	KategoriProdukController      *controllers.KategoriProdukController
+	ProdukController              *controllers.ProdukController
+	// FileImageController           *controllers.FileImageController
 	AuthMiddleware                *middleware.AuthMiddleware
 }
 
@@ -95,5 +98,14 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 
 		// Setup tagihan iuran routes
 		SetupTagihanIuranRoutes(api, config.TagihanIuranController, config.AuthMiddleware)
+
+		// Setup kategori produk routes
+		SetupKategoriProdukRoutes(api, config.KategoriProdukController, config.AuthMiddleware)
+
+		// Setup produk routes
+		SetupProdukRoutes(api, config.ProdukController, config.AuthMiddleware)
+
+		// Setup file image routes
+		// SetupFileRoutes(api, config.FileImageController, config.AuthMiddleware)
 	}
 }

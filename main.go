@@ -51,6 +51,9 @@ func main() {
 	kategoriPemasukanController := controllers.NewKategoriPemasukanController(db)
 	pemasukanController := controllers.NewPemasukanController(db)
 	tagihanIuranController := controllers.NewTagihanIuranController(db)
+	kategoriProdukController := controllers.NewKategoriProdukController(db)
+	// fileImageController := controllers.NewFileImageController()
+	produkController := controllers.NewProdukController(db)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtUtils)
@@ -91,6 +94,9 @@ func main() {
 		KategoriPemasukanController: kategoriPemasukanController,
 		PemasukanController: pemasukanController,
 		TagihanIuranController: tagihanIuranController,
+		KategoriProdukController: kategoriProdukController,
+		ProdukController: produkController,
+		// FileImageController: fileImageController,
 		AuthMiddleware:     authMiddleware,
 	}
 
