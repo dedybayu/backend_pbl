@@ -52,6 +52,7 @@ func main() {
 	pemasukanController := controllers.NewPemasukanController(db)
 	tagihanIuranController := controllers.NewTagihanIuranController(db)
 	kategoriProdukController := controllers.NewKategoriProdukController(db)
+	ProfileController := controllers.NewProfileController(db)
 	// fileImageController := controllers.NewFileImageController()
 	produkController := controllers.NewProdukController(db)
 
@@ -96,6 +97,7 @@ func main() {
 		TagihanIuranController: tagihanIuranController,
 		KategoriProdukController: kategoriProdukController,
 		ProdukController: produkController,
+		ProfileController: ProfileController,
 		// FileImageController: fileImageController,
 		AuthMiddleware:     authMiddleware,
 	}

@@ -13,7 +13,6 @@ func SetupAuthRoutes(router *gin.Engine, authController *controllers.AuthControl
 	{
 		auth.POST("/login", authController.Login)
 		auth.POST("/logout", authMiddleware.Auth(), authController.Logout)
-		auth.GET("/profile", authMiddleware.Auth(), authController.GetProfile)
 		auth.POST("/refresh", authMiddleware.Auth(), authController.RefreshToken)
 	}
 }

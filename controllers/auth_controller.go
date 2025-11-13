@@ -199,27 +199,6 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	})
 }
 
-// GetProfile returns current user profile
-func (ac *AuthController) GetProfile(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
-
-	var user models.User
-	if err := ac.db.Preload("Level").First(&user, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		return
-	}
-
-	response := ProfileResponse{
-		User:  user,
-		Level: user.Level,
-	}
-
-	c.JSON(http.StatusOK, response)
-}
 
 // RefreshToken generates new token (optional)
 func (ac *AuthController) RefreshToken(c *gin.Context) {
