@@ -22,16 +22,24 @@ func NewAuthController(db *gorm.DB, jwtUtils *utils.JWTUtils) *AuthController {
 	return &AuthController{db: db, jwtUtils: jwtUtils}
 }
 
+type UserResponse struct {
+	UserID   uint         `json:"user_id"`
+	Username string       `json:"username"`
+	// Nama     string       `json:"nama"`
+	LevelID  uint         `json:"level_id"`
+	Level    models.Level `json:"level"`
+}
+
 type LoginRequest struct {
 	Username string `json:"username" form:"username" xml:"username" binding:"required"`
 	Password string `json:"password" form:"password" xml:"password" binding:"required"`
 }
 
 type LoginResponse struct {
-	Token string      `json:"token"`
-	User  models.User `json:"user"`
-	Level models.Level `json:"level"`
-	LevelKode string `json:"level_kode"`
+	Token     string       `json:"token"`
+	User      UserResponse `json:"user"`
+	Level     models.Level `json:"level"`
+	LevelKode string       `json:"level_kode"`
 }
 
 type LogoutResponse struct {
@@ -39,23 +47,23 @@ type LogoutResponse struct {
 }
 
 type ProfileResponse struct {
-	User  models.User `json:"user"`
+	User  models.User  `json:"user"`
 	Level models.Level `json:"level"`
 }
 
 // Login handles user authentication - Support multiple content types
 func (ac *AuthController) Login(c *gin.Context) {
 	var req LoginRequest
-	
+
 	// Deteksi content type dan bind sesuai
 	contentType := c.GetHeader("Content-Type")
-	
+
 	var err error
 	if strings.Contains(contentType, "application/json") {
 		// Handle JSON
 		err = c.ShouldBindJSON(&req)
-	} else if strings.Contains(contentType, "multipart/form-data") || 
-	          strings.Contains(contentType, "application/x-www-form-urlencoded") {
+	} else if strings.Contains(contentType, "multipart/form-data") ||
+		strings.Contains(contentType, "application/x-www-form-urlencoded") {
 		// Handle form-data dan x-www-form-urlencoded
 		err = c.ShouldBind(&req)
 	} else {
@@ -65,14 +73,14 @@ func (ac *AuthController) Login(c *gin.Context) {
 			err = c.ShouldBindJSON(&req)
 		}
 	}
-	
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
+			"error":   "Invalid request data",
 			"details": err.Error(),
 			"supported_formats": []string{
 				"application/json",
-				"multipart/form-data", 
+				"multipart/form-data",
 				"application/x-www-form-urlencoded",
 			},
 		})
@@ -108,8 +116,14 @@ func (ac *AuthController) Login(c *gin.Context) {
 
 	response := LoginResponse{
 		Token: token,
-		User:  user,
-		Level: user.Level,
+		User: UserResponse{
+			UserID:   user.UserID,
+			Username: user.Username,
+			// Nama:     user.Nama,
+			LevelID: user.LevelID,
+			Level:   user.Level,
+		},
+		Level:     user.Level,
 		LevelKode: user.Level.LevelKode,
 	}
 
@@ -119,11 +133,11 @@ func (ac *AuthController) Login(c *gin.Context) {
 // UniversalLogin - Alternatif: menggunakan ShouldBind yang support semua format
 func (ac *AuthController) UniversalLogin(c *gin.Context) {
 	var req LoginRequest
-	
+
 	// Gunakan ShouldBind yang support multiple content types
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
+			"error":   "Invalid request data",
 			"details": err.Error(),
 			"supported_content_types": []string{
 				"application/json",
@@ -164,8 +178,15 @@ func (ac *AuthController) UniversalLogin(c *gin.Context) {
 
 	response := LoginResponse{
 		Token: token,
-		User:  user,
-		Level: user.Level,
+		User: UserResponse{
+			UserID:   user.UserID,
+			Username: user.Username,
+			// Nama:     user.Nama,
+			LevelID: user.LevelID,
+			Level:   user.Level,
+		},
+		Level:     user.Level,
+		LevelKode: user.Level.LevelKode,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -201,7 +222,6 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	})
 }
 
-
 // RefreshToken generates new token (optional)
 func (ac *AuthController) RefreshToken(c *gin.Context) {
 	userID, exists := c.Get("userID")
@@ -234,7 +254,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"token": token,
+		"token":   token,
 		"message": "Token refreshed successfully",
 	})
 }
@@ -245,7 +265,7 @@ func (ac *AuthController) CheckAuthStatus(c *gin.Context) {
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"authenticated": false,
-			"message": "Not authenticated",
+			"message":       "Not authenticated",
 		})
 		return
 	}
@@ -254,7 +274,7 @@ func (ac *AuthController) CheckAuthStatus(c *gin.Context) {
 	if err := ac.db.Preload("Level").First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"authenticated": false,
-			"message": "User not found",
+			"message":       "User not found",
 		})
 		return
 	}
