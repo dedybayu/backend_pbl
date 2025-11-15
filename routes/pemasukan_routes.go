@@ -12,12 +12,12 @@ func SetupPemasukanRoutes(api *gin.RouterGroup, pemasukanController *controllers
 	pemasukan := api.Group("/pemasukan")
 	{
 		// Public routes (butuh auth)
-		pemasukan.GET("", authMiddleware.RequireLevel(1, 2), pemasukanController.GetAllPemasukan)
-		pemasukan.GET("/statistik", authMiddleware.RequireLevel(1, 2), pemasukanController.GetStatistikPemasukan)
-		pemasukan.GET("/laporan", authMiddleware.RequireLevel(1, 2), pemasukanController.GetLaporanPemasukanBulanan)
-		pemasukan.GET("/total-kategori", authMiddleware.RequireLevel(1, 2), pemasukanController.GetTotalNominalPerKategori)
-		pemasukan.GET("/:id", authMiddleware.RequireLevel(1, 2), pemasukanController.GetPemasukanByID)
-		pemasukan.GET("/image/:filename", authMiddleware.RequireLevel(1, 2), pemasukanController.GetPemasukanBuktiImage)
+		pemasukan.GET("", authMiddleware.RequireLevel(1, 3), pemasukanController.GetAllPemasukan)
+		pemasukan.GET("/statistik", authMiddleware.RequireLevel(1, 3), pemasukanController.GetStatistikPemasukan)
+		pemasukan.GET("/laporan", authMiddleware.RequireLevel(1, 3), pemasukanController.GetLaporanPemasukanBulanan)
+		pemasukan.GET("/total-kategori", authMiddleware.RequireLevel(1, 3), pemasukanController.GetTotalNominalPerKategori)
+		pemasukan.GET("/:id", authMiddleware.RequireLevel(1, 3), pemasukanController.GetPemasukanByID)
+		pemasukan.GET("/image/:filename", authMiddleware.RequireLevel(1, 3), pemasukanController.GetPemasukanBuktiImage)
 		
 		
 		// Admin only routes
