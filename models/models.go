@@ -5,24 +5,31 @@ import (
 )
 
 type Level struct {
-	LevelID   uint      `gorm:"primaryKey;autoIncrement" json:"level_id"`
-	LevelKode string    `gorm:"unique;not null" json:"level_kode"`
-	LevelNama string    `gorm:"not null" json:"level_nama"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Users     []User    `gorm:"foreignKey:LevelID" json:"users"` // Relasi ke users
+    LevelID   uint      `gorm:"primaryKey;autoIncrement" json:"level_id"`
+    LevelKode string    `gorm:"unique;not null" json:"level_kode"`
+    LevelNama string    `gorm:"not null" json:"level_nama"`
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+
+    // Hanya menandakan bahwa Level punya banyak user
+    // TIDAK PERLU foreignKey di sini (supaya FK tidak kebalik)
+    Users []User `json:"users"`
 }
 
+
 type User struct {
-	UserID      uint      `gorm:"primaryKey;autoIncrement" json:"user_id"`
-	Username    string    `gorm:"unique;not null" json:"username"`
-	Password    string    `gorm:"not null" json:"password"`
-	LevelID     uint      `gorm:"not null" json:"level_id"`
-	Level       Level     `gorm:"foreignKey:LevelID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"level"`
-	FotoProfile string    `gorm:"foto_profile" json:"foto_profile"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+    UserID      uint      `gorm:"primaryKey;autoIncrement" json:"user_id"`
+    Username    string    `gorm:"unique;not null" json:"username"`
+    Password    string    `gorm:"not null" json:"password"`
+    LevelID     uint      `gorm:"not null" json:"level_id"`
+
+    Level       Level     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"level"`
+    
+    FotoProfile string    `json:"foto_profile"`
+    CreatedAt   time.Time `json:"created_at"`
+    UpdatedAt   time.Time `json:"updated_at"`
 }
+
 
 type Keluarga struct {
 	KeluargaID     uint      `gorm:"primaryKey;autoIncrement" json:"keluarga_id"`

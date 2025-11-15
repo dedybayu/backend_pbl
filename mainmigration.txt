@@ -1,0 +1,39 @@
+package main
+
+import (
+	"log"
+	"rt-management/database"
+)
+
+func main() {
+	// Konfigurasi database
+	config := database.DatabaseConfig{
+		Host:     "localhost",
+		Port:     "3306",
+		User:     "dedybayu",
+		Password: "dbsn",
+		DBName:   "rt_management",
+	}
+
+	// Inisialisasi koneksi database
+	if err := database.InitDB(config); err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	// Drop semua tabel
+	if err := database.DropTables(); err != nil {
+		log.Fatal("Failed to drop tables:", err)
+	}
+
+	// Migrasi database
+	if err := database.Migrate(); err != nil {
+		log.Fatal("Failed to migrate database:", err)
+	}
+
+	// Seed data
+	if err := database.SeedData(); err != nil {
+		log.Fatal("Failed to seed data:", err)
+	}
+
+	log.Println("Database setup completed successfully!")
+}

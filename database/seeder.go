@@ -51,7 +51,10 @@ func SeedData() error {
 func seedLevels() error {
 	levels := []models.Level{
 		{LevelKode: "ADM", LevelNama: "Administrator"},
-		{LevelKode: "RT", LevelNama: "Pengurus RT"},
+		{LevelKode: "SRT", LevelNama: "Sekretaris"},
+		{LevelKode: "BND", LevelNama: "Bendahara"},
+		{LevelKode: "KRT", LevelNama: "Ketua RT"},
+		{LevelKode: "KRW", LevelNama: "Ketua RW"},
 		{LevelKode: "WRG", LevelNama: "Warga"},
 	}
 

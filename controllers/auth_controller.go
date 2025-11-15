@@ -31,6 +31,7 @@ type LoginResponse struct {
 	Token string      `json:"token"`
 	User  models.User `json:"user"`
 	Level models.Level `json:"level"`
+	LevelKode string `json:"level_kode"`
 }
 
 type LogoutResponse struct {
@@ -109,6 +110,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		Token: token,
 		User:  user,
 		Level: user.Level,
+		LevelKode: user.Level.LevelKode,
 	}
 
 	c.JSON(http.StatusOK, response)
