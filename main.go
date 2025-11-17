@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 	"os"
-	"rt-management/config"
 	"rt-management/controllers"
 	"rt-management/database"
 	"rt-management/middleware"
@@ -12,21 +11,16 @@ import (
 	"rt-management/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
 
-	// ----------------------------------------------------------------------
-	// 1. FLAG OPSIONAL UNTUK MIGRATE & SEED
-	// ----------------------------------------------------------------------
+	// FLAGS
 	migrate := flag.Bool("migrate", false, "Run database migration")
 	seed := flag.Bool("seed", false, "Run database seeder")
 	flag.Parse()
 
-	// ----------------------------------------------------------------------
-	// 2. INIT DATABASE
-	// ----------------------------------------------------------------------
+	// CONNECT DB
 	dbConfig := database.DatabaseConfig{
 		Host:     "localhost",
 		Port:     "3306",
@@ -35,62 +29,39 @@ func main() {
 		DBName:   "rt_management",
 	}
 
-	if err := database.InitDB(dbConfig); err != nil {
-		log.Fatal("❌ Failed to connect DB:", err)
+	db, err := database.InitDB(dbConfig)
+	if err != nil {
+		log.Fatal("❌ DB connection error:", err)
 	}
 
-	// ----------------------------------------------------------------------
-	// 3. JALANKAN MIGRATION JIKA DIMINTA
-	// ----------------------------------------------------------------------
+	// RUN MIGRATION ONLY
 	if *migrate {
-		log.Println("🔄 Running MIGRATION...")
-		if err := database.DropTables(); err != nil {
-			log.Fatal("❌ Failed DropTables:", err)
+		log.Println("🔄 Running migration...")
+		if err := database.CleanMigrate(); err != nil {
+			log.Fatal(err)
 		}
-		if err := database.Migrate(); err != nil {
-			log.Fatal("❌ Failed Migrate:", err)
-		}
-		log.Println("✅ Migration complete")
-	}
-
-	// ----------------------------------------------------------------------
-	// 4. JALANKAN SEEDER JIKA DIMINTA
-	// ----------------------------------------------------------------------
-	if *seed {
-		log.Println("🌱 Running SEEDER...")
-		if err := database.SeedData(); err != nil {
-			log.Fatal("❌ Failed Seeder:", err)
-		}
-		log.Println("✅ Seeding complete")
-	}
-
-	// ----------------------------------------------------------------------
-	// 5. JIKA HANYA MIGRATE/SEED, STOP. JANGAN JALANIN SERVER
-	// ----------------------------------------------------------------------
-	if *migrate || *seed {
 		return
 	}
 
-	// ----------------------------------------------------------------------
-	// 6. LOAD ENV & MULAI SERVER SEPERTI BIASA
-	// ----------------------------------------------------------------------
-	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️ No .env file found")
+	// RUN SEED ONLY
+	if *seed {
+		log.Println("🌱 Running seeder...")
+		if err := database.SeedData(); err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 
-	db, err := config.InitDB()
-	if err != nil {
-		log.Fatal("❌ Failed to connect DB:", err)
-	}
+	// =============== NORMAL MODE (START API SERVER) ===============
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "rt-management-secret-key-2024"
+		jwtSecret = "rt-management-secret-key"
 	}
 
 	jwtUtils := utils.NewJWTUtils(jwtSecret)
 
-	// Controllers
+	// CONTROLLERS
 	authController := controllers.NewAuthController(db, jwtUtils)
 	userController := controllers.NewUserController(db)
 	levelController := controllers.NewLevelController(db)
@@ -109,14 +80,14 @@ func main() {
 	produkController := controllers.NewProdukController(db)
 	profileController := controllers.NewProfileController(db)
 
-	// Middleware
+	// MIDDLEWARE
 	authMiddleware := middleware.NewAuthMiddleware(jwtUtils)
 
-	// Router
-	router := gin.Default()
-	router.Use(middleware.SanitizationMiddleware())
+	// ROUTER
+	r := gin.Default()
+	r.Use(middleware.SanitizationMiddleware())
 
-	router.Use(func(c *gin.Context) {
+	r.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -127,7 +98,6 @@ func main() {
 		c.Next()
 	})
 
-	// Router config
 	routeConfig := &routes.RouteConfig{
 		AuthController:               authController,
 		UserController:               userController,
@@ -149,17 +119,13 @@ func main() {
 		AuthMiddleware:               authMiddleware,
 	}
 
-	routes.SetupRoutes(router, routeConfig)
+	routes.SetupRoutes(r, routeConfig)
 
-	// Start Server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
 	log.Printf("🚀 Server running at :%s", port)
-
-	if err := router.Run(":" + port); err != nil {
-		log.Fatal("❌ Server error:", err)
-	}
+	r.Run(":" + port)
 }

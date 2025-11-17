@@ -18,8 +18,7 @@ func SeedData() error {
 
 	log.Println("Starting to seed data...")
 
-	// Seed dalam urutan yang benar berdasarkan foreign key dependencies
-	seedFunctions := []func() error{
+	seeders := []func() error{
 		seedLevels,
 		seedUsers,
 		seedAgama,
@@ -38,18 +37,20 @@ func SeedData() error {
 		seedProduk,
 	}
 
-	for _, seedFunc := range seedFunctions {
-		if err := seedFunc(); err != nil {
-			return fmt.Errorf("seeding failed: %v", err)
+	for _, fn := range seeders {
+		if err := fn(); err != nil {
+			return err
 		}
 	}
 
-	log.Println("Data seeding completed successfully")
+	log.Println("Seeder completed!")
 	return nil
 }
 
+/* --------------------- LEVEL ---------------------- */
+
 func seedLevels() error {
-	levels := []models.Level{
+	data := []models.Level{
 		{LevelKode: "ADM", LevelNama: "Administrator"},
 		{LevelKode: "SRT", LevelNama: "Sekretaris"},
 		{LevelKode: "BND", LevelNama: "Bendahara"},
@@ -58,458 +59,243 @@ func seedLevels() error {
 		{LevelKode: "WRG", LevelNama: "Warga"},
 	}
 
-	for i := range levels {
-		levels[i].CreatedAt = time.Now()
-		levels[i].UpdatedAt = time.Now()
-	}
-
-	if err := DB.Create(&levels).Error; err != nil {
-		return fmt.Errorf("failed to seed levels: %v", err)
-	}
-	log.Println("Seeded levels")
-	return nil
+	return DB.Create(&data).Error
 }
+
+/* --------------------- USERS ---------------------- */
 
 func seedUsers() error {
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	pass, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 
-	users := []models.User{
-		{
-			Username: "admin",
-			Password: string(hashedPassword),
-			LevelID:  1,
-		},
-		{
-			Username: "pengurus_rt",
-			Password: string(hashedPassword),
-			LevelID:  2,
-		},
-		{
-			Username: "warga001",
-			Password: string(hashedPassword),
-			LevelID:  3,
-		},
+	data := []models.User{
+		{Username: "admin", Password: string(pass), LevelID: 1},
+		{Username: "pengurus_rt", Password: string(pass), LevelID: 2},
+		{Username: "warga001", Password: string(pass), LevelID: 3},
 	}
 
-	for i := range users {
-		users[i].CreatedAt = time.Now()
-		users[i].UpdatedAt = time.Now()
-	}
-
-	if err := DB.Create(&users).Error; err != nil {
-		return fmt.Errorf("failed to seed users: %v", err)
-	}
-	log.Println("Seeded users")
-	return nil
+	return DB.Create(&data).Error
 }
+
+/* --------------------- AGAMA ---------------------- */
 
 func seedAgama() error {
-	agamaList := []string{"Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"}
-	var agamas []models.Agama
-
-	for _, nama := range agamaList {
-		agamas = append(agamas, models.Agama{
-			AgamaNama: nama,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		})
+	names := []string{"Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"}
+	var data []models.Agama
+	for _, n := range names {
+		data = append(data, models.Agama{AgamaNama: n})
 	}
-
-	if err := DB.Create(&agamas).Error; err != nil {
-		return fmt.Errorf("failed to seed agama: %v", err)
-	}
-	log.Println("Seeded agama")
-	return nil
+	return DB.Create(&data).Error
 }
+
+/* --------------------- PEKERJAAN ---------------------- */
 
 func seedPekerjaan() error {
-	pekerjaanList := []string{
-		"PNS", "TNI", "Polri", "Karyawan Swasta", "Wiraswasta", "Petani", 
+	names := []string{
+		"PNS", "TNI", "Polri", "Karyawan Swasta", "Wiraswasta", "Petani",
 		"Nelayan", "Guru", "Dokter", "Perawat", "Pedagang", "Buruh", "Pensiunan",
 	}
-	var pekerjaans []models.Pekerjaan
-
-	for _, nama := range pekerjaanList {
-		pekerjaans = append(pekerjaans, models.Pekerjaan{
-			PekerjaanNama: nama,
-			CreatedAt:     time.Now(),
-			UpdatedAt:     time.Now(),
-		})
+	var data []models.Pekerjaan
+	for _, n := range names {
+		data = append(data, models.Pekerjaan{PekerjaanNama: n})
 	}
-
-	if err := DB.Create(&pekerjaans).Error; err != nil {
-		return fmt.Errorf("failed to seed pekerjaan: %v", err)
-	}
-	log.Println("Seeded pekerjaan")
-	return nil
+	return DB.Create(&data).Error
 }
 
-func seedKeluarga() error {
-	var keluarga []models.Keluarga
+/* --------------------- KELUARGA ---------------------- */
 
+func seedKeluarga() error {
+	var data []models.Keluarga
 	for i := 0; i < 20; i++ {
 		status := "aktif"
 		if i%10 == 0 {
 			status = "nonaktif"
 		}
-
-		keluarga = append(keluarga, models.Keluarga{
+		data = append(data, models.Keluarga{
 			KeluargaNama:   faker.LastName() + " Family",
 			KeluargaStatus: status,
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
 		})
 	}
-
-	if err := DB.Create(&keluarga).Error; err != nil {
-		return fmt.Errorf("failed to seed keluarga: %v", err)
-	}
-	log.Println("Seeded keluarga")
-	return nil
+	return DB.Create(&data).Error
 }
 
+/* --------------------- WARGA ---------------------- */
+
 func seedWarga() error {
-	var wargas []models.Warga
 	var keluarga []models.Keluarga
 	var agama []models.Agama
 	var pekerjaan []models.Pekerjaan
 
-	if err := DB.Find(&keluarga).Error; err != nil {
-		return fmt.Errorf("failed to fetch keluarga: %v", err)
-	}
-	if err := DB.Find(&agama).Error; err != nil {
-		return fmt.Errorf("failed to fetch agama: %v", err)
-	}
-	if err := DB.Find(&pekerjaan).Error; err != nil {
-		return fmt.Errorf("failed to fetch pekerjaan: %v", err)
-	}
+	DB.Find(&keluarga)
+	DB.Find(&agama)
+	DB.Find(&pekerjaan)
 
 	if len(keluarga) == 0 || len(agama) == 0 || len(pekerjaan) == 0 {
-		return fmt.Errorf("required reference data not found")
+		return fmt.Errorf("reference data missing")
 	}
 
-	kotaIndonesia := []string{
-		"Jakarta", "Surabaya", "Bandung", "Medan", "Semarang", 
-		"Makassar", "Palembang", "Denpasar", "Yogyakarta", "Malang",
-	}
+	cities := []string{"Jakarta", "Bandung", "Surabaya", "Medan", "Semarang"}
+
+	var data []models.Warga
 
 	for i := 0; i < 100; i++ {
-		jenisKelamin := "L"
-		if i%2 == 0 {
-			jenisKelamin = "P"
-		}
-
-		statusAktif := "aktif"
-		if i%20 == 0 {
-			statusAktif = "nonaktif"
-		}
-
-		statusHidup := "hidup"
-		if i%50 == 0 {
-			statusHidup = "meninggal"
-		}
-
 		nik := "32"
 		for j := 0; j < 14; j++ {
 			nik += fmt.Sprintf("%d", rand.Intn(10))
 		}
 
-		warga := models.Warga{
+		data = append(data, models.Warga{
 			KeluargaID:        keluarga[rand.Intn(len(keluarga))].KeluargaID,
-			WargaNama:         faker.FirstName() + " " + faker.LastName(),
+			WargaNama:         faker.Name(),
 			WargaNIK:          nik,
-			WargaNoTlp:        "08" + fmt.Sprintf("%010d", rand.Intn(10000000000)),
-			WargaTempatLahir:  kotaIndonesia[rand.Intn(len(kotaIndonesia))],
-			WargaTanggalLahir: time.Now().AddDate(-rand.Intn(60)+18, -rand.Intn(12), -rand.Intn(30)),
-			WargaJenisKelamin: jenisKelamin,
-			WargaStatusAktif:  statusAktif,
-			WargaStatusHidup:  statusHidup,
+			WargaNoTlp:        "08" + fmt.Sprintf("%010d", rand.Intn(9999999999)),
+			WargaTempatLahir:  cities[rand.Intn(len(cities))],
+			WargaTanggalLahir: time.Now().AddDate(-rand.Intn(40)-20, 0, 0),
+			WargaJenisKelamin: []string{"L", "P"}[rand.Intn(2)],
+			WargaStatusAktif:  []string{"aktif", "nonaktif"}[rand.Intn(2)],
+			WargaStatusHidup:  []string{"hidup", "meninggal"}[rand.Intn(2)],
 			AgamaID:           agama[rand.Intn(len(agama))].AgamaID,
 			PekerjaanID:       pekerjaan[rand.Intn(len(pekerjaan))].PekerjaanID,
-			CreatedAt:         time.Now(),
-			UpdatedAt:         time.Now(),
-		}
-		wargas = append(wargas, warga)
-	}
-
-	if err := DB.CreateInBatches(&wargas, 50).Error; err != nil {
-		return fmt.Errorf("failed to seed warga: %v", err)
-	}
-	log.Println("Seeded warga")
-	return nil
-}
-
-func seedRumah() error {
-	var rumahs []models.Rumah
-	var warga []models.Warga
-
-	if err := DB.Find(&warga).Error; err != nil {
-		return fmt.Errorf("failed to fetch warga: %v", err)
-	}
-
-	if len(warga) == 0 {
-		return fmt.Errorf("no warga data found")
-	}
-
-	jalanList := []string{
-		"Jl. Merdeka", "Jl. Sudirman", "Jl. Thamrin", "Jl. Gatot Subroto", "Jl. Asia Afrika",
-	}
-	kotaList := []string{"Jakarta", "Bandung", "Surabaya", "Medan", "Semarang"}
-
-	for i := 0; i < 50; i++ {
-		status := "tersedia"
-		wargaID := uint(0)
-		
-		if i < 40 {
-			status = "ditempati"
-			wargaID = warga[rand.Intn(len(warga))].WargaID
-		}
-
-		alamat := fmt.Sprintf("%s No. %d, %s", 
-			jalanList[rand.Intn(len(jalanList))], 
-			rand.Intn(100)+1, 
-			kotaList[rand.Intn(len(kotaList))])
-
-		rumah := models.Rumah{
-			RumahAlamat: alamat,
-			RumahStatus: status,
-			WargaID:     wargaID,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		}
-		rumahs = append(rumahs, rumah)
-	}
-
-	if err := DB.Create(&rumahs).Error; err != nil {
-		return fmt.Errorf("failed to seed rumah: %v", err)
-	}
-	log.Println("Seeded rumah")
-	return nil
-}
-
-func seedKategoriKegiatan() error {
-	kategoriList := []string{"Gotong Royong", "Rapat RT", "Peringatan Hari Besar", "Olahraga", "Kesehatan"}
-	var kategoris []models.KategoriKegiatan
-
-	for _, nama := range kategoriList {
-		kategoris = append(kategoris, models.KategoriKegiatan{
-			KategoriKegiatanNama: nama,
-			CreatedAt:            time.Now(),
-			UpdatedAt:            time.Now(),
 		})
 	}
 
-	if err := DB.Create(&kategoris).Error; err != nil {
-		return fmt.Errorf("failed to seed kategori kegiatan: %v", err)
+	return DB.CreateInBatches(&data, 50).Error
+}
+
+/* --------------------- RUMAH ---------------------- */
+
+func seedRumah() error {
+	rumahs := []models.Rumah{}
+
+	for i := 1; i <= 5; i++ {
+		rumahs = append(rumahs, models.Rumah{
+			RumahAlamat: fmt.Sprintf("Jl. Contoh No.%d", i),
+			RumahStatus: "ditempati",
+			WargaID:     uint(i),
+		})
 	}
-	log.Println("Seeded kategori kegiatan")
-	return nil
+
+	return DB.Create(&rumahs).Error
+}
+
+
+
+
+/* --------------------- MASTER DATA LAIN ---------------------- */
+
+func seedKategoriKegiatan() error {
+	names := []string{"Gotong Royong", "Rapat RT", "Hari Besar", "Olahraga", "Kesehatan"}
+	var data []models.KategoriKegiatan
+	for _, n := range names {
+		data = append(data, models.KategoriKegiatan{KategoriKegiatanNama: n})
+	}
+	return DB.Create(&data).Error
 }
 
 func seedKegiatan() error {
-	var kegiatans []models.Kegiatan
 	var kategori []models.KategoriKegiatan
+	DB.Find(&kategori)
 
-	if err := DB.Find(&kategori).Error; err != nil {
-		return fmt.Errorf("failed to fetch kategori kegiatan: %v", err)
-	}
+	places := []string{"Balai RW", "Lapangan", "Masjid", "Sekolah"}
 
-	if len(kategori) == 0 {
-		return fmt.Errorf("no kategori kegiatan data found")
-	}
-
-	lokasiList := []string{"Balai RW", "Lapangan", "Masjid", "Sekolah", "Puskesmas"}
-
+	var data []models.Kegiatan
 	for i := 0; i < 30; i++ {
-		kegiatan := models.Kegiatan{
+		data = append(data, models.Kegiatan{
 			KegiatanNama:       faker.Sentence(),
 			KategoriKegiatanID: kategori[rand.Intn(len(kategori))].KategoriKegiatanID,
-			KegiatanTanggal:    time.Now().AddDate(0, 0, rand.Intn(60)-30),
-			KegiatanLokasi:     lokasiList[rand.Intn(len(lokasiList))],
-			KegiatanPJ:         faker.FirstName() + " " + faker.LastName(),
+			KegiatanTanggal:    time.Now().AddDate(0, 0, rand.Intn(30)),
+			KegiatanLokasi:     places[rand.Intn(len(places))],
+			KegiatanPJ:         faker.Name(),
 			KegiatanDeskripsi:  faker.Paragraph(),
-			CreatedAt:          time.Now(),
-			UpdatedAt:          time.Now(),
-		}
-		kegiatans = append(kegiatans, kegiatan)
+		})
 	}
-
-	if err := DB.Create(&kegiatans).Error; err != nil {
-		return fmt.Errorf("failed to seed kegiatan: %v", err)
-	}
-	log.Println("Seeded kegiatan")
-	return nil
+	return DB.Create(&data).Error
 }
 
 func seedKategoriPengeluaran() error {
-	kategoriList := []string{"Listrik", "Air", "Kebersihan", "Kegiatan RT", "Administrasi"}
-	var kategoris []models.KategoriPengeluaran
-
-	for _, nama := range kategoriList {
-		kategoris = append(kategoris, models.KategoriPengeluaran{
-			KategoriPengeluaranNama: nama,
-			CreatedAt:               time.Now(),
-			UpdatedAt:               time.Now(),
-		})
+	names := []string{"Listrik", "Air", "Kebersihan", "Kegiatan RT", "Administrasi"}
+	var data []models.KategoriPengeluaran
+	for _, n := range names {
+		data = append(data, models.KategoriPengeluaran{KategoriPengeluaranNama: n})
 	}
-
-	if err := DB.Create(&kategoris).Error; err != nil {
-		return fmt.Errorf("failed to seed kategori pengeluaran: %v", err)
-	}
-	log.Println("Seeded kategori pengeluaran")
-	return nil
+	return DB.Create(&data).Error
 }
 
 func seedPengeluaran() error {
-	var pengeluarans []models.Pengeluaran
 	var kategori []models.KategoriPengeluaran
+	DB.Find(&kategori)
 
-	if err := DB.Find(&kategori).Error; err != nil {
-		return fmt.Errorf("failed to fetch kategori pengeluaran: %v", err)
-	}
-
-	if len(kategori) == 0 {
-		return fmt.Errorf("no kategori pengeluaran data found")
-	}
-
+	var data []models.Pengeluaran
 	for i := 0; i < 50; i++ {
-		pengeluaran := models.Pengeluaran{
+		data = append(data, models.Pengeluaran{
 			KategoriPengeluaranID: kategori[rand.Intn(len(kategori))].KategoriPengeluaranID,
 			PengeluaranNama:       faker.Word(),
-			PengeluaranTanggal:    time.Now().AddDate(0, 0, -rand.Intn(90)),
-			PengeluaranNominal:    float64(rand.Intn(1000000) + 50000),
-			PengeluaranBukti:      "bukti_" + faker.Word() + ".jpg",
-			CreatedAt:             time.Now(),
-			UpdatedAt:             time.Now(),
-		}
-		pengeluarans = append(pengeluarans, pengeluaran)
+			PengeluaranTanggal:    time.Now().AddDate(0, 0, -rand.Intn(100)),
+			PengeluaranNominal:    float64(rand.Intn(800000) + 100000),
+			PengeluaranBukti:      faker.Word() + ".jpg",
+		})
 	}
-
-	if err := DB.Create(&pengeluarans).Error; err != nil {
-		return fmt.Errorf("failed to seed pengeluaran: %v", err)
-	}
-	log.Println("Seeded pengeluaran")
-	return nil
+	return DB.Create(&data).Error
 }
 
 func seedKategoriPemasukan() error {
-	kategoriList := []string{"Iuran Warga", "Sumbangan", "Dana Desa", "Lain-lain"}
-	var kategoris []models.KategoriPemasukan
-
-	for _, nama := range kategoriList {
-		kategoris = append(kategoris, models.KategoriPemasukan{
-			KategoriPemasukanNama: nama,
-			CreatedAt:             time.Now(),
-			UpdatedAt:             time.Now(),
-		})
+	names := []string{"Iuran Warga", "Sumbangan", "Dana Desa", "Lain-lain"}
+	var data []models.KategoriPemasukan
+	for _, n := range names {
+		data = append(data, models.KategoriPemasukan{KategoriPemasukanNama: n})
 	}
-
-	if err := DB.Create(&kategoris).Error; err != nil {
-		return fmt.Errorf("failed to seed kategori pemasukan: %v", err)
-	}
-	log.Println("Seeded kategori pemasukan")
-	return nil
+	return DB.Create(&data).Error
 }
 
 func seedPemasukan() error {
-	var pemasukans []models.Pemasukan
 	var kategori []models.KategoriPemasukan
+	DB.Find(&kategori)
 
-	if err := DB.Find(&kategori).Error; err != nil {
-		return fmt.Errorf("failed to fetch kategori pemasukan: %v", err)
-	}
-
-	if len(kategori) == 0 {
-		return fmt.Errorf("no kategori pemasukan data found")
-	}
-
+	var data []models.Pemasukan
 	for i := 0; i < 40; i++ {
-		pemasukan := models.Pemasukan{
+		data = append(data, models.Pemasukan{
 			KategoriPemasukanID: kategori[rand.Intn(len(kategori))].KategoriPemasukanID,
 			PemasukanNama:       faker.Word(),
-			PemasukanTanggal:    time.Now().AddDate(0, 0, -rand.Intn(90)),
-			PemasukanNominal:    float64(rand.Intn(2000000) + 100000),
-			PemasukanBukti:      "bukti_" + faker.Word() + ".jpg",
-			CreatedAt:           time.Now(),
-			UpdatedAt:           time.Now(),
-		}
-		pemasukans = append(pemasukans, pemasukan)
+			PemasukanTanggal:    time.Now().AddDate(0, 0, -rand.Intn(60)),
+			PemasukanNominal:    float64(rand.Intn(1500000) + 500000),
+		})
 	}
-
-	if err := DB.Create(&pemasukans).Error; err != nil {
-		return fmt.Errorf("failed to seed pemasukan: %v", err)
-	}
-	log.Println("Seeded pemasukan")
-	return nil
+	return DB.Create(&data).Error
 }
 
 func seedTagihanIuran() error {
-	tagihanList := []string{"Iuran Kebersihan", "Iuran Keamanan", "Iuran Kegiatan", "Iuran Sampah"}
-	var tagihans []models.TagihanIuran
-
-	for _, nama := range tagihanList {
-		tagihans = append(tagihans, models.TagihanIuran{
-			TagihanIuran: nama,
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
-		})
+	names := []string{"Iuran Kebersihan", "Iuran Keamanan", "Iuran Kegiatan", "Iuran Sampah"}
+	var data []models.TagihanIuran
+	for _, n := range names {
+		data = append(data, models.TagihanIuran{TagihanIuran: n})
 	}
-
-	if err := DB.Create(&tagihans).Error; err != nil {
-		return fmt.Errorf("failed to seed tagihan iuran: %v", err)
-	}
-	log.Println("Seeded tagihan iuran")
-	return nil
+	return DB.Create(&data).Error
 }
 
+/* --------------------- PRODUK (E-COMMERCE) ---------------------- */
+
 func seedKategoriProduk() error {
-	kategoriList := []string{"Makanan", "Minuman", "Peralatan Rumah Tangga", "Elektronik"}
-	var kategoris []models.KategoriProduk
-
-	for _, nama := range kategoriList {
-		kategoris = append(kategoris, models.KategoriProduk{
-			KategoriProdukNama: nama,
-			CreatedAt:          time.Now(),
-			UpdatedAt:          time.Now(),
-		})
+	names := []string{"Makanan", "Minuman", "Peralatan Rumah Tangga", "Elektronik"}
+	var data []models.KategoriProduk
+	for _, n := range names {
+		data = append(data, models.KategoriProduk{KategoriProdukNama: n})
 	}
-
-	if err := DB.Create(&kategoris).Error; err != nil {
-		return fmt.Errorf("failed to seed kategori produk: %v", err)
-	}
-	log.Println("Seeded kategori produk")
-	return nil
+	return DB.Create(&data).Error
 }
 
 func seedProduk() error {
-	var produks []models.Produk
 	var kategori []models.KategoriProduk
+	DB.Find(&kategori)
 
-	if err := DB.Find(&kategori).Error; err != nil {
-		return fmt.Errorf("failed to fetch kategori produk: %v", err)
-	}
-
-	if len(kategori) == 0 {
-		return fmt.Errorf("no kategori produk data found")
-	}
-
+	var data []models.Produk
 	for i := 0; i < 20; i++ {
-		produk := models.Produk{
+		data = append(data, models.Produk{
 			ProdukNama:       faker.Word(),
 			ProdukDeskripsi:  faker.Sentence(),
 			ProdukStok:       rand.Intn(100) + 1,
-			ProdukHarga:      float64(rand.Intn(100000) + 5000),
-			ProdukFoto:       "produk_" + faker.Word() + ".jpg",
+			ProdukHarga:      float64(rand.Intn(100000) + 10000),
+			ProdukFoto:       faker.Word() + ".jpg",
 			KategoriProdukID: kategori[rand.Intn(len(kategori))].KategoriProdukID,
-			CreatedAt:        time.Now(),
-			UpdatedAt:        time.Now(),
-		}
-		produks = append(produks, produk)
+		})
 	}
-
-	if err := DB.Create(&produks).Error; err != nil {
-		return fmt.Errorf("failed to seed produk: %v", err)
-	}
-	log.Println("Seeded produk")
-	return nil
+	return DB.Create(&data).Error
 }
