@@ -70,8 +70,11 @@ func seedUsers() error {
 
 	data := []models.User{
 		{Username: "admin", Password: string(pass), LevelID: 1},
-		{Username: "pengurus_rt", Password: string(pass), LevelID: 2},
-		{Username: "warga001", Password: string(pass), LevelID: 3},
+		{Username: "sekretaris", Password: string(pass), LevelID: 2},
+		{Username: "bendahara", Password: string(pass), LevelID: 3},
+		{Username: "pengurus_rt", Password: string(pass), LevelID: 4},
+		{Username: "pengurus_rw", Password: string(pass), LevelID: 5},
+		{Username: "warga001", Password: string(pass), LevelID: 6},
 	}
 
 	return DB.Create(&data).Error
