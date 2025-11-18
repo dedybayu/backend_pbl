@@ -16,8 +16,9 @@ import (
 func main() {
 
 	// FLAGS
-	migrate := flag.Bool("migrate", false, "Run database migration")
-	seed := flag.Bool("seed", false, "Run database seeder")
+	migrate := flag.Bool("migrate", false, "Run database migration only")
+	seed := flag.Bool("seed", false, "Run database seed only")
+	migrateSeed := flag.Bool("migrate-seed", false, "Run migration and then seed")
 	flag.Parse()
 
 	// CONNECT DB
@@ -46,6 +47,18 @@ func main() {
 	// RUN SEED ONLY
 	if *seed {
 		log.Println("🌱 Running seeder...")
+		if err := database.SeedData(); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	// RUN MIGRATE + SEED
+	if *migrateSeed {
+		log.Println("🔄 Running migration and seeding...")
+		if err := database.CleanMigrate(); err != nil {
+			log.Fatal(err)
+		}
 		if err := database.SeedData(); err != nil {
 			log.Fatal(err)
 		}
@@ -99,24 +112,24 @@ func main() {
 	})
 
 	routeConfig := &routes.RouteConfig{
-		AuthController:               authController,
-		UserController:               userController,
-		LevelController:              levelController,
-		KeluargaController:           keluargaController,
-		WargaController:              wargaController,
-		RumahController:              rumahController,
-		KegiatanController:           kegiatanController,
-		BroadcastController:          broadcastController,
-		MutasiKeluargaController:     mutasiKeluargaController,
+		AuthController:                authController,
+		UserController:                userController,
+		LevelController:               levelController,
+		KeluargaController:            keluargaController,
+		WargaController:               wargaController,
+		RumahController:               rumahController,
+		KegiatanController:            kegiatanController,
+		BroadcastController:           broadcastController,
+		MutasiKeluargaController:      mutasiKeluargaController,
 		KategoriPengeluaranController: kategoriPengeluaranController,
-		PengeluaranController:        pengeluaranController,
-		KategoriPemasukanController:  kategoriPemasukanController,
-		PemasukanController:          pemasukanController,
-		TagihanIuranController:       tagihanIuranController,
-		KategoriProdukController:     kategoriProdukController,
-		ProdukController:             produkController,
-		ProfileController:            profileController,
-		AuthMiddleware:               authMiddleware,
+		PengeluaranController:         pengeluaranController,
+		KategoriPemasukanController:   kategoriPemasukanController,
+		PemasukanController:           pemasukanController,
+		TagihanIuranController:        tagihanIuranController,
+		KategoriProdukController:      kategoriProdukController,
+		ProdukController:              produkController,
+		ProfileController:             profileController,
+		AuthMiddleware:                authMiddleware,
 	}
 
 	routes.SetupRoutes(r, routeConfig)

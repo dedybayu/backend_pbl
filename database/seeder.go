@@ -35,6 +35,7 @@ func SeedData() error {
 		seedTagihanIuran,
 		seedKategoriProduk,
 		seedProduk,
+		seedBroadcast,
 	}
 
 	for _, fn := range seeders {
@@ -298,4 +299,24 @@ func seedProduk() error {
 		})
 	}
 	return DB.Create(&data).Error
+}
+
+func seedBroadcast() error {
+	// buat 5 data broadcast
+	for i := 0; i < 5; i++ {
+		broadcast := models.Broadcast{
+			BroadcastNama:      faker.Sentence(),   // judul/nama broadcast
+			BroadcastDeskripsi: faker.Paragraph(), // deskripsi
+			BroadcastFoto:      faker.Word() + ".jpg",       // contoh URL foto palsu
+			BroadcastDokumen:   faker.Word() + ".pdf",       // contoh URL dokumen palsu
+			CreatedAt:          time.Now(),
+			UpdatedAt:          time.Now(),
+		}
+
+		if err := DB.Create(&broadcast).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
