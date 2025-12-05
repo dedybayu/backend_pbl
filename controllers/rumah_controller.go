@@ -22,21 +22,21 @@ func NewRumahController(db *gorm.DB) *RumahController {
 
 // Request structs
 type CreateRumahRequest struct {
-	RumahAlamat string `json:"rumah_alamat" binding:"required"`
-	RumahStatus string `json:"rumah_status"`
-	WargaID     uint   `json:"warga_id"`
+	RumahAlamat string `form:"rumah_alamat" binding:"required"`
+	RumahStatus string `form:"rumah_status"`
+	WargaID     uint   `form:"warga_id"`
 }
 
 type UpdateRumahRequest struct {
-	RumahAlamat string `json:"rumah_alamat"`
-	RumahStatus string `json:"rumah_status"`
-	WargaID     uint   `json:"warga_id"`
+	RumahAlamat string `form:"rumah_alamat"`
+	RumahStatus string `form:"rumah_status"`
+	WargaID     uint   `form:"warga_id"`
 }
 
 // ✅ CREATE - Membuat rumah baru
 func (rc *RumahController) CreateRumah(c *gin.Context) {
 	var req CreateRumahRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -200,7 +200,7 @@ func (rc *RumahController) UpdateRumah(c *gin.Context) {
 	}
 
 	var req UpdateRumahRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),

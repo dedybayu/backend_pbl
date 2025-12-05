@@ -22,27 +22,27 @@ func NewKegiatanController(db *gorm.DB) *KegiatanController {
 
 // Request structs
 type CreateKegiatanRequest struct {
-	KegiatanNama       string    `json:"kegiatan_nama" binding:"required"`
-	KategoriKegiatanID uint      `json:"kategori_kegiatan_id" binding:"required"`
-	KegiatanTanggal    time.Time `json:"kegiatan_tanggal" binding:"required"`
-	KegiatanLokasi     string    `json:"kegiatan_lokasi"`
-	KegiatanPJ         string    `json:"kegiatan_pj"`
-	KegiatanDeskripsi  string    `json:"kegiatan_deskripsi"`
+	KegiatanNama       string    `form:"kegiatan_nama" binding:"required"`
+	KategoriKegiatanID uint      `form:"kategori_kegiatan_id" binding:"required"`
+	KegiatanTanggal    time.Time `form:"kegiatan_tanggal" binding:"required"`
+	KegiatanLokasi     string    `form:"kegiatan_lokasi"`
+	KegiatanPJ         string    `form:"kegiatan_pj"`
+	KegiatanDeskripsi  string    `form:"kegiatan_deskripsi"`
 }
 
 type UpdateKegiatanRequest struct {
-	KegiatanNama       string    `json:"kegiatan_nama"`
-	KategoriKegiatanID uint      `json:"kategori_kegiatan_id"`
-	KegiatanTanggal    time.Time `json:"kegiatan_tanggal"`
-	KegiatanLokasi     string    `json:"kegiatan_lokasi"`
-	KegiatanPJ         string    `json:"kegiatan_pj"`
-	KegiatanDeskripsi  string    `json:"kegiatan_deskripsi"`
+	KegiatanNama       string    `form:"kegiatan_nama"`
+	KategoriKegiatanID uint      `form:"kategori_kegiatan_id"`
+	KegiatanTanggal    time.Time `form:"kegiatan_tanggal"`
+	KegiatanLokasi     string    `form:"kegiatan_lokasi"`
+	KegiatanPJ         string    `form:"kegiatan_pj"`
+	KegiatanDeskripsi  string    `form:"kegiatan_deskripsi"`
 }
 
 // ✅ CREATE - Membuat kegiatan baru
 func (kc *KegiatanController) CreateKegiatan(c *gin.Context) {
 	var req CreateKegiatanRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -272,7 +272,7 @@ func (kc *KegiatanController) UpdateKegiatan(c *gin.Context) {
 	}
 
 	var req UpdateKegiatanRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -512,10 +512,10 @@ func (kc *KegiatanController) GetKegiatanByBulanTahun(c *gin.Context) {
 // ✅ GET - Statistik kegiatan per bulan
 func (kc *KegiatanController) GetStatistikKegiatan(c *gin.Context) {
 	type StatistikBulanan struct {
-		Bulan         string `json:"bulan"`
-		Tahun         int    `json:"tahun"`
-		BulanAngka    int    `json:"bulan_angka"`
-		TotalKegiatan int    `json:"total_kegiatan"`
+		Bulan         string `form:"bulan"`
+		Tahun         int    `form:"tahun"`
+		BulanAngka    int    `form:"bulan_angka"`
+		TotalKegiatan int    `form:"total_kegiatan"`
 	}
 
 	var statistik []StatistikBulanan

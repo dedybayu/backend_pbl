@@ -22,11 +22,11 @@ func NewKategoriPengeluaranController(db *gorm.DB) *KategoriPengeluaranControlle
 
 // Request structs
 type CreateKategoriPengeluaranRequest struct {
-	KategoriPengeluaranNama string `json:"kategori_pengeluaran_nama" binding:"required"`
+	KategoriPengeluaranNama string `form:"kategori_pengeluaran_nama" binding:"required"`
 }
 
 type UpdateKategoriPengeluaranRequest struct {
-	KategoriPengeluaranNama string `json:"kategori_pengeluaran_nama" binding:"required"`
+	KategoriPengeluaranNama string `form:"kategori_pengeluaran_nama" binding:"required"`
 }
 
 // ✅ CREATE - Membuat kategori pengeluaran baru

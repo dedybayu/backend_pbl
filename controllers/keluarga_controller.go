@@ -26,13 +26,13 @@ func NewKeluargaController(db *gorm.DB) *KeluargaController {
 }
 
 type CreateKeluargaRequest struct {
-	KeluargaNama   string `json:"keluarga_nama" binding:"required"`
-	KeluargaStatus string `json:"keluarga_status"`
+	KeluargaNama   string `form:"keluarga_nama" binding:"required"`
+	KeluargaStatus string `form:"keluarga_status"`
 }
 
 type UpdateKeluargaRequest struct {
-	KeluargaNama   string `json:"keluarga_nama"`
-	KeluargaStatus string `json:"keluarga_status"`
+	KeluargaNama   string `form:"keluarga_nama"`
+	KeluargaStatus string `form:"keluarga_status"`
 }
 
 // ✅ Security validation functions

@@ -22,17 +22,17 @@ func NewTagihanIuranController(db *gorm.DB) *TagihanIuranController {
 
 // Request structs
 type CreateTagihanIuranRequest struct {
-	TagihanIuran string `json:"tagihan_iuran" binding:"required"`
+	TagihanIuran string `form:"tagihan_iuran" binding:"required"`
 }
 
 type UpdateTagihanIuranRequest struct {
-	TagihanIuran string `json:"tagihan_iuran" binding:"required"`
+	TagihanIuran string `form:"tagihan_iuran" binding:"required"`
 }
 
 // ✅ CREATE - Membuat tagihan iuran baru
 func (tic *TagihanIuranController) CreateTagihanIuran(c *gin.Context) {
 	var req CreateTagihanIuranRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -194,7 +194,7 @@ func (tic *TagihanIuranController) UpdateTagihanIuran(c *gin.Context) {
 	}
 
 	var req UpdateTagihanIuranRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),

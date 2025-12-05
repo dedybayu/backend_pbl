@@ -22,11 +22,11 @@ func NewKategoriKegiatanController(db *gorm.DB) *KategoriKegiatanController {
 
 // Request structs
 type CreateKategoriKegiatanRequest struct {
-	KategoriKegiatanNama string `json:"kategori_kegiatan_nama" binding:"required"`
+	KategoriKegiatanNama string `form:"kategori_kegiatan_nama" binding:"required"`
 }
 
 type UpdateKategoriKegiatanRequest struct {
-	KategoriKegiatanNama string `json:"kategori_kegiatan_nama" binding:"required"`
+	KategoriKegiatanNama string `form:"kategori_kegiatan_nama" binding:"required"`
 }
 
 // ✅ CREATE - Membuat kategori kegiatan baru
