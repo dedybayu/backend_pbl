@@ -118,7 +118,9 @@ func (kc *KeluargaController) GetKeluargaByID(c *gin.Context) {
 	}
 
 	log.Printf("✅ Successfully fetched family: %s", keluarga.KeluargaNama)
-	c.JSON(http.StatusOK, keluarga)
+	c.JSON(http.StatusOK, gin.H{
+		"data": keluarga,
+	})
 }
 
 // GetKeluargaWithDetails returns keluarga dengan detail lengkap
