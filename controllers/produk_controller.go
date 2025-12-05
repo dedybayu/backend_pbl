@@ -488,7 +488,7 @@ func (pc *ProdukController) GetAllProduk(c *gin.Context) {
 
 	// Execute query dengan pagination dan sorting
 	if err := query.Offset(offset).
-		Limit(limit).
+		// Limit(limit).
 		Order("created_at DESC").
 		Find(&produk).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -499,11 +499,11 @@ func (pc *ProdukController) GetAllProduk(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": produk,
-		"pagination": gin.H{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-		},
+		// "pagination": gin.H{
+		// 	"page":  page,
+		// 	"limit": limit,
+		// 	"total": total,
+		// },
 	})
 }
 

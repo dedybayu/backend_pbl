@@ -93,7 +93,7 @@ func (rc *RumahController) CreateRumah(c *gin.Context) {
 
 	if err := rc.db.Create(&rumah).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal membuat rumah",
+			"error":   "Gagal membuat rumah",
 			"details": err.Error(),
 		})
 		return
@@ -141,7 +141,10 @@ func (rc *RumahController) GetAllRumah(c *gin.Context) {
 	query.Model(&models.Rumah{}).Count(&total)
 
 	// Execute query with pagination
-	if err := query.Offset(offset).Limit(limit).Find(&rumah).Error; err != nil {
+	if err := query.
+		Offset(offset).
+		// Limit(limit).
+		Find(&rumah).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal mengambil data rumah",
 		})
@@ -150,11 +153,11 @@ func (rc *RumahController) GetAllRumah(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": rumah,
-		"pagination": gin.H{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-		},
+		// "pagination": gin.H{
+		// 	"page":  page,
+		// 	"limit": limit,
+		// 	"total": total,
+		// },
 	})
 }
 
@@ -248,7 +251,7 @@ func (rc *RumahController) UpdateRumah(c *gin.Context) {
 
 	if err := rc.db.Model(&rumah).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal mengupdate rumah",
+			"error":   "Gagal mengupdate rumah",
 			"details": err.Error(),
 		})
 		return
@@ -288,7 +291,7 @@ func (rc *RumahController) DeleteRumah(c *gin.Context) {
 
 	if err := rc.db.Delete(&rumah).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal menghapus rumah",
+			"error":   "Gagal menghapus rumah",
 			"details": err.Error(),
 		})
 		return

@@ -216,7 +216,7 @@ func (pc *PengeluaranController) GetAllPengeluaran(c *gin.Context) {
 
 	// Execute query dengan pagination dan sorting
 	if err := query.Offset(offset).
-		Limit(limit).
+		// Limit(limit).
 		Order("pengeluaran_tanggal DESC, created_at DESC").
 		Find(&pengeluaran).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -227,11 +227,11 @@ func (pc *PengeluaranController) GetAllPengeluaran(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": pengeluaran,
-		"pagination": gin.H{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-		},
+		// "pagination": gin.H{
+		// 	"page":  page,
+		// 	"limit": limit,
+		// 	"total": total,
+		// },
 	})
 }
 

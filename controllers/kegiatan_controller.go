@@ -204,11 +204,11 @@ func (kc *KegiatanController) GetAllKegiatan(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": kegiatan,
-		"pagination": gin.H{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-		},
+		// "pagination": gin.H{
+		// 	"page":  page,
+		// 	"limit": limit,
+		// 	"total": total,
+		// },
 	})
 }
 

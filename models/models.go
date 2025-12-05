@@ -237,8 +237,10 @@ type Pemasukan struct {
 
 
 /* ============================
-   TAGIHAN IURAN
+   TAGIHAN IURAN 
 ============================ */
+
+//TODO konek sama warga
 
 type TagihanIuran struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`

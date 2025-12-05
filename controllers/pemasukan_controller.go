@@ -215,7 +215,7 @@ func (pc *PemasukanController) GetAllPemasukan(c *gin.Context) {
 
 	// Execute query dengan pagination dan sorting
 	if err := query.Offset(offset).
-		Limit(limit).
+		// Limit(limit).
 		Order("pemasukan_tanggal DESC, created_at DESC").
 		Find(&pemasukan).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -226,11 +226,11 @@ func (pc *PemasukanController) GetAllPemasukan(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": pemasukan,
-		"pagination": gin.H{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-		},
+		// "pagination": gin.H{
+		// 	"page":  page,
+		// 	"limit": limit,
+		// 	"total": total,
+		// },
 	})
 }
 

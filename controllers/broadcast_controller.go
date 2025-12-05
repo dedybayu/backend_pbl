@@ -349,7 +349,7 @@ func (bc *BroadcastController) GetAllBroadcast(c *gin.Context) {
 
 	// Execute query dengan pagination dan sorting
 	if err := query.Offset(offset).
-		Limit(limit).
+		// Limit(limit).
 		Order("created_at DESC").
 		Find(&broadcast).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

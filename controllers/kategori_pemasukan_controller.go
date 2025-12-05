@@ -116,7 +116,7 @@ func (kpc *KategoriPemasukanController) GetAllKategoriPemasukan(c *gin.Context) 
 	// Execute query dengan pagination dan sorting
 	if err := query.Preload("Pemasukans").
 		Offset(offset).
-		Limit(limit).
+		// Limit(limit).
 		Order("created_at DESC").
 		Find(&kategori).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -127,11 +127,11 @@ func (kpc *KategoriPemasukanController) GetAllKategoriPemasukan(c *gin.Context) 
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": kategori,
-		"pagination": gin.H{
-			"page":  page,
-			"limit": limit,
-			"total": total,
-		},
+		// "pagination": gin.H{
+		// 	"page":  page,
+		// 	"limit": limit,
+		// 	"total": total,
+		// },
 	})
 }
 
