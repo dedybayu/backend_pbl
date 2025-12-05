@@ -32,7 +32,7 @@ type UpdateKategoriKegiatanRequest struct {
 // ✅ CREATE - Membuat kategori kegiatan baru
 func (kc *KategoriKegiatanController) CreateKategoriKegiatan(c *gin.Context) {
 	var req CreateKategoriKegiatanRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -195,7 +195,7 @@ func (kc *KategoriKegiatanController) UpdateKategoriKegiatan(c *gin.Context) {
 	}
 
 	var req UpdateKategoriKegiatanRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),

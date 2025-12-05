@@ -151,7 +151,7 @@ func seedWarga() error {
 			KeluargaID:        keluarga[rand.Intn(len(keluarga))].KeluargaID,
 			WargaNama:         faker.Name(),
 			WargaNIK:          nik,
-			WargaNoTlp:        "08" + fmt.Sprintf("%010d", rand.Intn(9999999999)),
+			WargaNoTlp:        "08" + fmt.Sprintf("%010d", rand.Intn(1000000000)),
 			WargaTempatLahir:  cities[rand.Intn(len(cities))],
 			WargaTanggalLahir: time.Now().AddDate(-rand.Intn(40)-20, 0, 0),
 			WargaJenisKelamin: []string{"L", "P"}[rand.Intn(2)],

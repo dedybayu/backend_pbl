@@ -160,7 +160,7 @@ func (kc *KeluargaController) GetKeluargaWithDetails(c *gin.Context) {
 // CreateKeluarga creates new keluarga dengan comprehensive security checks
 func (kc *KeluargaController) CreateKeluarga(c *gin.Context) {
 	var req CreateKeluargaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
@@ -231,7 +231,7 @@ func (kc *KeluargaController) UpdateKeluarga(c *gin.Context) {
 	log.Printf("🔄 Updating family with ID: %s", keluargaID)
 
 	var req UpdateKeluargaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid request data",
 			"details": err.Error(),
