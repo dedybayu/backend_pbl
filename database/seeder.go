@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"rt-management/models"
+	"strconv"
 	"time"
 
 	"github.com/bxcodec/faker/v3"
@@ -221,7 +222,7 @@ func seedWarga() error {
 		hash, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 
 		user := models.User{
-			Username:   faker.Username(),
+			Username:   "warga000" + strconv.Itoa(i+1),
 			Password:   string(hash),
 			UserNama:   faker.Name(),
 			UserAlamat: faker.Sentence(),

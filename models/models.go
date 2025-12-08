@@ -113,6 +113,7 @@ type Warga struct {
 	PekerjaanID uint `json:"pekerjaan_id"`
 	RumahID     uint `json:"rumah_id"`
 
+	// Relasi many-to-one
 	Keluarga Keluarga `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"keluarga"`
 	User     *User    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 
@@ -120,15 +121,13 @@ type Warga struct {
 	Pekerjaan *Pekerjaan `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"pekerjaan"`
 	Rumah     *Rumah     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"rumah"`
 
+	// Relasi one-to-many
+	TagihanIurans []TagihanIuran `gorm:"foreignKey:WargaID" json:"tagihan_iurans"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-
-   TagihanIurans []TagihanIuran `gorm:"foreignKey:WargaID"`
-   Keluargas []Keluarga `gorm:"foreignKey:KeluargaID"`
-   Agamas []Agama `gorm:"foreignKey:AgamaID"`
-   Pekerjaans []Pekerjaan `gorm:"foreignKey:PekerjaanID"`
-   Rumahs []Rumah `gorm:"foreignKey:RumahID"`
 }
+
 
 /* ============================
    KEGIATAN
@@ -262,7 +261,7 @@ type TagihanIuran struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	TagihanIuran string    `gorm:"not null;size:100" json:"tagihan_iuran"`
    TagihanIuranNominal float64   `gorm:"not null;type:decimal(15,2)" json:"tagihan_iuran_nominal"`
-   TagihanIuranStatus string    `gorm:"type:enum('','lunas');default:''" json:"tagihan_iuran_status"`
+   TagihanIuranStatus string    `gorm:"type:enum('tertagih','lunas');default:'tertagih'" json:"tagihan_iuran_status"`
    WargaID      uint      `gorm:"not null" json:"warga_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

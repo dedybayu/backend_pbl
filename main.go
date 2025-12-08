@@ -11,13 +11,19 @@ import (
 	"rt-management/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+
+	_ "rt-management/docs" // ← harus sesuai module path projek
 
 	swaggerFiles "github.com/swaggo/files"
-    ginSwagger "github.com/swaggo/gin-swagger"
-    _ "rt-management/docs" // ← harus sesuai module path projek
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
+	// Load .env
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠ Warning: .env file not found, using default values")
+	}
 
 	// FLAGS
 	migrate := flag.Bool("migrate", false, "Run database migration only")
@@ -25,13 +31,13 @@ func main() {
 	migrateSeed := flag.Bool("migrate-seed", false, "Run migration and then seed")
 	flag.Parse()
 
-	// CONNECT DB
+	// CONNECT DB (ambil dari .env)
 	dbConfig := database.DatabaseConfig{
-		Host:     "localhost",
-		Port:     "3306",
-		User:     "dedybayu",
-		Password: "dbsn",
-		DBName:   "rt_management",
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USERNAME"),
+		Password: os.Getenv("DB_PASSWORD"),
+		DBName:   os.Getenv("DB_NAME"),
 	}
 
 	db, err := database.InitDB(dbConfig)
