@@ -63,49 +63,53 @@ type Pekerjaan struct {
 }
 
 /* ============================
-   WARGA
-============================ */
-
-type Warga struct {
-	WargaID           uint      `gorm:"primaryKey;autoIncrement" json:"warga_id"`
-	KeluargaID        uint      `gorm:"not null" json:"keluarga_id"`
-	WargaNama         string    `gorm:"not null;size:100" json:"warga_nama"`
-	WargaNIK          string    `gorm:"unique;not null;size:16" json:"warga_nik"`
-	WargaNoTlp        string    `gorm:"size:15" json:"warga_no_tlp"`
-	WargaTempatLahir  string    `gorm:"size:50" json:"warga_tempat_lahir"`
-	WargaTanggalLahir time.Time `json:"warga_tanggal_lahir"`
-	WargaJenisKelamin string    `gorm:"type:enum('L','P');default:'L'" json:"warga_jenis_kelamin"`
-	WargaStatusAktif  string    `gorm:"type:enum('aktif','nonaktif');default:'aktif'" json:"warga_status_aktif"`
-	WargaStatusHidup  string    `gorm:"type:enum('hidup','meninggal');default:'hidup'" json:"warga_status_hidup"`
-
-	AgamaID     uint     `json:"agama_id"`
-	PekerjaanID uint     `json:"pekerjaan_id"`
-
-	Keluarga  Keluarga  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"keluarga"`
-	Agama     *Agama     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"agama"`
-	Pekerjaan *Pekerjaan `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"pekerjaan"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-
-	Rumahs []Rumah `gorm:"foreignKey:WargaID"`
-}
-
-/* ============================
    RUMAH
 ============================ */
 
 type Rumah struct {
-	RumahID     uint      `gorm:"primaryKey;autoIncrement" json:"rumah_id"`
-	RumahAlamat string    `gorm:"not null" json:"rumah_alamat"`
-	RumahStatus string    `gorm:"type:enum('tersedia','ditempati');default:'tersedia'" json:"rumah_status"`
-
-	WargaID uint  `json:"warga_id"`
-	Warga   *Warga `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"warga"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+    RumahID     uint      `gorm:"primaryKey;autoIncrement" json:"rumah_id"`
+    RumahAlamat string    `gorm:"not null" json:"rumah_alamat"`
+    RumahStatus string    `gorm:"type:enum('tersedia','ditempati');default:'tersedia'" json:"rumah_status"`
+    CreatedAt   time.Time `json:"created_at"`
+    UpdatedAt   time.Time `json:"updated_at"`
 }
+
+
+
+
+
+/* ============================
+   WARGA
+============================ */
+
+type Warga struct {
+    WargaID           uint      `gorm:"primaryKey;autoIncrement" json:"warga_id"`
+    KeluargaID        uint      `gorm:"not null" json:"keluarga_id"`
+
+    WargaNama         string    `gorm:"not null;size:100" json:"warga_nama"`
+    WargaNIK          string    `gorm:"unique;not null;size:16" json:"warga_nik"`
+    WargaNoTlp        string    `gorm:"size:15" json:"warga_no_tlp"`
+    WargaTempatLahir  string    `gorm:"size:50" json:"warga_tempat_lahir"`
+    WargaTanggalLahir time.Time `json:"warga_tanggal_lahir"`
+    WargaJenisKelamin string    `gorm:"type:enum('L','P');default:'L'" json:"warga_jenis_kelamin"`
+    WargaStatusAktif  string    `gorm:"type:enum('aktif','nonaktif');default:'aktif'" json:"warga_status_aktif"`
+    WargaStatusHidup  string    `gorm:"type:enum('hidup','meninggal');default:'hidup'" json:"warga_status_hidup"`
+
+    AgamaID     uint     `json:"agama_id"`
+    PekerjaanID uint     `json:"pekerjaan_id"`
+    RumahID     uint      `json:"rumah_id"` 
+
+    Keluarga   Keluarga   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"keluarga"`
+    Agama      *Agama     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"agama"`
+    Pekerjaan  *Pekerjaan `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"pekerjaan"`
+    Rumah      *Rumah     `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"rumah"`
+
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+}
+
+
+
 
 /* ============================
    KEGIATAN

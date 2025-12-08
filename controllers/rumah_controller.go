@@ -24,16 +24,13 @@ func NewRumahController(db *gorm.DB) *RumahController {
 type CreateRumahRequest struct {
 	RumahAlamat string `form:"rumah_alamat" binding:"required"`
 	RumahStatus string `form:"rumah_status"`
-	WargaID     uint   `form:"warga_id"`
 }
 
 type UpdateRumahRequest struct {
 	RumahAlamat string `form:"rumah_alamat"`
 	RumahStatus string `form:"rumah_status"`
-	WargaID     uint   `form:"warga_id"`
 }
 
-// ✅ CREATE - Membuat rumah baru
 func (rc *RumahController) CreateRumah(c *gin.Context) {
 	var req CreateRumahRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -65,28 +62,13 @@ func (rc *RumahController) CreateRumah(c *gin.Context) {
 		return
 	}
 
-	// Jika WargaID diisi, validasi apakah warga exists
-	if req.WargaID != 0 {
-		var warga models.Warga
-		if err := rc.db.First(&warga, req.WargaID).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"error": "Warga tidak ditemukan",
-				})
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Gagal memvalidasi warga",
-				})
-			}
-			return
-		}
-	}
+	// HAPUS validasi WargaID karena rumah tidak punya warga_id
+	// if req.WargaID != 0 { ... }
 
 	// Buat rumah baru
 	rumah := models.Rumah{
 		RumahAlamat: req.RumahAlamat,
 		RumahStatus: req.RumahStatus,
-		WargaID:     req.WargaID,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -99,21 +81,12 @@ func (rc *RumahController) CreateRumah(c *gin.Context) {
 		return
 	}
 
-	// Reload dengan data warga
-	if err := rc.db.Preload("Warga").First(&rumah, rumah.RumahID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal memuat data rumah yang dibuat",
-		})
-		return
-	}
-
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Rumah berhasil dibuat",
-		"data":    rumah,
+		"data":    rumah, // Tidak perlu preload Warga karena tidak ada relasi
 	})
 }
 
-// ✅ READ - Mendapatkan semua rumah
 func (rc *RumahController) GetAllRumah(c *gin.Context) {
 	var rumah []models.Rumah
 
@@ -124,26 +97,32 @@ func (rc *RumahController) GetAllRumah(c *gin.Context) {
 
 	// Filter parameters
 	status := c.Query("status")
-	wargaID := c.Query("warga_id")
+	wargaID := c.Query("warga_id") // Masih bisa digunakan untuk query khusus
 
-	query := rc.db.Preload("Warga")
+	// HAPUS Preload("Warga") karena sekarang tidak ada relasi dari Rumah ke Warga
+	query := rc.db.Model(&models.Rumah{})
 
 	// Apply filters
 	if status != "" {
 		query = query.Where("rumah_status = ?", status)
 	}
+	
+	// FILTER BERDASARKAN WargaID - CARA BARU (One-to-One inverse)
 	if wargaID != "" {
-		query = query.Where("warga_id = ?", wargaID)
+		// Mencari rumah yang ditempati oleh warga tertentu
+		// Melalui join dengan tabel warga
+		query = query.Joins("INNER JOIN wargas ON wargas.rumah_id = rumahs.rumah_id").
+			Where("wargas.warga_id = ?", wargaID)
 	}
 
 	// Get total count for pagination
 	var total int64
-	query.Model(&models.Rumah{}).Count(&total)
+	query.Count(&total)
 
 	// Execute query with pagination
 	if err := query.
 		Offset(offset).
-		// Limit(limit).
+		Limit(limit).
 		Find(&rumah).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal mengambil data rumah",
@@ -151,22 +130,30 @@ func (rc *RumahController) GetAllRumah(c *gin.Context) {
 		return
 	}
 
+	// Opsional: Untuk mendapatkan data warga yang menempati rumah
+	// Butuh query terpisah atau menggunakan join
+	for i := range rumah {
+		var warga models.Warga
+		rc.db.Where("rumah_id = ?", rumah[i].RumahID).First(&warga)
+		// rumah[i].Warga = &warga // Jika ada field Warga di model Rumah
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"data": rumah,
-		// "pagination": gin.H{
-		// 	"page":  page,
-		// 	"limit": limit,
-		// 	"total": total,
-		// },
+		"pagination": gin.H{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		},
 	})
 }
 
-// ✅ READ - Mendapatkan rumah by ID
 func (rc *RumahController) GetRumahByID(c *gin.Context) {
 	id := c.Param("id")
 
 	var rumah models.Rumah
-	if err := rc.db.Preload("Warga").First(&rumah, id).Error; err != nil {
+	// HAPUS Preload("Warga") karena tidak ada relasi
+	if err := rc.db.First(&rumah, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Rumah tidak ditemukan",
@@ -179,12 +166,18 @@ func (rc *RumahController) GetRumahByID(c *gin.Context) {
 		return
 	}
 
+	// Opsional: Ambil data warga yang menempati rumah ini
+	var warga models.Warga
+	if err := rc.db.Where("rumah_id = ?", rumah.RumahID).First(&warga).Error; err == nil {
+		// Jika ingin menambahkan data warga ke response
+		// rumah.Warga = &warga
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"data": rumah,
 	})
 }
 
-// ✅ UPDATE - Mengupdate rumah
 func (rc *RumahController) UpdateRumah(c *gin.Context) {
 	id := c.Param("id")
 
@@ -219,22 +212,8 @@ func (rc *RumahController) UpdateRumah(c *gin.Context) {
 		return
 	}
 
-	// Jika WargaID diisi, validasi apakah warga exists
-	if req.WargaID != 0 {
-		var warga models.Warga
-		if err := rc.db.First(&warga, req.WargaID).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"error": "Warga tidak ditemukan",
-				})
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": "Gagal memvalidasi warga",
-				})
-			}
-			return
-		}
-	}
+	// HAPUS validasi WargaID karena rumah tidak punya warga_id
+	// if req.WargaID != 0 { ... }
 
 	// Update fields
 	updates := make(map[string]interface{})
@@ -244,23 +223,12 @@ func (rc *RumahController) UpdateRumah(c *gin.Context) {
 	if req.RumahStatus != "" {
 		updates["rumah_status"] = req.RumahStatus
 	}
-	if req.WargaID != 0 {
-		updates["warga_id"] = req.WargaID
-	}
 	updates["updated_at"] = time.Now()
 
 	if err := rc.db.Model(&rumah).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal mengupdate rumah",
 			"details": err.Error(),
-		})
-		return
-	}
-
-	// Reload dengan data terbaru
-	if err := rc.db.Preload("Warga").First(&rumah, id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Gagal memuat data rumah yang diupdate",
 		})
 		return
 	}

@@ -24,8 +24,8 @@ func SeedData() error {
 		seedAgama,
 		seedPekerjaan,
 		seedKeluarga,
-		seedWarga,
 		seedRumah,
+		seedWarga,
 		seedKategoriKegiatan,
 		seedKegiatan,
 		seedKategoriPengeluaran,
@@ -124,34 +124,59 @@ func seedKeluarga() error {
 
 /* --------------------- WARGA ---------------------- */
 
+func seedRumah() error {
+	rumahs := []models.Rumah{}
+
+	for i := 1; i <= 5; i++ {
+		rumahs = append(rumahs, models.Rumah{
+			RumahAlamat: fmt.Sprintf("Jl. Contoh No.%d", i),
+			RumahStatus: "tersedia", // default
+		})
+	}
+
+	return DB.Create(&rumahs).Error
+}
+
+
 func seedWarga() error {
 	var keluarga []models.Keluarga
 	var agama []models.Agama
 	var pekerjaan []models.Pekerjaan
+	var rumah []models.Rumah
 
 	DB.Find(&keluarga)
 	DB.Find(&agama)
 	DB.Find(&pekerjaan)
+	DB.Find(&rumah)
 
 	if len(keluarga) == 0 || len(agama) == 0 || len(pekerjaan) == 0 {
 		return fmt.Errorf("reference data missing")
 	}
 
-	cities := []string{"Jakarta", "Bandung", "Surabaya", "Medan", "Semarang"}
+	cities := []string{"Jakarta", "Bandung", "Surabaya", "Medan", "Semarang", "Yogyakarta", "Makassar"}
 
 	var data []models.Warga
 
 	for i := 0; i < 100; i++ {
+
+		// generate nik random
 		nik := "32"
 		for j := 0; j < 14; j++ {
 			nik += fmt.Sprintf("%d", rand.Intn(10))
 		}
 
-		data = append(data, models.Warga{
+		// generate phone random
+		phone := "08"
+		for j := 0; j < 10; j++ {
+			phone += fmt.Sprintf("%d", rand.Intn(10))
+		}
+
+		// warga dasar
+		warga := models.Warga{
 			KeluargaID:        keluarga[rand.Intn(len(keluarga))].KeluargaID,
 			WargaNama:         faker.Name(),
 			WargaNIK:          nik,
-			WargaNoTlp:        "08" + fmt.Sprintf("%010d", rand.Intn(1000000000)),
+			WargaNoTlp:        phone,
 			WargaTempatLahir:  cities[rand.Intn(len(cities))],
 			WargaTanggalLahir: time.Now().AddDate(-rand.Intn(40)-20, 0, 0),
 			WargaJenisKelamin: []string{"L", "P"}[rand.Intn(2)],
@@ -159,27 +184,41 @@ func seedWarga() error {
 			WargaStatusHidup:  []string{"hidup", "meninggal"}[rand.Intn(2)],
 			AgamaID:           agama[rand.Intn(len(agama))].AgamaID,
 			PekerjaanID:       pekerjaan[rand.Intn(len(pekerjaan))].PekerjaanID,
-		})
+			RumahID:           rumah[rand.Intn(len(rumah))].RumahID, // default: tidak punya rumah
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+		}
+
+		// Assign rumah hanya untuk warga hidup + aktif
+		if len(rumah) > 0 {
+			if warga.WargaStatusAktif == "aktif" && warga.WargaStatusHidup == "hidup" {
+				if rand.Intn(100) < 80 { // 80% punya rumah
+					rumahID := rumah[rand.Intn(len(rumah))].RumahID
+					warga.RumahID = rumahID
+				}
+			}
+		}
+
+		data = append(data, warga)
 	}
 
-	return DB.CreateInBatches(&data, 50).Error
-}
-
-/* --------------------- RUMAH ---------------------- */
-
-func seedRumah() error {
-	rumahs := []models.Rumah{}
-
-	for i := 1; i <= 5; i++ {
-		rumahs = append(rumahs, models.Rumah{
-			RumahAlamat: fmt.Sprintf("Jl. Contoh No.%d", i),
-			RumahStatus: "ditempati",
-			WargaID:     uint(i),
-		})
+	// batch insert
+	if err := DB.CreateInBatches(&data, 50).Error; err != nil {
+		return err
 	}
 
-	return DB.Create(&rumahs).Error
+	// Update status rumah → ditempati
+	for _, w := range data {
+		if w.RumahID != 0 {
+			DB.Model(&models.Rumah{}).
+				Where("rumah_id = ?", w.RumahID).
+				Update("rumah_status", "ditempati")
+		}
+	}
+
+	return nil
 }
+
 
 
 
