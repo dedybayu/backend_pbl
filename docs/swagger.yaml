@@ -1,0 +1,651 @@
+definitions:
+  models.Agama:
+    properties:
+      agama_id:
+        type: integer
+      agama_nama:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      wargas:
+        items:
+          $ref: '#/definitions/models.Warga'
+        type: array
+    type: object
+  models.KategoriProduk:
+    properties:
+      created_at:
+        type: string
+      kategori_produk_id:
+        type: integer
+      kategori_produk_nama:
+        type: string
+      produks:
+        items:
+          $ref: '#/definitions/models.Produk'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  models.Keluarga:
+    properties:
+      created_at:
+        type: string
+      keluarga_id:
+        type: integer
+      keluarga_nama:
+        type: string
+      keluarga_status:
+        type: string
+      mutasiKeluargas:
+        items:
+          $ref: '#/definitions/models.MutasiKeluarga'
+        type: array
+      updated_at:
+        type: string
+      wargas:
+        items:
+          $ref: '#/definitions/models.Warga'
+        type: array
+    type: object
+  models.Level:
+    properties:
+      created_at:
+        type: string
+      level_id:
+        type: integer
+      level_kode:
+        type: string
+      level_nama:
+        type: string
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    type: object
+  models.MutasiKeluarga:
+    properties:
+      created_at:
+        type: string
+      keluarga:
+        $ref: '#/definitions/models.Keluarga'
+      keluarga_id:
+        type: integer
+      mutasi_keluarga_alasan:
+        type: string
+      mutasi_keluarga_id:
+        type: integer
+      mutasi_keluarga_jenis:
+        type: string
+      mutasi_keluarga_tanggal:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Pekerjaan:
+    properties:
+      created_at:
+        type: string
+      pekerjaan_id:
+        type: integer
+      pekerjaan_nama:
+        type: string
+      updated_at:
+        type: string
+      wargas:
+        items:
+          $ref: '#/definitions/models.Warga'
+        type: array
+    type: object
+  models.Produk:
+    properties:
+      created_at:
+        type: string
+      kategori_produk:
+        $ref: '#/definitions/models.KategoriProduk'
+      kategori_produk_id:
+        type: integer
+      produk_deskripsi:
+        type: string
+      produk_foto:
+        type: string
+      produk_harga:
+        type: number
+      produk_id:
+        type: integer
+      produk_nama:
+        type: string
+      produk_stok:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
+    type: object
+  models.Rumah:
+    properties:
+      created_at:
+        type: string
+      rumah_alamat:
+        type: string
+      rumah_id:
+        type: integer
+      rumah_status:
+        type: string
+      updated_at:
+        type: string
+      wargas:
+        items:
+          $ref: '#/definitions/models.Warga'
+        type: array
+    type: object
+  models.TagihanIuran:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      tagihan_iuran:
+        type: string
+      tagihan_iuran_nominal:
+        type: number
+      tagihan_iuran_status:
+        type: string
+      updated_at:
+        type: string
+      warga:
+        $ref: '#/definitions/models.Warga'
+      warga_id:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      alamat:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      foto_profile:
+        type: string
+      level:
+        $ref: '#/definitions/models.Level'
+      level_id:
+        type: integer
+      nama:
+        type: string
+      no_telp:
+        type: string
+      password:
+        type: string
+      produk:
+        description: one-to-many produk
+        items:
+          $ref: '#/definitions/models.Produk'
+        type: array
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+      username:
+        type: string
+      warga:
+        allOf:
+        - $ref: '#/definitions/models.Warga'
+        description: one-to-one
+    type: object
+  models.Warga:
+    properties:
+      agama:
+        $ref: '#/definitions/models.Agama'
+      agama_id:
+        type: integer
+      agamas:
+        items:
+          $ref: '#/definitions/models.Agama'
+        type: array
+      created_at:
+        type: string
+      keluarga:
+        $ref: '#/definitions/models.Keluarga'
+      keluarga_id:
+        type: integer
+      keluargas:
+        items:
+          $ref: '#/definitions/models.Keluarga'
+        type: array
+      pekerjaan:
+        $ref: '#/definitions/models.Pekerjaan'
+      pekerjaan_id:
+        type: integer
+      pekerjaans:
+        items:
+          $ref: '#/definitions/models.Pekerjaan'
+        type: array
+      rumah:
+        $ref: '#/definitions/models.Rumah'
+      rumah_id:
+        type: integer
+      rumahs:
+        items:
+          $ref: '#/definitions/models.Rumah'
+        type: array
+      tagihanIurans:
+        items:
+          $ref: '#/definitions/models.TagihanIuran'
+        type: array
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
+      warga_id:
+        type: integer
+      warga_jenis_kelamin:
+        type: string
+      warga_nama:
+        type: string
+      warga_nik:
+        type: string
+      warga_no_tlp:
+        type: string
+      warga_status_aktif:
+        type: string
+      warga_status_hidup:
+        type: string
+      warga_tanggal_lahir:
+        type: string
+      warga_tempat_lahir:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/produk:
+    get:
+      description: Mendapatkan semua produk
+      parameters:
+      - description: Cari produk berdasarkan nama atau deskripsi
+        in: query
+        name: search
+        type: string
+      - description: Filter produk berdasarkan ID kategori
+        in: query
+        name: kategori_id
+        type: string
+      - description: Filter produk berdasarkan stok minimum
+        in: query
+        name: stok_min
+        type: string
+      - description: Filter produk berdasarkan stok maksimum
+        in: query
+        name: stok_max
+        type: string
+      - description: Filter produk berdasarkan harga minimum
+        in: query
+        name: harga_min
+        type: string
+      - description: Filter produk berdasarkan harga maksimum
+        in: query
+        name: harga_max
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mendapatkan semua produk
+      tags:
+      - Produk
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membuat produk baru dengan upload foto
+      parameters:
+      - description: Nama Produk
+        in: formData
+        name: produk_nama
+        required: true
+        type: string
+      - description: Deskripsi Produk
+        in: formData
+        name: produk_deskripsi
+        type: string
+      - description: Stok Produk
+        in: formData
+        name: produk_stok
+        required: true
+        type: integer
+      - description: Harga Produk
+        in: formData
+        name: produk_harga
+        required: true
+        type: number
+      - description: ID Kategori Produk
+        in: formData
+        name: kategori_produk_id
+        required: true
+        type: integer
+      - description: ID User
+        in: formData
+        name: user_id
+        required: true
+        type: integer
+      - description: Foto Produk
+        in: formData
+        name: produk_foto
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Produk'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Membuat produk baru
+      tags:
+      - Produk
+  /api/produk/{id}:
+    delete:
+      description: Menghapus produk dan foto terkait
+      parameters:
+      - description: Produk ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Hapus produk
+      tags:
+      - Produk
+    get:
+      description: Mendapatkan produk berdasarkan ID
+      parameters:
+      - description: Produk ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mendapatkan produk berdasarkan ID
+      tags:
+      - Produk
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update produk termasuk upload foto baru
+      parameters:
+      - description: Produk ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nama Produk
+        in: formData
+        name: produk_nama
+        type: string
+      - description: Deskripsi Produk
+        in: formData
+        name: produk_deskripsi
+        type: string
+      - description: Stok Produk
+        in: formData
+        name: produk_stok
+        type: integer
+      - description: Harga Produk
+        in: formData
+        name: produk_harga
+        type: number
+      - description: ID Kategori Produk
+        in: formData
+        name: kategori_produk_id
+        type: integer
+      - description: ID User
+        in: formData
+        name: user_id
+        type: integer
+      - description: Foto Produk
+        in: formData
+        name: produk_foto
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Produk'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update produk
+      tags:
+      - Produk
+  /api/produk/{id}/stok:
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate stok produk (form data)
+      parameters:
+      - description: Produk ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stok baru
+        in: formData
+        name: produk_stok
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Produk'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update stok produk
+      tags:
+      - Produk
+  /api/produk/image/{filename}:
+    get:
+      description: Mengirim file foto produk
+      parameters:
+      - description: Nama file foto
+        in: path
+        name: filename
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Serve file foto produk
+      tags:
+      - Produk
+  /api/produk/statistik:
+    get:
+      description: Mendapatkan statistik produk (total, stok, nilai inventori, dll)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Statistik produk
+      tags:
+      - Produk
+  /api/produk/stok-menipis:
+    get:
+      description: Mendapatkan produk dengan stok menipis (<10)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Produk'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Produk stok menipis
+      tags:
+      - Produk
+  /api/produk/terbaru:
+    get:
+      description: Mendapatkan daftar produk terbaru
+      parameters:
+      - description: Limit produk
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Produk'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Produk terbaru
+      tags:
+      - Produk
+swagger: "2.0"

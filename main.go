@@ -11,6 +11,10 @@ import (
 	"rt-management/utils"
 
 	"github.com/gin-gonic/gin"
+
+	swaggerFiles "github.com/swaggo/files"
+    ginSwagger "github.com/swaggo/gin-swagger"
+    _ "rt-management/docs" // ← harus sesuai module path projek
 )
 
 func main() {
@@ -133,6 +137,9 @@ func main() {
 	}
 
 	routes.SetupRoutes(r, routeConfig)
+	// Swagger UI: http://localhost:8080/swagger/index.html
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 
 	port := os.Getenv("PORT")
 	if port == "" {

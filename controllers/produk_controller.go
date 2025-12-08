@@ -44,7 +44,25 @@ type UpdateProdukRequest struct {
 	UserID           uint    `form:"user_id"`
 }
 
-// ✅ CREATE - Membuat produk baru dengan file upload
+
+
+// CreateProduk godoc
+// @Summary      Membuat produk baru
+// @Description  Membuat produk baru dengan upload foto
+// @Tags         Produk
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        produk_nama       formData string true "Nama Produk"
+// @Param        produk_deskripsi  formData string false "Deskripsi Produk"
+// @Param        produk_stok       formData int true "Stok Produk"
+// @Param        produk_harga      formData number true "Harga Produk"
+// @Param        kategori_produk_id formData int true "ID Kategori Produk"
+// @Param        user_id           formData int true "ID User"
+// @Param        produk_foto       formData file true "Foto Produk"
+// @Success      201  {object}  models.Produk
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router /api/produk [post]
 func (pc *ProdukController) CreateProduk(c *gin.Context) {
 	var req CreateProdukRequest
 
@@ -177,6 +195,26 @@ func (pc *ProdukController) CreateProduk(c *gin.Context) {
 }
 
 // ✅ UPDATE - Mengupdate produk dengan file upload
+
+// UpdateProduk godoc
+// @Summary      Update produk
+// @Description  Update produk termasuk upload foto baru
+// @Tags         Produk
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id                 path int true "Produk ID"
+// @Param        produk_nama       formData string false "Nama Produk"
+// @Param        produk_deskripsi  formData string false "Deskripsi Produk"
+// @Param        produk_stok       formData int false "Stok Produk"
+// @Param        produk_harga      formData number false "Harga Produk"
+// @Param        kategori_produk_id formData int false "ID Kategori Produk"
+// @Param        user_id           formData int false "ID User"
+// @Param        produk_foto       formData file false "Foto Produk"
+// @Success      200  {object}  models.Produk
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /api/produk/{id} [put]
 func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 	id := c.Param("id")
 
@@ -380,6 +418,18 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 
 
 // ✅ DELETE - Menghapus produk beserta file fotonya
+
+// DeleteProduk godoc
+// @Summary      Hapus produk
+// @Description  Menghapus produk dan foto terkait
+// @Tags         Produk
+// @Produce      json
+// @Param        id path int true "Produk ID"
+// @Success      200 {object} map[string]string
+// @Failure      400 {object} map[string]interface{}
+// @Failure      404 {object} map[string]interface{}
+// @Failure      500 {object} map[string]interface{}
+// @Router       /api/produk/{id} [delete]
 func (pc *ProdukController) DeleteProduk(c *gin.Context) {
 	id := c.Param("id")
 
@@ -429,6 +479,18 @@ func (pc *ProdukController) DeleteProduk(c *gin.Context) {
 }
 
 // ✅ GET - Serve file foto produk
+
+// GetProdukFoto godoc
+// @Summary      Serve file foto produk
+// @Description  Mengirim file foto produk
+// @Tags         Produk
+// @Produce      octet-stream
+// @Param        filename path string true "Nama file foto"
+// @Success      200 {file} file
+// @Failure      400 {object} map[string]interface{}
+// @Failure      404 {object} map[string]interface{}
+// @Failure      500 {object} map[string]interface{}
+// @Router       /api/produk/image/{filename} [get]
 func (pc *ProdukController) GetProdukFoto(c *gin.Context) {
 	filename := c.Param("filename")
 	
@@ -476,6 +538,22 @@ func (pc *ProdukController) GetProdukFoto(c *gin.Context) {
 }
 
 // ✅ READ - Mendapatkan semua produk (TETAP SAMA - GET request)
+
+// GetAllProduk godoc
+// @Summary      Mendapatkan semua produk
+// @Description  Mendapatkan semua produk
+// @Tags         Produk
+// @Produce      json
+// @Param        search query string false "Cari produk berdasarkan nama atau deskripsi"
+// @Param        kategori_id query string false "Filter produk berdasarkan ID kategori"
+// @Param        stok_min query string false "Filter produk berdasarkan stok minimum"
+// @Param        stok_max query string false "Filter produk berdasarkan stok maksimum"
+// @Param        harga_min query string false "Filter produk berdasarkan harga minimum"
+// @Param        harga_max query string false "Filter produk berdasarkan harga maksimum"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]interface{}
+// @Failure      500 {object} map[string]interface{}
+// @Router       /api/produk [get]
 func (pc *ProdukController) GetAllProduk(c *gin.Context) {
 	var produk []models.Produk
 
@@ -556,6 +634,18 @@ func (pc *ProdukController) GetAllProduk(c *gin.Context) {
 
 
 // ✅ READ - Mendapatkan produk by ID (TETAP SAMA - GET request)
+
+// GetProdukByID godoc
+// @Summary      Mendapatkan produk berdasarkan ID
+// @Description  Mendapatkan produk berdasarkan ID
+// @Tags         Produk
+// @Produce      json
+// @Param        id path int true "Produk ID"
+// @Success      200 {object} map[string]interface{}
+// @Failure      400 {object} map[string]interface{}
+// @Failure      404 {object} map[string]interface{}
+// @Failure      500 {object} map[string]interface{}
+// @Router       /api/produk/{id} [get]
 func (pc *ProdukController) GetProdukByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -587,6 +677,16 @@ func (pc *ProdukController) GetProdukByID(c *gin.Context) {
 	})
 }
 // ✅ GET - Produk terbaru (TETAP SAMA - GET request)
+
+// GetProdukTerbaru godoc
+// @Summary      Produk terbaru
+// @Description  Mendapatkan daftar produk terbaru
+// @Tags         Produk
+// @Produce      json
+// @Param        limit query int false "Limit produk"
+// @Success      200  {array}  models.Produk
+// @Failure      500  {object} map[string]interface{}
+// @Router       /api/produk/terbaru [get]
 func (pc *ProdukController) GetProdukTerbaru(c *gin.Context) {
 	var produk []models.Produk
 
@@ -611,6 +711,15 @@ func (pc *ProdukController) GetProdukTerbaru(c *gin.Context) {
 }
 
 // ✅ GET - Produk dengan stok menipis (TETAP SAMA - GET request)
+
+// GetProdukStokMenipis godoc
+// @Summary      Produk stok menipis
+// @Description  Mendapatkan produk dengan stok menipis (<10)
+// @Tags         Produk
+// @Produce      json
+// @Success      200  {array}  models.Produk
+// @Failure      500  {object} map[string]interface{}
+// @Router       /api/produk/stok-menipis [get]
 func (pc *ProdukController) GetProdukStokMenipis(c *gin.Context) {
 	var produk []models.Produk
 
@@ -633,6 +742,15 @@ func (pc *ProdukController) GetProdukStokMenipis(c *gin.Context) {
 }
 
 // ✅ GET - Statistik produk (TETAP SAMA - GET request)
+
+// GetStatistikProduk godoc
+// @Summary      Statistik produk
+// @Description  Mendapatkan statistik produk (total, stok, nilai inventori, dll)
+// @Tags         Produk
+// @Produce      json
+// @Success      200  {object} map[string]interface{}
+// @Failure      500  {object} map[string]interface{}
+// @Router       /api/produk/statistik [get]
 func (pc *ProdukController) GetStatistikProduk(c *gin.Context) {
 	type StatistikResult struct {
 		TotalProduk      int64   `json:"total_produk"`
@@ -675,6 +793,20 @@ func (pc *ProdukController) GetStatistikProduk(c *gin.Context) {
 }
 
 // ✅ PATCH - Update stok produk (FORM DATA)
+
+// UpdateStokProduk godoc
+// @Summary      Update stok produk
+// @Description  Mengupdate stok produk (form data)
+// @Tags         Produk
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id path int true "Produk ID"
+// @Param        produk_stok formData int true "Stok baru"
+// @Success      200 {object} models.Produk
+// @Failure      400 {object} map[string]interface{}
+// @Failure      404 {object} map[string]interface{}
+// @Failure      500 {object} map[string]interface{}
+// @Router       /api/produk/{id}/stok [patch]
 func (pc *ProdukController) UpdateStokProduk(c *gin.Context) {
 	id := c.Param("id")
 
