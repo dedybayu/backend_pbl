@@ -68,16 +68,64 @@ func seedLevels() error {
 func seedUsers() error {
 	pass, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 
-	data := []models.User{
-		{Username: "admin", Password: string(pass), LevelID: 1},
-		{Username: "sekretaris", Password: string(pass), LevelID: 2},
-		{Username: "bendahara", Password: string(pass), LevelID: 3},
-		{Username: "pengurus_rt", Password: string(pass), LevelID: 4},
-		{Username: "pengurus_rw", Password: string(pass), LevelID: 5},
-		{Username: "warga001", Password: string(pass), LevelID: 6},
+	users := []models.User{
+		{
+			Username:  "admin",
+			Password:  string(pass),
+			UserNama:  "Administrator",
+			UserAlamat: "Jalan Suhat No. 1",
+			UserNoTelp: "081111111111",
+			UserEmail: "admin@example.com",
+			LevelID:   1,
+		},
+		{
+			Username:  "sekretaris",
+			Password:  string(pass),
+			UserNama:  "Sekretaris Desa",
+			UserAlamat: "Jalan Mawar No. 2",
+			UserNoTelp: "082222222222",
+			UserEmail: "sekretaris@example.com",
+			LevelID:   2,
+		},
+		{
+			Username:  "bendahara",
+			Password:  string(pass),
+			UserNama:  "Bendahara Desa",
+			UserAlamat: "Jalan Melati No. 3",
+			UserNoTelp: "083333333333",
+			UserEmail: "bendahara@example.com",
+			LevelID:   3,
+		},
+		{
+			Username:  "pengurus_rt",
+			Password:  string(pass),
+			UserNama:  "Pengurus RT",
+			UserAlamat: "Jalan Kenanga No. 4",
+			UserNoTelp: "084444444444",
+			UserEmail: "pengurus_rt@example.com",
+			LevelID:   4,
+		},
+		{
+			Username:  "pengurus_rw",
+			Password:  string(pass),
+			UserNama:  "Pengurus RW",
+			UserAlamat: "Jalan Anggrek No. 5",
+			UserNoTelp: "085555555555",
+			UserEmail: "pengurus_rw@example.com",
+			LevelID:   5,
+		},
+		{
+			Username:  "warga001",
+			Password:  string(pass),
+			UserNama:  "Warga Desa 001",
+			UserAlamat: "Jalan Cempaka No. 6",
+			UserNoTelp: "086666666666",
+			UserEmail: "warga001@example.com",
+			LevelID:   6,
+		},
 	}
 
-	return DB.Create(&data).Error
+	return DB.Create(&users).Error
 }
 
 /* --------------------- AGAMA ---------------------- */
@@ -137,7 +185,6 @@ func seedRumah() error {
 	return DB.Create(&rumahs).Error
 }
 
-
 func seedWarga() error {
 	var keluarga []models.Keluarga
 	var agama []models.Agama
@@ -154,27 +201,44 @@ func seedWarga() error {
 	}
 
 	cities := []string{"Jakarta", "Bandung", "Surabaya", "Medan", "Semarang", "Yogyakarta", "Makassar"}
-
 	var data []models.Warga
 
 	for i := 0; i < 100; i++ {
 
-		// generate nik random
+		// generate nik
 		nik := "32"
 		for j := 0; j < 14; j++ {
 			nik += fmt.Sprintf("%d", rand.Intn(10))
 		}
 
-		// generate phone random
+		// generate phone
 		phone := "08"
 		for j := 0; j < 10; j++ {
 			phone += fmt.Sprintf("%d", rand.Intn(10))
 		}
 
-		// warga dasar
+		// === BUAT USER OTOMATIS ===
+		hash, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+
+		user := models.User{
+			Username:   faker.Username(),
+			Password:   string(hash),
+			UserNama:   faker.Name(),
+			UserAlamat: faker.Sentence(),
+			UserNoTelp: phone,
+			UserEmail:  faker.Email(),
+			LevelID:    3, // misal level warga
+		}
+
+		if err := DB.Create(&user).Error; err != nil {
+			return fmt.Errorf("gagal membuat user: %v", err)
+		}
+
+		// === BUAT DATA WARGA ===
 		warga := models.Warga{
+			UserID:            user.UserID, // ✔ uint langsung, BUKAN &user.UserID
 			KeluargaID:        keluarga[rand.Intn(len(keluarga))].KeluargaID,
-			WargaNama:         faker.Name(),
+			WargaNama:         user.UserNama,
 			WargaNIK:          nik,
 			WargaNoTlp:        phone,
 			WargaTempatLahir:  cities[rand.Intn(len(cities))],
@@ -184,30 +248,27 @@ func seedWarga() error {
 			WargaStatusHidup:  []string{"hidup", "meninggal"}[rand.Intn(2)],
 			AgamaID:           agama[rand.Intn(len(agama))].AgamaID,
 			PekerjaanID:       pekerjaan[rand.Intn(len(pekerjaan))].PekerjaanID,
-			RumahID:           rumah[rand.Intn(len(rumah))].RumahID, // default: tidak punya rumah
+			RumahID:           rumah[rand.Intn(len(rumah))].RumahID,
 			CreatedAt:         time.Now(),
 			UpdatedAt:         time.Now(),
 		}
 
-		// Assign rumah hanya untuk warga hidup + aktif
-		if len(rumah) > 0 {
-			if warga.WargaStatusAktif == "aktif" && warga.WargaStatusHidup == "hidup" {
-				if rand.Intn(100) < 80 { // 80% punya rumah
-					rumahID := rumah[rand.Intn(len(rumah))].RumahID
-					warga.RumahID = rumahID
-				}
+		// assign rumah hanya warga hidup & aktif
+		if len(rumah) > 0 && warga.WargaStatusAktif == "aktif" && warga.WargaStatusHidup == "hidup" {
+			if rand.Intn(100) < 80 {
+				warga.RumahID = rumah[rand.Intn(len(rumah))].RumahID
 			}
 		}
 
 		data = append(data, warga)
 	}
 
-	// batch insert
+	// batch insert warga
 	if err := DB.CreateInBatches(&data, 50).Error; err != nil {
 		return err
 	}
 
-	// Update status rumah → ditempati
+	// update status rumah menjadi ditempati
 	for _, w := range data {
 		if w.RumahID != 0 {
 			DB.Model(&models.Rumah{}).
@@ -218,8 +279,6 @@ func seedWarga() error {
 
 	return nil
 }
-
-
 
 
 
@@ -307,12 +366,18 @@ func seedPemasukan() error {
 
 func seedTagihanIuran() error {
 	names := []string{"Iuran Kebersihan", "Iuran Keamanan", "Iuran Kegiatan", "Iuran Sampah"}
+
 	var data []models.TagihanIuran
 	for _, n := range names {
-		data = append(data, models.TagihanIuran{TagihanIuran: n})
+		data = append(data, models.TagihanIuran{
+			TagihanIuran: n,
+			WargaID:       1, // default admin
+		})
 	}
+
 	return DB.Create(&data).Error
 }
+
 
 /* --------------------- PRODUK (E-COMMERCE) ---------------------- */
 
@@ -327,7 +392,9 @@ func seedKategoriProduk() error {
 
 func seedProduk() error {
 	var kategori []models.KategoriProduk
+	var user []models.User
 	DB.Find(&kategori)
+	DB.Find(&user)
 
 	var data []models.Produk
 	for i := 0; i < 20; i++ {
@@ -338,6 +405,7 @@ func seedProduk() error {
 			ProdukHarga:      float64(rand.Intn(100000) + 10000),
 			ProdukFoto:       faker.Word() + ".jpg",
 			KategoriProdukID: kategori[rand.Intn(len(kategori))].KategoriProdukID,
+			UserID:           user[rand.Intn(len(user))].UserID,
 		})
 	}
 	return DB.Create(&data).Error
@@ -347,10 +415,10 @@ func seedBroadcast() error {
 	// buat 5 data broadcast
 	for i := 0; i < 5; i++ {
 		broadcast := models.Broadcast{
-			BroadcastNama:      faker.Sentence(),   // judul/nama broadcast
-			BroadcastDeskripsi: faker.Paragraph(), // deskripsi
-			BroadcastFoto:      faker.Word() + ".jpg",       // contoh URL foto palsu
-			BroadcastDokumen:   faker.Word() + ".pdf",       // contoh URL dokumen palsu
+			BroadcastNama:      faker.Sentence(),      // judul/nama broadcast
+			BroadcastDeskripsi: faker.Paragraph(),     // deskripsi
+			BroadcastFoto:      faker.Word() + ".jpg", // contoh URL foto palsu
+			BroadcastDokumen:   faker.Word() + ".pdf", // contoh URL dokumen palsu
 			CreatedAt:          time.Now(),
 			UpdatedAt:          time.Now(),
 		}

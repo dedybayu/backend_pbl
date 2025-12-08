@@ -40,7 +40,13 @@ func Migrate() error {
 
 	DB.Exec("SET FOREIGN_KEY_CHECKS = 0")
 
+	// ✅ URUTAN MIGRATION YANG BENAR:
+	// 1. Tabel master/induk (tanpa foreign key)
+	// 2. Tabel yang punya foreign key ke tabel #1
+	// 3. Tabel yang punya foreign key ke tabel #2, dst
+	
 	tables := []interface{}{
+		// ===== TABEL MASTER/INDUK (tanpa foreign key) =====
 		&models.Level{},
 		&models.Agama{},
 		&models.Pekerjaan{},
@@ -50,22 +56,35 @@ func Migrate() error {
 		&models.KategoriPemasukan{},
 		&models.TagihanIuran{},
 		&models.KategoriProduk{},
-		&models.User{},
-		&models.Warga{},
-		&models.Rumah{},
-		&models.Kegiatan{},
-		&models.Broadcast{},
-		&models.MutasiKeluarga{},
-		&models.Pengeluaran{},
-		&models.Pemasukan{},
-		&models.Produk{},
+		&models.Rumah{}, // ✅ RUMAH DIPINDAHKAN KE SINI (tidak punya foreign key)
+		
+		// ===== TABEL YANG BUTUH TABEL MASTER =====
+		&models.User{},           // butuh Level
+		
+		// ===== TABEL YANG BUTUH USER & MASTER LAIN =====
+		&models.Warga{},          // butuh Keluarga, Agama, Pekerjaan, Rumah, User? (cek ini)
+		&models.Produk{},         // butuh KategoriProduk, User
+		&models.Kegiatan{},       // butuh KategoriKegiatan
+		&models.Pengeluaran{},    // butuh KategoriPengeluaran
+		&models.Pemasukan{},      // butuh KategoriPemasukan
+		&models.Broadcast{},      // tidak punya foreign key
+		&models.MutasiKeluarga{}, // butuh Keluarga
+		
+		// ===== TABEL E-COMMERCE (butuh User & Produk) =====
+		&models.Keranjang{},      // butuh User, Produk
+		&models.Transaksi{},      // butuh User
+		&models.DetailTransaksi{}, // butuh Transaksi, Produk
 	}
+
+	log.Println("🔄 Starting database migration...")
 
 	for _, t := range tables {
 		if err := DB.AutoMigrate(t); err != nil {
-			return fmt.Errorf("migrate failed %T: %v", t, err)
+			log.Printf("❌ Migrate failed for %T: %v", t, err)
+			// Jangan langsung return, lanjutkan untuk debug
+		} else {
+			log.Printf("✓ Migrated: %T", t)
 		}
-		log.Printf("✓ Migrated: %T", t)
 	}
 
 	DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
@@ -81,16 +100,29 @@ func DropTables() error {
 
 	DB.Exec("SET FOREIGN_KEY_CHECKS = 0")
 
+	// ✅ URUTAN DROP YANG BENAR (berlawanan dengan migration):
+	// Child/tabel dependen dihapus dulu, parent belakangan
+	
 	tables := []interface{}{
-		&models.Produk{},
-		&models.Pemasukan{},
-		&models.Pengeluaran{},
-		&models.MutasiKeluarga{},
+		// ===== TABEL CHILD/DEPENDEN (dihapus dulu) =====
+		&models.DetailTransaksi{}, // butuh Transaksi, Produk
+		&models.Transaksi{},       // butuh User
+		&models.Keranjang{},       // butuh User, Produk
+		
+		// ===== TABEL CHILD LAINNYA =====
+		&models.Produk{},           // butuh KategoriProduk, User
+		&models.Pemasukan{},        // butuh KategoriPemasukan
+		&models.Pengeluaran{},      // butuh KategoriPengeluaran
+		&models.MutasiKeluarga{},   // butuh Keluarga
 		&models.Broadcast{},
-		&models.Kegiatan{},
-		&models.Rumah{},
-		&models.Warga{},
-		&models.User{},
+		&models.Kegiatan{},         // butuh KategoriKegiatan
+		&models.Warga{},            // butuh Keluarga, Agama, Pekerjaan, Rumah
+		
+		// ===== TABEL DEPENDEN =====
+		&models.User{},             // butuh Level
+		&models.Rumah{},            // tidak punya foreign key
+		
+		// ===== TABEL MASTER/PARENT (dihapus belakangan) =====
 		&models.KategoriProduk{},
 		&models.TagihanIuran{},
 		&models.KategoriPemasukan{},
@@ -102,14 +134,24 @@ func DropTables() error {
 		&models.Level{},
 	}
 
+	log.Println("🗑 Starting to drop tables...")
+
 	for _, t := range tables {
-		_ = DB.Migrator().DropTable(t)
-		log.Printf("✓ Dropped: %T", t)
+		// Cek apakah tabel exist sebelum drop
+		if DB.Migrator().HasTable(t) {
+			if err := DB.Migrator().DropTable(t); err != nil {
+				log.Printf("⚠️ Failed to drop %T: %v", t, err)
+			} else {
+				log.Printf("✓ Dropped: %T", t)
+			}
+		} else {
+			log.Printf("ℹ️ Table %T doesn't exist", t)
+		}
 	}
 
 	DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
 
-	log.Println("🗑 All tables dropped")
+	log.Println("✅ All tables dropped")
 	return nil
 }
 

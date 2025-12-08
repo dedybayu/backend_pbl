@@ -1,4 +1,3 @@
-// controllers/warga_controller.go
 package controllers
 
 import (
@@ -27,31 +26,33 @@ func NewWargaController(db *gorm.DB) *WargaController {
 }
 
 type CreateWargaRequest struct {
-	KeluargaID        uint      `form:"keluarga_id" binding:"required"`
-	WargaNama         string    `form:"warga_nama" binding:"required"`
-	WargaNIK          string    `form:"warga_nik" binding:"required"`
-	WargaNoTlp        string    `form:"warga_no_tlp"`
-	WargaTempatLahir  string    `form:"warga_tempat_lahir"`
+	KeluargaID        uint   `form:"keluarga_id" binding:"required"`
+	RumahID           uint   `form:"rumah_id"` // ✅ TAMBAHKAN RumahID
+	WargaNama         string `form:"warga_nama" binding:"required"`
+	WargaNIK          string `form:"warga_nik" binding:"required"`
+	WargaNoTlp        string `form:"warga_no_tlp"`
+	WargaTempatLahir  string `form:"warga_tempat_lahir"`
 	WargaTanggalLahir string `form:"warga_tanggal_lahir"`
-	WargaJenisKelamin string    `form:"warga_jenis_kelamin" binding:"required"`
-	WargaStatusAktif  string    `form:"warga_status_aktif"`
-	WargaStatusHidup  string    `form:"warga_status_hidup"`
-	AgamaID           uint      `form:"agama_id"`
-	PekerjaanID       uint      `form:"pekerjaan_id"`
+	WargaJenisKelamin string `form:"warga_jenis_kelamin" binding:"required"`
+	WargaStatusAktif  string `form:"warga_status_aktif"`
+	WargaStatusHidup  string `form:"warga_status_hidup"`
+	AgamaID           uint   `form:"agama_id"`
+	PekerjaanID       uint   `form:"pekerjaan_id"`
 }
 
 type UpdateWargaRequest struct {
-	KeluargaID        uint      `form:"keluarga_id"`
-	WargaNama         string    `form:"warga_nama"`
-	WargaNIK          string    `form:"warga_nik"`
-	WargaNoTlp        string    `form:"warga_no_tlp"`
-	WargaTempatLahir  string    `form:"warga_tempat_lahir"`
+	KeluargaID        uint   `form:"keluarga_id"`
+	RumahID           uint   `form:"rumah_id"` // ✅ TAMBAHKAN RumahID
+	WargaNama         string `form:"warga_nama"`
+	WargaNIK          string `form:"warga_nik"`
+	WargaNoTlp        string `form:"warga_no_tlp"`
+	WargaTempatLahir  string `form:"warga_tempat_lahir"`
 	WargaTanggalLahir string `form:"warga_tanggal_lahir"`
-	WargaJenisKelamin string    `form:"warga_jenis_kelamin"`
-	WargaStatusAktif  string    `form:"warga_status_aktif"`
-	WargaStatusHidup  string    `form:"warga_status_hidup"`
-	AgamaID           uint      `form:"agama_id"`
-	PekerjaanID       uint      `form:"pekerjaan_id"`
+	WargaJenisKelamin string `form:"warga_jenis_kelamin"`
+	WargaStatusAktif  string `form:"warga_status_aktif"`
+	WargaStatusHidup  string `form:"warga_status_hidup"`
+	AgamaID           uint   `form:"agama_id"`
+	PekerjaanID       uint   `form:"pekerjaan_id"`
 }
 
 // ✅ Security validation functions
@@ -106,6 +107,14 @@ func isValidStatusHidup(status string) bool {
 	return validStatuses[status]
 }
 
+// func isValidRumahStatus(status string) bool {
+// 	validStatuses := map[string]bool{
+// 		"tersedia":  true,
+// 		"ditempati": true,
+// 	}
+// 	return validStatuses[status]
+// }
+
 func isValidWargaID(id string) bool {
 	// Validasi ID adalah angka positif
 	parsedID, err := strconv.ParseUint(id, 10, 32)
@@ -119,18 +128,20 @@ func sanitizeString(input string) string {
 	return strings.TrimSpace(sanitized)
 }
 
-// GetAllWarga returns all warga dengan security checks
+// ✅ GetAllWarga returns all warga dengan security checks
 func (wc *WargaController) GetAllWarga(c *gin.Context) {
 	var wargas []models.Warga
 	
 	log.Println("🔄 Fetching all residents from database...")
 	
 	// ✅ SAFE: GORM menggunakan parameterized queries
+	// ✅ PERBAIKAN: Preload "Rumah" bukan "Rumahs"
 	if err := wc.db.
+		Preload("User").
 		Preload("Keluarga").
 		Preload("Agama").
 		Preload("Pekerjaan").
-		Preload("Rumahs").
+		Preload("Rumah"). // ✅ DIUBAH: Preload("Rumah") bukan Preload("Rumahs")
 		Find(&wargas).Error; err != nil {
 		log.Printf("❌ Error fetching residents: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -146,7 +157,7 @@ func (wc *WargaController) GetAllWarga(c *gin.Context) {
 	})
 }
 
-// GetTotalWarga returns total number of warga
+// ✅ GetTotalWarga returns total number of warga
 func (wc *WargaController) GetTotalWarga(c *gin.Context) {
 	var total int64
 	
@@ -168,7 +179,7 @@ func (wc *WargaController) GetTotalWarga(c *gin.Context) {
 	})
 }
 
-// GetWargaByID returns warga by ID dengan security validation
+// ✅ GetWargaByID returns warga by ID dengan security validation
 func (wc *WargaController) GetWargaByID(c *gin.Context) {
 	wargaID := c.Param("id")
 
@@ -183,13 +194,16 @@ func (wc *WargaController) GetWargaByID(c *gin.Context) {
 	log.Printf("🔄 Fetching resident with ID: %s", wargaID)
 
 	var warga models.Warga
-	// ✅ SAFE: GORM menggunakan prepared statements
+
+	// PRELOAD semua relasi, termasuk TagihanIuran
 	if err := wc.db.
 		Preload("Keluarga").
 		Preload("Agama").
 		Preload("Pekerjaan").
-		Preload("Rumahs").
+		Preload("Rumah").
+		Preload("TagihanIurans"). // ✅ Tambahkan ini
 		First(&warga, wargaID).Error; err != nil {
+
 		log.Printf("❌ Error fetching resident %s: %v", wargaID, err)
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -204,10 +218,12 @@ func (wc *WargaController) GetWargaByID(c *gin.Context) {
 	}
 
 	log.Printf("✅ Successfully fetched resident: %s", warga.WargaNama)
+
 	c.JSON(http.StatusOK, warga)
 }
 
-// GetWargaByKeluarga returns warga by keluarga ID
+
+// ✅ GetWargaByKeluarga returns warga by keluarga ID
 func (wc *WargaController) GetWargaByKeluarga(c *gin.Context) {
 	keluargaID := c.Param("keluarga_id")
 
@@ -223,10 +239,12 @@ func (wc *WargaController) GetWargaByKeluarga(c *gin.Context) {
 
 	var wargas []models.Warga
 	// ✅ SAFE: Parameterized query
+	// ✅ PERBAIKAN: Preload "Rumah" bukan "Rumahs"
 	if err := wc.db.
 		Preload("Keluarga").
 		Preload("Agama").
 		Preload("Pekerjaan").
+		Preload("Rumah"). // ✅ DIUBAH: Preload("Rumah") bukan Preload("Rumahs")
 		Where("keluarga_id = ?", keluargaID).
 		Find(&wargas).Error; err != nil {
 		log.Printf("❌ Error fetching residents for family %s: %v", keluargaID, err)
@@ -243,12 +261,12 @@ func (wc *WargaController) GetWargaByKeluarga(c *gin.Context) {
 	})
 }
 
-// CreateWarga creates new warga dengan comprehensive security checks
+// ✅ CreateWarga creates new warga dengan comprehensive security checks
 func (wc *WargaController) CreateWarga(c *gin.Context) {
 	var req CreateWargaRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
+			"error":   "Invalid request data",
 			"details": err.Error(),
 		})
 		return
@@ -332,7 +350,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 		return
 	}
 
-	// ✅ Check if keluarga exists
+	// ✅ Check jika keluarga exists
 	var keluarga models.Keluarga
 	if err := wc.db.First(&keluarga, req.KeluargaID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -347,7 +365,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 		return
 	}
 
-	// ✅ Check if agama exists (jika provided)
+	// ✅ Check jika agama exists (jika provided)
 	if req.AgamaID != 0 {
 		var agama models.Agama
 		if err := wc.db.First(&agama, req.AgamaID).Error; err != nil {
@@ -364,7 +382,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 		}
 	}
 
-	// ✅ Check if pekerjaan exists (jika provided)
+	// ✅ Check jika pekerjaan exists (jika provided)
 	if req.PekerjaanID != 0 {
 		var pekerjaan models.Pekerjaan
 		if err := wc.db.First(&pekerjaan, req.PekerjaanID).Error; err != nil {
@@ -381,7 +399,33 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 		}
 	}
 
-	// ✅ Check if NIK already exists
+	// ✅ Check jika rumah exists (jika provided)
+	if req.RumahID != 0 {
+		var rumah models.Rumah
+		if err := wc.db.First(&rumah, req.RumahID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "House not found",
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Failed to validate house",
+				})
+			}
+			return
+		}
+
+		// ✅ Check jika rumah sudah ditempati warga lain
+		// var existingWarga models.Warga
+		// if err := wc.db.Where("rumah_id = ?", req.RumahID).First(&existingWarga).Error; err == nil {
+		// 	c.JSON(http.StatusBadRequest, gin.H{
+		// 		"error": "House already occupied by another resident",
+		// 	})
+		// 	return
+		// }
+	}
+
+	// ✅ Check jika NIK already exists
 	var existingWarga models.Warga
 	if err := wc.db.Where("warga_nik = ?", req.WargaNIK).First(&existingWarga).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -394,6 +438,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 
 	warga := models.Warga{
 		KeluargaID:        req.KeluargaID,
+		RumahID:           req.RumahID, // ✅ TAMBAHKAN RumahID
 		WargaNama:         req.WargaNama,
 		WargaNIK:          req.WargaNIK,
 		WargaNoTlp:        req.WargaNoTlp,
@@ -415,11 +460,19 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 		return
 	}
 
+	// ✅ Update status rumah jika warga ditempatkan di rumah
+	if req.RumahID != 0 {
+		wc.db.Model(&models.Rumah{}).
+			Where("rumah_id = ?", req.RumahID).
+			Update("rumah_status", "ditempati")
+	}
+
 	// ✅ Reload warga dengan data terbaru
 	if err := wc.db.
 		Preload("Keluarga").
 		Preload("Agama").
 		Preload("Pekerjaan").
+		Preload("Rumah"). // ✅ DIUBAH: Preload("Rumah") bukan Preload("Rumahs")
 		First(&warga, warga.WargaID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to load created resident",
@@ -434,7 +487,7 @@ func (wc *WargaController) CreateWarga(c *gin.Context) {
 	})
 }
 
-// UpdateWarga updates warga data dengan security checks
+// ✅ UpdateWarga updates warga data dengan security checks
 func (wc *WargaController) UpdateWarga(c *gin.Context) {
 	wargaID := c.Param("id")
 
@@ -451,7 +504,7 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 	var req UpdateWargaRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request data",
+			"error":   "Invalid request data",
 			"details": err.Error(),
 		})
 		return
@@ -489,6 +542,9 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 		return
 	}
 
+	// ✅ Simpan rumah_id sebelumnya untuk update status rumah
+	previousRumahID := warga.RumahID
+
 	// ✅ Update fields dengan validasi
 	if req.KeluargaID != 0 {
 		var keluarga models.Keluarga
@@ -505,6 +561,34 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 			return
 		}
 		warga.KeluargaID = req.KeluargaID
+	}
+
+	// ✅ Update RumahID dengan validasi
+	if req.RumahID != 0 && req.RumahID != warga.RumahID {
+		var rumah models.Rumah
+		if err := wc.db.First(&rumah, req.RumahID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "House not found",
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Failed to validate house",
+				})
+			}
+			return
+		}
+
+		// ✅ Check jika rumah sudah ditempati warga lain
+		// var existingWarga models.Warga
+		// if err := wc.db.Where("rumah_id = ? AND warga_id != ?", req.RumahID, wargaID).First(&existingWarga).Error; err == nil {
+		// 	c.JSON(http.StatusBadRequest, gin.H{
+		// 		"error": "House already occupied by another resident",
+		// 	})
+		// 	return
+		// }
+
+		warga.RumahID = req.RumahID
 	}
 
 	if req.WargaNama != "" {
@@ -524,7 +608,7 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 			})
 			return
 		}
-		// Check if NIK already exists (excluding current resident)
+		// Check jika NIK already exists (excluding current resident)
 		var existingWarga models.Warga
 		if err := wc.db.Where("warga_nik = ? AND warga_id != ?", req.WargaNIK, wargaID).First(&existingWarga).Error; err == nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -593,7 +677,7 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 	if req.WargaStatusHidup != "" {
 		if !isValidStatusHidup(req.WargaStatusHidup) {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Status hidup must be 'hidup' or 'meninggal'",
+				"error": "Status hidup must be 'hidup' atau 'meninggal'",
 			})
 			return
 		}
@@ -643,12 +727,27 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 		return
 	}
 
+	// ✅ Update status rumah berdasarkan perubahan
+	if previousRumahID != 0 && previousRumahID != warga.RumahID {
+		// Update rumah lama menjadi tersedia
+		wc.db.Model(&models.Rumah{}).
+			Where("rumah_id = ?", previousRumahID).
+			Update("rumah_status", "tersedia")
+	}
+	
+	if warga.RumahID != 0 {
+		// Update rumah baru menjadi ditempati
+		wc.db.Model(&models.Rumah{}).
+			Where("rumah_id = ?", warga.RumahID).
+			Update("rumah_status", "ditempati")
+	}
+
 	// ✅ Reload dengan data terbaru
 	if err := wc.db.
 		Preload("Keluarga").
 		Preload("Agama").
 		Preload("Pekerjaan").
-		Preload("Rumahs").
+		Preload("Rumah"). // ✅ DIUBAH: Preload("Rumah") bukan Preload("Rumahs")
 		First(&warga, wargaID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to load updated resident",
@@ -662,7 +761,8 @@ func (wc *WargaController) UpdateWarga(c *gin.Context) {
 		"data":    warga,
 	})
 }
-// DeleteWarga deletes warga dengan security checks
+
+// ✅ DeleteWarga deletes warga dengan security checks
 func (wc *WargaController) DeleteWarga(c *gin.Context) {
 	wargaID := c.Param("id")
 
@@ -691,22 +791,11 @@ func (wc *WargaController) DeleteWarga(c *gin.Context) {
 		return
 	}
 
-	// ✅ Check jika warga masih memiliki rumah
-	var rumahCount int64
-	if err := wc.db.Model(&models.Rumah{}).Where("warga_id = ?", wargaID).Count(&rumahCount).Error; err != nil {
-		log.Printf("❌ Error checking resident's houses: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to check resident's houses",
-		})
-		return
-	}
-
-	if rumahCount > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Cannot delete resident that still has houses",
-			"house_count": rumahCount,
-		})
-		return
+	// ✅ Update rumah menjadi tersedia jika warga punya rumah
+	if warga.RumahID != 0 {
+		wc.db.Model(&models.Rumah{}).
+			Where("rumah_id = ?", warga.RumahID).
+			Update("rumah_status", "tersedia")
 	}
 
 	// ✅ SAFE: GORM Delete dengan parameterized query
@@ -725,16 +814,18 @@ func (wc *WargaController) DeleteWarga(c *gin.Context) {
 	})
 }
 
-// GetWargaStats returns statistics about warga
+// ✅ GetWargaStats returns statistics about warga
 func (wc *WargaController) GetWargaStats(c *gin.Context) {
 	var stats struct {
-		TotalWarga       int64 `json:"total_warga"`
-		WargaAktif       int64 `json:"warga_aktif"`
-		WargaNonaktif    int64 `json:"warga_nonaktif"`
-		WargaLakiLaki    int64 `json:"warga_laki_laki"`
-		WargaPerempuan   int64 `json:"warga_perempuan"`
-		WargaHidup       int64 `json:"warga_hidup"`
-		WargaMeninggal   int64 `json:"warga_meninggal"`
+		TotalWarga        int64 `json:"total_warga"`
+		WargaAktif        int64 `json:"warga_aktif"`
+		WargaNonaktif     int64 `json:"warga_nonaktif"`
+		WargaLakiLaki     int64 `json:"warga_laki_laki"`
+		WargaPerempuan    int64 `json:"warga_perempuan"`
+		WargaHidup        int64 `json:"warga_hidup"`
+		WargaMeninggal    int64 `json:"warga_meninggal"`
+		WargaDenganRumah  int64 `json:"warga_dengan_rumah"`
+		WargaTanpaRumah   int64 `json:"warga_tanpa_rumah"`
 	}
 
 	// ✅ SAFE: Semua count queries menggunakan parameterized queries
@@ -745,14 +836,16 @@ func (wc *WargaController) GetWargaStats(c *gin.Context) {
 	wc.db.Model(&models.Warga{}).Where("warga_jenis_kelamin = ?", "P").Count(&stats.WargaPerempuan)
 	wc.db.Model(&models.Warga{}).Where("warga_status_hidup = ?", "hidup").Count(&stats.WargaHidup)
 	wc.db.Model(&models.Warga{}).Where("warga_status_hidup = ?", "meninggal").Count(&stats.WargaMeninggal)
+	wc.db.Model(&models.Warga{}).Where("rumah_id IS NOT NULL").Count(&stats.WargaDenganRumah)
+	wc.db.Model(&models.Warga{}).Where("rumah_id IS NULL").Count(&stats.WargaTanpaRumah)
 
-	log.Printf("📊 Resident stats: Total=%d, Active=%d, Male=%d, Female=%d", 
-		stats.TotalWarga, stats.WargaAktif, stats.WargaLakiLaki, stats.WargaPerempuan)
+	log.Printf("📊 Resident stats: Total=%d, Active=%d, WithHouse=%d, WithoutHouse=%d", 
+		stats.TotalWarga, stats.WargaAktif, stats.WargaDenganRumah, stats.WargaTanpaRumah)
 
 	c.JSON(http.StatusOK, stats)
 }
 
-// SearchWarga searches warga by name or NIK
+// ✅ SearchWarga searches warga by name or NIK
 func (wc *WargaController) SearchWarga(c *gin.Context) {
     query := c.Query("q")
     if query == "" {
@@ -781,10 +874,12 @@ func (wc *WargaController) SearchWarga(c *gin.Context) {
     var wargas []models.Warga
     
     // ✅ SAFE: Gunakan parameterized query
+    // ✅ PERBAIKAN: Preload "Rumah" bukan "Rumahs"
     if err := wc.db.
         Preload("Keluarga").
         Preload("Agama").
         Preload("Pekerjaan").
+        Preload("Rumah"). // ✅ DIUBAH: Preload("Rumah") bukan Preload("Rumahs")
         Where("warga_nama LIKE ? OR warga_nik LIKE ?", "%"+query+"%", "%"+query+"%").
         Find(&wargas).Error; err != nil {
         log.Printf("❌ Error searching residents: %v", err)
@@ -801,4 +896,44 @@ func (wc *WargaController) SearchWarga(c *gin.Context) {
         "results": wargas,
         "count":   len(wargas),
     })
+}
+
+// ✅ GetWargaByRumah returns warga by rumah ID
+func (wc *WargaController) GetWargaByRumah(c *gin.Context) {
+	rumahID := c.Param("rumah_id")
+
+	// ✅ Validasi ID input
+	if !isValidWargaID(rumahID) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid house ID format",
+		})
+		return
+	}
+
+	log.Printf("🔄 Fetching resident for house ID: %s", rumahID)
+
+	var warga models.Warga
+	// ✅ PERBAIKAN: Preload "Rumah" bukan "Rumahs"
+	if err := wc.db.
+		Preload("Keluarga").
+		Preload("Agama").
+		Preload("Pekerjaan").
+		Preload("Rumah"). // ✅ DIUBAH: Preload("Rumah") bukan Preload("Rumahs")
+		Where("rumah_id = ?", rumahID).
+		First(&warga).Error; err != nil {
+		log.Printf("❌ Error fetching resident for house %s: %v", rumahID, err)
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "No resident found for this house",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to fetch resident for this house",
+			})
+		}
+		return
+	}
+
+	log.Printf("✅ Successfully fetched resident for house ID: %s", rumahID)
+	c.JSON(http.StatusOK, warga)
 }

@@ -24,14 +24,14 @@ func NewProdukController(db *gorm.DB) *ProdukController {
 	return &ProdukController{db: db}
 }
 
-// Request structs - ubah binding untuk file upload
 type CreateProdukRequest struct {
 	ProdukNama       string  `form:"produk_nama" binding:"required"`
 	ProdukDeskripsi  string  `form:"produk_deskripsi"`
 	ProdukStok       int     `form:"produk_stok" binding:"required"`
 	ProdukHarga      float64 `form:"produk_harga" binding:"required"`
-	ProdukFoto       string  `form:"-"` // Tidak binding dari form, akan dihandle secara manual
+	ProdukFoto       string  `form:"-"`
 	KategoriProdukID uint    `form:"kategori_produk_id" binding:"required"`
+	UserID           uint    `form:"user_id" binding:"required"`
 }
 
 type UpdateProdukRequest struct {
@@ -39,16 +39,15 @@ type UpdateProdukRequest struct {
 	ProdukDeskripsi  string  `form:"produk_deskripsi"`
 	ProdukStok       int     `form:"produk_stok"`
 	ProdukHarga      float64 `form:"produk_harga"`
-	ProdukFoto       string  `form:"-"` // Tidak binding dari form, akan dihandle secara manual
+	ProdukFoto       string  `form:"-"`
 	KategoriProdukID uint    `form:"kategori_produk_id"`
+	UserID           uint    `form:"user_id"`
 }
-
-
 
 // ✅ CREATE - Membuat produk baru dengan file upload
 func (pc *ProdukController) CreateProduk(c *gin.Context) {
 	var req CreateProdukRequest
-	
+
 	// Bind form data
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -61,6 +60,21 @@ func (pc *ProdukController) CreateProduk(c *gin.Context) {
 	// Sanitize input
 	req.ProdukNama = strings.TrimSpace(req.ProdukNama)
 	req.ProdukDeskripsi = strings.TrimSpace(req.ProdukDeskripsi)
+
+	// Validasi UserID (user harus ada)
+	var user models.User
+	if err := pc.db.First(&user, req.UserID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "User tidak ditemukan",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Gagal memvalidasi user",
+			})
+		}
+		return
+	}
 
 	// Validasi required fields
 	if req.ProdukNama == "" {
@@ -109,39 +123,31 @@ func (pc *ProdukController) CreateProduk(c *gin.Context) {
 		return
 	}
 
-	// Check if produk dengan nama yang sama sudah ada
-	// var existingProduk models.Produk
-	// if err := pc.db.Where("produk_nama = ?", req.ProdukNama).First(&existingProduk).Error; err == nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"error": "Produk dengan nama tersebut sudah ada",
-	// 	})
-	// 	return
-	// }
-
-		// Handle file upload
-	fotoPath, err := helper.HandleFileImageUpload(c, "produk_foto", "")
-	if err != nil {
-		if err == http.ErrMissingFile {
+	// Handle file upload
+	fotoPath, uploadErr := helper.HandleFileImageUpload(c, "produk_foto", "")
+	if uploadErr != nil {
+		if uploadErr == http.ErrMissingFile {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "Foto produk harus diupload",
 			})
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   "Gagal mengupload foto",
-				"details": err.Error(),
+				"details": uploadErr.Error(),
 			})
 		}
 		return
 	}
 
-	// Buat produk baru
+	// Buat produk baru (masukkan UserID)
 	produk := models.Produk{
 		ProdukNama:       req.ProdukNama,
 		ProdukDeskripsi:  req.ProdukDeskripsi,
 		ProdukStok:       req.ProdukStok,
 		ProdukHarga:      req.ProdukHarga,
-		ProdukFoto:       fotoPath, // Hanya menyimpan nama file
+		ProdukFoto:       fotoPath,
 		KategoriProdukID: req.KategoriProdukID,
+		UserID:           req.UserID, // penting
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
@@ -156,8 +162,8 @@ func (pc *ProdukController) CreateProduk(c *gin.Context) {
 		return
 	}
 
-	// Reload dengan data kategori
-	if err := pc.db.Preload("KategoriProduk").First(&produk, produk.ProdukID).Error; err != nil {
+	// Reload dengan data kategori + user
+	if err := pc.db.Preload("KategoriProduk").Preload("User").First(&produk, produk.ProdukID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal memuat data produk yang dibuat",
 		})
@@ -207,14 +213,41 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 		return
 	}
 
+	// Validasi jika UserID diupdate
+	if req.UserID != 0 {
+		var user models.User
+		if err := pc.db.First(&user, req.UserID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"error": "User tidak ditemukan",
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Gagal memvalidasi user",
+				})
+			}
+			return
+		}
+	}
+
 	// Handle file upload (pass current photo path for potential deletion)
-	fotoPath, err := helper.HandleFileImageUpload(c, "produk_foto", produk.ProdukFoto)
-	if err != nil && err != http.ErrMissingFile {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Gagal mengupload foto",
-			"details": err.Error(),
-		})
-		return
+	fotoPath := ""
+	hasNewPhoto := false
+	if file, fileErr := c.FormFile("produk_foto"); fileErr == nil && file != nil {
+		// ada file dalam request -> gunakan helper untuk menyimpan (dengan old filename sebagai backup)
+		newPath, upErr := helper.HandleFileImageUpload(c, "produk_foto", produk.ProdukFoto)
+		if upErr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Gagal mengupload foto",
+				"details": upErr.Error(),
+			})
+			return
+		}
+		fotoPath = newPath
+		hasNewPhoto = true
+	} else {
+		// tidak ada file upload -> tidak apa-apa (fileErr biasanya http.ErrMissingFile)
+		hasNewPhoto = false
 	}
 
 	// Sanitize input
@@ -280,7 +313,7 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 
 	// Update fields menggunakan map
 	updates := make(map[string]interface{})
-	
+
 	if req.ProdukNama != "" {
 		updates["produk_nama"] = req.ProdukNama
 	}
@@ -293,18 +326,21 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 	if req.ProdukHarga != 0 {
 		updates["produk_harga"] = req.ProdukHarga
 	}
-	if fotoPath != "" && err != http.ErrMissingFile {
+	if hasNewPhoto && fotoPath != "" {
 		updates["produk_foto"] = fotoPath
 	}
 	if req.KategoriProdukID != 0 {
 		updates["kategori_produk_id"] = req.KategoriProdukID
 	}
-	
+	if req.UserID != 0 {
+		updates["user_id"] = req.UserID
+	}
+
 	updates["updated_at"] = time.Now()
 
 	if err := pc.db.Model(&produk).Updates(updates).Error; err != nil {
 		// Hapus file baru yang sudah diupload jika gagal update database
-		if fotoPath != "" && err != http.ErrMissingFile {
+		if hasNewPhoto && fotoPath != "" {
 			helper.DeleteOldPhoto(fotoPath, "produk_foto")
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -314,8 +350,22 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 		return
 	}
 
-	// Reload dengan data terbaru termasuk kategori
-	if err := pc.db.Preload("KategoriProduk").First(&produk, produkID).Error; err != nil {
+	// Jika update berhasil dan ada foto baru -> hapus foto lama dari storage (helper bisa melakukan ini, contoh:)
+	if hasNewPhoto && produk.ProdukFoto != "" {
+		// produk.ProdukFoto saat ini masih berisi old filename dari sebelum update,
+		// tetapi karena kita menjalankan Updates di atas, produk struct belum otomatis berubah.
+		// Ambil produk terbaru dulu lalu hapus file lama jika perlu.
+		var updatedProduk models.Produk
+		if err := pc.db.First(&updatedProduk, produkID).Error; err == nil {
+			// jika foto lama berbeda dengan foto baru, hapus file lama
+			if updatedProduk.ProdukFoto != "" && updatedProduk.ProdukFoto != fotoPath {
+				helper.DeleteOldPhoto(produk.ProdukFoto, "produk_foto") // produk.ProdukFoto masih old
+			}
+		}
+	}
+
+	// Reload dengan data terbaru termasuk kategori dan user
+	if err := pc.db.Preload("KategoriProduk").Preload("User").First(&produk, produkID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal memuat data produk yang diupdate",
 		})
@@ -327,6 +377,7 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 		"data":    produk,
 	})
 }
+
 
 // ✅ DELETE - Menghapus produk beserta file fotonya
 func (pc *ProdukController) DeleteProduk(c *gin.Context) {
@@ -428,84 +479,81 @@ func (pc *ProdukController) GetProdukFoto(c *gin.Context) {
 func (pc *ProdukController) GetAllProduk(c *gin.Context) {
 	var produk []models.Produk
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset := (page - 1) * limit
-
-	// Filter parameters
-	kategoriID := c.Query("kategori_id")
+	// Parameter filter
 	search := c.Query("search")
+	kategoriID := c.Query("kategori_id")
 	stokMin := c.Query("stok_min")
 	stokMax := c.Query("stok_max")
 	hargaMin := c.Query("harga_min")
 	hargaMax := c.Query("harga_max")
 
-	// Build query dengan GORM (AMAN - parameterized queries)
-	query := pc.db.Model(&models.Produk{}).Preload("KategoriProduk")
+	// Build base query
+	query := pc.db.Model(&models.Produk{}).
+		Preload("KategoriProduk").
+		Preload("User")
 
-	// Apply filters
+	// === FILTERS ===
+
+	// Search
 	if search != "" {
 		searchSafe := strings.TrimSpace(search)
-		query = query.Where("produk_nama LIKE ? OR produk_deskripsi LIKE ?", 
+		query = query.Where("produk_nama LIKE ? OR produk_deskripsi LIKE ?",
 			"%"+searchSafe+"%", "%"+searchSafe+"%")
 	}
 
+	// Kategori
 	if kategoriID != "" {
-		kategoriIDSafe, err := strconv.ParseUint(kategoriID, 10, 32)
-		if err == nil {
-			query = query.Where("kategori_produk_id = ?", kategoriIDSafe)
+		if safeID, err := strconv.Atoi(kategoriID); err == nil {
+			query = query.Where("kategori_produk_id = ?", safeID)
 		}
 	}
 
+	// Stok minimum
 	if stokMin != "" {
-		if stokMinSafe, err := strconv.Atoi(stokMin); err == nil {
-			query = query.Where("produk_stok >= ?", stokMinSafe)
+		if safe, err := strconv.Atoi(stokMin); err == nil {
+			query = query.Where("produk_stok >= ?", safe)
 		}
 	}
 
+	// Stok maksimum
 	if stokMax != "" {
-		if stokMaxSafe, err := strconv.Atoi(stokMax); err == nil {
-			query = query.Where("produk_stok <= ?", stokMaxSafe)
+		if safe, err := strconv.Atoi(stokMax); err == nil {
+			query = query.Where("produk_stok <= ?", safe)
 		}
 	}
 
+	// Harga minimum
 	if hargaMin != "" {
-		if hargaMinSafe, err := strconv.ParseFloat(hargaMin, 64); err == nil {
-			query = query.Where("produk_harga >= ?", hargaMinSafe)
+		if safe, err := strconv.ParseFloat(hargaMin, 64); err == nil {
+			query = query.Where("produk_harga >= ?", safe)
 		}
 	}
 
+	// Harga maksimum
 	if hargaMax != "" {
-		if hargaMaxSafe, err := strconv.ParseFloat(hargaMax, 64); err == nil {
-			query = query.Where("produk_harga <= ?", hargaMaxSafe)
+		if safe, err := strconv.ParseFloat(hargaMax, 64); err == nil {
+			query = query.Where("produk_harga <= ?", safe)
 		}
 	}
 
-	// Get total count for pagination
-	var total int64
-	query.Count(&total)
-
-	// Execute query dengan pagination dan sorting
-	if err := query.Offset(offset).
-		// Limit(limit).
+	// === EXECUTE ===
+	if err := query.
 		Order("created_at DESC").
 		Find(&produk).Error; err != nil {
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal mengambil data produk",
 		})
 		return
 	}
 
+	// === OUTPUT ===
 	c.JSON(http.StatusOK, gin.H{
 		"data": produk,
-		// "pagination": gin.H{
-		// 	"page":  page,
-		// 	"limit": limit,
-		// 	"total": total,
-		// },
 	})
 }
+
+
 
 // ✅ READ - Mendapatkan produk by ID (TETAP SAMA - GET request)
 func (pc *ProdukController) GetProdukByID(c *gin.Context) {
