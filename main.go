@@ -103,6 +103,9 @@ func main() {
 	kategoriProdukController := controllers.NewKategoriProdukController(db)
 	produkController := controllers.NewProdukController(db)
 	profileController := controllers.NewProfileController(db)
+	keranjangController := controllers.NewKeranjangController(db)
+	transaksiController := controllers.NewTransaksiController(db)
+	detailTransaksiController := controllers.NewDetailTransaksiController(db)
 
 	// MIDDLEWARE
 	authMiddleware := middleware.NewAuthMiddleware(jwtUtils)
@@ -141,6 +144,9 @@ func main() {
 		KategoriProdukController:      kategoriProdukController,
 		ProdukController:              produkController,
 		ProfileController:             profileController,
+		KeranjangController:           keranjangController,
+		TransaksiController:           transaksiController,
+		DetailTransaksiController:     detailTransaksiController,
 		AuthMiddleware:                authMiddleware,
 	}
 

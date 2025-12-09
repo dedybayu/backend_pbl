@@ -4,6 +4,118 @@
         "contact": {}
     },
     "paths": {
+        "/api/detail-transaksi/transaksi/{transaksi_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan semua detail transaksi berdasarkan ID transaksi",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "detail-transaksi"
+                ],
+                "summary": "Dapatkan detail transaksi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Transaksi",
+                        "name": "transaksi_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar detail transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Transaksi tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data detail",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/detail-transaksi/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan detail transaksi berdasarkan ID detail",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "detail-transaksi"
+                ],
+                "summary": "Dapatkan detail berdasarkan ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Detail Transaksi",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Detail tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data detail",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/kategori-kegiatan": {
             "get": {
                 "security": [
@@ -376,6 +488,874 @@
                     },
                     "500": {
                         "description": "Gagal menghapus kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kegiatan": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan daftar semua kegiatan dengan filter dan pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Mendapatkan semua kegiatan",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit per halaman (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Kata kunci pencarian",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter berdasarkan ID kategori",
+                        "name": "kategori_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal mulai (format: YYYY-MM-DD)",
+                        "name": "tanggal_from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal sampai (format: YYYY-MM-DD)",
+                        "name": "tanggal_to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Membuat kegiatan baru dengan data yang diberikan",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Membuat kegiatan baru",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Nama kegiatan",
+                        "name": "kegiatan_nama",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID kategori kegiatan",
+                        "name": "kategori_kegiatan_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tanggal kegiatan (format: RFC3339)",
+                        "name": "kegiatan_tanggal",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lokasi kegiatan",
+                        "name": "kegiatan_lokasi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Penanggung jawab kegiatan",
+                        "name": "kegiatan_pj",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Deskripsi kegiatan",
+                        "name": "kegiatan_deskripsi",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Kegiatan berhasil dibuat",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal membuat kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kegiatan/bulan/{bulan}/tahun/{tahun}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan daftar kegiatan berdasarkan bulan dan tahun tertentu",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Mendapatkan kegiatan per bulan dan tahun",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Bulan (1-12)",
+                        "name": "bulan",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Tahun (2000-2100)",
+                        "name": "tahun",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar kegiatan bulanan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Parameter tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kegiatan/mendatang": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan daftar kegiatan yang akan datang (tanggal \u003e= hari ini)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Mendapatkan kegiatan mendatang",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Jumlah data (default: 5)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar kegiatan mendatang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kegiatan/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mencari kegiatan berdasarkan kata kunci",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Mencari kegiatan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Kata kunci pencarian",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hasil pencarian kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Parameter pencarian harus diisi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mencari kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kegiatan/statistik": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan statistik jumlah kegiatan per bulan (6 bulan terakhir)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Mendapatkan statistik kegiatan",
+                "responses": {
+                    "200": {
+                        "description": "Statistik kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil statistik",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kegiatan/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan detail kegiatan berdasarkan ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Mendapatkan kegiatan berdasarkan ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Kegiatan",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Kegiatan tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengupdate data kegiatan berdasarkan ID",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Mengupdate kegiatan",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Kegiatan",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nama kegiatan",
+                        "name": "kegiatan_nama",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID kategori kegiatan",
+                        "name": "kategori_kegiatan_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tanggal kegiatan (format: RFC3339)",
+                        "name": "kegiatan_tanggal",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Lokasi kegiatan",
+                        "name": "kegiatan_lokasi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Penanggung jawab kegiatan",
+                        "name": "kegiatan_pj",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Deskripsi kegiatan",
+                        "name": "kegiatan_deskripsi",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Kegiatan berhasil diupdate",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Kegiatan tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengupdate kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus kegiatan berdasarkan ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kegiatan"
+                ],
+                "summary": "Menghapus kegiatan",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Kegiatan",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Kegiatan berhasil dihapus",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Kegiatan tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menghapus kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/keranjang": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan semua item di keranjang user dengan status active",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keranjang"
+                ],
+                "summary": "Dapatkan item keranjang",
+                "responses": {
+                    "200": {
+                        "description": "Daftar item keranjang",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CartSummaryResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menambahkan produk ke keranjang belanja user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keranjang"
+                ],
+                "summary": "Tambah produk ke keranjang",
+                "parameters": [
+                    {
+                        "description": "Data produk yang akan ditambahkan",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CreateKeranjangRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Produk berhasil ditambahkan ke keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Produk tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "Stok produk tidak mencukupi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menambahkan ke keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/keranjang/checkout-preview": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan ringkasan untuk checkout dari keranjang",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keranjang"
+                ],
+                "summary": "Preview checkout",
+                "responses": {
+                    "200": {
+                        "description": "Ringkasan checkout",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Keranjang kosong",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal membuat preview checkout",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/keranjang/clear": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus semua item dari keranjang user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keranjang"
+                ],
+                "summary": "Kosongkan keranjang",
+                "responses": {
+                    "200": {
+                        "description": "Keranjang berhasil dikosongkan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengosongkan keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/keranjang/count": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan jumlah total item di keranjang user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keranjang"
+                ],
+                "summary": "Hitung jumlah item keranjang",
+                "responses": {
+                    "200": {
+                        "description": "Jumlah item keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menghitung jumlah item",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/keranjang/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengupdate jumlah item di keranjang",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keranjang"
+                ],
+                "summary": "Update item keranjang",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Keranjang",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data update jumlah",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.UpdateKeranjangRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item keranjang berhasil diupdate",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Item keranjang tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "Stok produk tidak mencukupi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengupdate item keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus item dari keranjang (soft delete dengan mengubah status)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keranjang"
+                ],
+                "summary": "Hapus item dari keranjang",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Keranjang",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item berhasil dihapus dari keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Item keranjang tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menghapus item",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -942,9 +1922,943 @@
                     }
                 }
             }
+        },
+        "/api/transaksi": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan daftar semua transaksi dengan filter",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaksi"
+                ],
+                "summary": "Dapatkan semua transaksi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit per halaman (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter status pembayaran",
+                        "name": "status_pembayaran",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter status transaksi",
+                        "name": "status_transaksi",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal mulai (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal sampai (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Pencarian kode transaksi atau nama penerima",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Membuat transaksi baru dengan mengambil semua item dari keranjang user",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaksi"
+                ],
+                "summary": "Buat transaksi baru dari keranjang",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Metode pembayaran (tunai, transfer_bank, e-wallet, qris)",
+                        "name": "metode_pembayaran",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alamat pengiriman",
+                        "name": "alamat_pengiriman",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nama penerima",
+                        "name": "nama_penerima",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nomor telepon penerima",
+                        "name": "no_telp_penerima",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Kurir pengiriman",
+                        "name": "kurir",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Biaya pengiriman",
+                        "name": "biaya_pengiriman",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Diskon",
+                        "name": "diskon",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Catatan",
+                        "name": "catatan",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Transaksi berhasil dibuat",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Keranjang kosong atau data tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "Stok produk tidak mencukupi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal membuat transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaksi/my": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan daftar transaksi milik user yang sedang login",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaksi"
+                ],
+                "summary": "Dapatkan transaksi user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit per halaman (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter status transaksi",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar transaksi user",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaksi/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan statistik transaksi (hanya admin)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaksi"
+                ],
+                "summary": "Dapatkan statistik transaksi",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tanggal mulai (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tanggal sampai (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistik transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Akses ditolak",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil statistik",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/transaksi/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan detail transaksi berdasarkan ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaksi"
+                ],
+                "summary": "Dapatkan transaksi berdasarkan ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Transaksi",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Transaksi tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengupdate data transaksi (hanya admin)",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaksi"
+                ],
+                "summary": "Update transaksi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Transaksi",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Metode pembayaran",
+                        "name": "metode_pembayaran",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status pembayaran",
+                        "name": "status_pembayaran",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status transaksi",
+                        "name": "status_transaksi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alamat pengiriman",
+                        "name": "alamat_pengiriman",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nama penerima",
+                        "name": "nama_penerima",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "No telepon penerima",
+                        "name": "no_telp_penerima",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Kurir",
+                        "name": "kurir",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "No resi",
+                        "name": "no_resi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Biaya pengiriman",
+                        "name": "biaya_pengiriman",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Diskon",
+                        "name": "diskon",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Catatan",
+                        "name": "catatan",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tanggal bayar (RFC3339)",
+                        "name": "tanggal_bayar",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tanggal kirim (RFC3339)",
+                        "name": "tanggal_kirim",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tanggal selesai (RFC3339)",
+                        "name": "tanggal_selesai",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaksi berhasil diupdate",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Akses ditolak",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Transaksi tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengupdate transaksi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Authenticate user with username and password",
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to generate token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Invalidate user's JWT token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LogoutResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid authorization header",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get authenticated user's profile information",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get user profile",
+                "responses": {
+                    "200": {
+                        "description": "User profile",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ProfileResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get user profile",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh-token": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate a new JWT token using current valid token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh JWT token",
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.RefreshTokenResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to generate token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/universal-login": {
+            "post": {
+                "description": "Alternative login endpoint that accepts multiple content types",
+                "consumes": [
+                    "multipart/form-data",
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Universal login",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to generate token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "controllers.CartSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controllers.KeranjangItemResponse"
+                    }
+                },
+                "total_barang": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "total_harga": {
+                    "type": "number",
+                    "example": 150000
+                },
+                "total_item": {
+                    "type": "integer",
+                    "example": 2
+                }
+            }
+        },
+        "controllers.CreateKeranjangRequest": {
+            "type": "object",
+            "required": [
+                "jumlah",
+                "produk_id"
+            ],
+            "properties": {
+                "jumlah": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 2
+                },
+                "produk_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "controllers.KeranjangItemResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "harga_satuan": {
+                    "type": "number",
+                    "example": 50000
+                },
+                "jumlah": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "keranjang_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "produk": {
+                    "$ref": "#/definitions/models.Produk"
+                },
+                "produk_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "subtotal": {
+                    "type": "number",
+                    "example": 100000
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "controllers.LoginRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "admin"
+                }
+            }
+        },
+        "controllers.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "$ref": "#/definitions/models.Level"
+                },
+                "level_kode": {
+                    "type": "string",
+                    "example": "ADM"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user": {
+                    "$ref": "#/definitions/controllers.UserResponse"
+                }
+            }
+        },
+        "controllers.LogoutResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Logout successful"
+                }
+            }
+        },
+        "controllers.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "$ref": "#/definitions/models.Level"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                }
+            }
+        },
+        "controllers.RefreshTokenResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Token refreshed successfully"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "controllers.UpdateKeranjangRequest": {
+            "type": "object",
+            "required": [
+                "jumlah"
+            ],
+            "properties": {
+                "jumlah": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 3
+                }
+            }
+        },
+        "controllers.UserResponse": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "$ref": "#/definitions/models.Level"
+                },
+                "level_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "user_alamat": {
+                    "type": "string",
+                    "example": "Jl. Contoh No. 123"
+                },
+                "user_email": {
+                    "type": "string",
+                    "example": "admin@example.com"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "user_nama": {
+                    "type": "string",
+                    "example": "Administrator"
+                },
+                "user_no_telp": {
+                    "type": "string",
+                    "example": "081234567890"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "warga": {
+                    "description": "hanya tampil jika tidak nil",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Warga"
+                        }
+                    ]
+                }
+            }
+        },
         "models.Agama": {
             "type": "object",
             "properties": {

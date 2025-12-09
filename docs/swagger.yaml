@@ -1,4 +1,149 @@
 definitions:
+  controllers.CartSummaryResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/controllers.KeranjangItemResponse'
+        type: array
+      total_barang:
+        example: 3
+        type: integer
+      total_harga:
+        example: 150000
+        type: number
+      total_item:
+        example: 2
+        type: integer
+    type: object
+  controllers.CreateKeranjangRequest:
+    properties:
+      jumlah:
+        example: 2
+        minimum: 1
+        type: integer
+      produk_id:
+        example: 1
+        type: integer
+    required:
+    - jumlah
+    - produk_id
+    type: object
+  controllers.KeranjangItemResponse:
+    properties:
+      created_at:
+        type: string
+      harga_satuan:
+        example: 50000
+        type: number
+      jumlah:
+        example: 2
+        type: integer
+      keranjang_id:
+        example: 1
+        type: integer
+      produk:
+        $ref: '#/definitions/models.Produk'
+      produk_id:
+        example: 1
+        type: integer
+      status:
+        example: active
+        type: string
+      subtotal:
+        example: 100000
+        type: number
+      updated_at:
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  controllers.LoginResponse:
+    properties:
+      level:
+        $ref: '#/definitions/models.Level'
+      level_kode:
+        example: ADM
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        $ref: '#/definitions/controllers.UserResponse'
+    type: object
+  controllers.LogoutResponse:
+    properties:
+      message:
+        example: Logout successful
+        type: string
+    type: object
+  controllers.ProfileResponse:
+    properties:
+      level:
+        $ref: '#/definitions/models.Level'
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  controllers.RefreshTokenResponse:
+    properties:
+      message:
+        example: Token refreshed successfully
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  controllers.UpdateKeranjangRequest:
+    properties:
+      jumlah:
+        example: 3
+        minimum: 1
+        type: integer
+    required:
+    - jumlah
+    type: object
+  controllers.UserResponse:
+    properties:
+      level:
+        $ref: '#/definitions/models.Level'
+      level_id:
+        example: 1
+        type: integer
+      user_alamat:
+        example: Jl. Contoh No. 123
+        type: string
+      user_email:
+        example: admin@example.com
+        type: string
+      user_id:
+        example: 1
+        type: integer
+      user_nama:
+        example: Administrator
+        type: string
+      user_no_telp:
+        example: "081234567890"
+        type: string
+      username:
+        example: admin
+        type: string
+      warga:
+        allOf:
+        - $ref: '#/definitions/models.Warga'
+        description: hanya tampil jika tidak nil
+    type: object
   models.Agama:
     properties:
       agama_id:
@@ -255,6 +400,80 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/detail-transaksi/{id}:
+    get:
+      description: Mendapatkan detail transaksi berdasarkan ID detail
+      parameters:
+      - description: ID Detail Transaksi
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail transaksi
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Detail tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data detail
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Dapatkan detail berdasarkan ID
+      tags:
+      - detail-transaksi
+  /api/detail-transaksi/transaksi/{transaksi_id}:
+    get:
+      description: Mendapatkan semua detail transaksi berdasarkan ID transaksi
+      parameters:
+      - description: ID Transaksi
+        in: path
+        name: transaksi_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar detail transaksi
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Transaksi tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data detail
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Dapatkan detail transaksi
+      tags:
+      - detail-transaksi
   /api/kategori-kegiatan:
     get:
       description: Mendapatkan daftar semua kategori kegiatan tanpa pagination limit
@@ -506,6 +725,576 @@ paths:
       summary: Mendapatkan kategori kegiatan dengan statistik
       tags:
       - kategori-kegiatan
+  /api/kegiatan:
+    get:
+      description: Mendapatkan daftar semua kegiatan dengan filter dan pagination
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Limit per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: Kata kunci pencarian
+        in: query
+        name: search
+        type: string
+      - description: Filter berdasarkan ID kategori
+        in: query
+        name: kategori_id
+        type: integer
+      - description: 'Filter tanggal mulai (format: YYYY-MM-DD)'
+        in: query
+        name: tanggal_from
+        type: string
+      - description: 'Filter tanggal sampai (format: YYYY-MM-DD)'
+        in: query
+        name: tanggal_to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan semua kegiatan
+      tags:
+      - kegiatan
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membuat kegiatan baru dengan data yang diberikan
+      parameters:
+      - description: Nama kegiatan
+        in: formData
+        name: kegiatan_nama
+        required: true
+        type: string
+      - description: ID kategori kegiatan
+        in: formData
+        name: kategori_kegiatan_id
+        required: true
+        type: integer
+      - description: 'Tanggal kegiatan (format: RFC3339)'
+        in: formData
+        name: kegiatan_tanggal
+        required: true
+        type: string
+      - description: Lokasi kegiatan
+        in: formData
+        name: kegiatan_lokasi
+        type: string
+      - description: Penanggung jawab kegiatan
+        in: formData
+        name: kegiatan_pj
+        type: string
+      - description: Deskripsi kegiatan
+        in: formData
+        name: kegiatan_deskripsi
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Kegiatan berhasil dibuat
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal membuat kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Membuat kegiatan baru
+      tags:
+      - kegiatan
+  /api/kegiatan/{id}:
+    delete:
+      description: Menghapus kegiatan berdasarkan ID
+      parameters:
+      - description: ID Kegiatan
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kegiatan berhasil dihapus
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Kegiatan tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menghapus kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Menghapus kegiatan
+      tags:
+      - kegiatan
+    get:
+      description: Mendapatkan detail kegiatan berdasarkan ID
+      parameters:
+      - description: ID Kegiatan
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Kegiatan tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan kegiatan berdasarkan ID
+      tags:
+      - kegiatan
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate data kegiatan berdasarkan ID
+      parameters:
+      - description: ID Kegiatan
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nama kegiatan
+        in: formData
+        name: kegiatan_nama
+        type: string
+      - description: ID kategori kegiatan
+        in: formData
+        name: kategori_kegiatan_id
+        type: integer
+      - description: 'Tanggal kegiatan (format: RFC3339)'
+        in: formData
+        name: kegiatan_tanggal
+        type: string
+      - description: Lokasi kegiatan
+        in: formData
+        name: kegiatan_lokasi
+        type: string
+      - description: Penanggung jawab kegiatan
+        in: formData
+        name: kegiatan_pj
+        type: string
+      - description: Deskripsi kegiatan
+        in: formData
+        name: kegiatan_deskripsi
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kegiatan berhasil diupdate
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Kegiatan tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengupdate kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mengupdate kegiatan
+      tags:
+      - kegiatan
+  /api/kegiatan/bulan/{bulan}/tahun/{tahun}:
+    get:
+      description: Mendapatkan daftar kegiatan berdasarkan bulan dan tahun tertentu
+      parameters:
+      - description: Bulan (1-12)
+        in: path
+        name: bulan
+        required: true
+        type: integer
+      - description: Tahun (2000-2100)
+        in: path
+        name: tahun
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar kegiatan bulanan
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parameter tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan kegiatan per bulan dan tahun
+      tags:
+      - kegiatan
+  /api/kegiatan/mendatang:
+    get:
+      description: Mendapatkan daftar kegiatan yang akan datang (tanggal >= hari ini)
+      parameters:
+      - description: 'Jumlah data (default: 5)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar kegiatan mendatang
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan kegiatan mendatang
+      tags:
+      - kegiatan
+  /api/kegiatan/search:
+    get:
+      description: Mencari kegiatan berdasarkan kata kunci
+      parameters:
+      - description: Kata kunci pencarian
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hasil pencarian kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parameter pencarian harus diisi
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mencari kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mencari kegiatan
+      tags:
+      - kegiatan
+  /api/kegiatan/statistik:
+    get:
+      description: Mendapatkan statistik jumlah kegiatan per bulan (6 bulan terakhir)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Statistik kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil statistik
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan statistik kegiatan
+      tags:
+      - kegiatan
+  /api/keranjang:
+    get:
+      description: Mendapatkan semua item di keranjang user dengan status active
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar item keranjang
+          schema:
+            $ref: '#/definitions/controllers.CartSummaryResponse'
+        "500":
+          description: Gagal mengambil data keranjang
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Dapatkan item keranjang
+      tags:
+      - keranjang
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan produk ke keranjang belanja user
+      parameters:
+      - description: Data produk yang akan ditambahkan
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.CreateKeranjangRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Produk berhasil ditambahkan ke keranjang
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Produk tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Stok produk tidak mencukupi
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menambahkan ke keranjang
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Tambah produk ke keranjang
+      tags:
+      - keranjang
+  /api/keranjang/{id}:
+    delete:
+      description: Menghapus item dari keranjang (soft delete dengan mengubah status)
+      parameters:
+      - description: ID Keranjang
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item berhasil dihapus dari keranjang
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Item keranjang tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menghapus item
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus item dari keranjang
+      tags:
+      - keranjang
+    put:
+      consumes:
+      - application/json
+      description: Mengupdate jumlah item di keranjang
+      parameters:
+      - description: ID Keranjang
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data update jumlah
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.UpdateKeranjangRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item keranjang berhasil diupdate
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Item keranjang tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Stok produk tidak mencukupi
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengupdate item keranjang
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update item keranjang
+      tags:
+      - keranjang
+  /api/keranjang/checkout-preview:
+    get:
+      description: Mendapatkan ringkasan untuk checkout dari keranjang
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ringkasan checkout
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Keranjang kosong
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal membuat preview checkout
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Preview checkout
+      tags:
+      - keranjang
+  /api/keranjang/clear:
+    delete:
+      description: Menghapus semua item dari keranjang user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Keranjang berhasil dikosongkan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengosongkan keranjang
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Kosongkan keranjang
+      tags:
+      - keranjang
+  /api/keranjang/count:
+    get:
+      description: Mendapatkan jumlah total item di keranjang user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Jumlah item keranjang
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menghitung jumlah item
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hitung jumlah item keranjang
+      tags:
+      - keranjang
   /api/produk:
     get:
       description: Mendapatkan semua produk
@@ -886,4 +1675,485 @@ paths:
       summary: Produk terbaru
       tags:
       - Produk
+  /api/transaksi:
+    get:
+      description: Mendapatkan daftar semua transaksi dengan filter
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Limit per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: Filter status pembayaran
+        in: query
+        name: status_pembayaran
+        type: string
+      - description: Filter status transaksi
+        in: query
+        name: status_transaksi
+        type: string
+      - description: Filter tanggal mulai (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: Filter tanggal sampai (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      - description: Pencarian kode transaksi atau nama penerima
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar transaksi
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data transaksi
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Dapatkan semua transaksi
+      tags:
+      - transaksi
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membuat transaksi baru dengan mengambil semua item dari keranjang
+        user
+      parameters:
+      - description: Metode pembayaran (tunai, transfer_bank, e-wallet, qris)
+        in: formData
+        name: metode_pembayaran
+        required: true
+        type: string
+      - description: Alamat pengiriman
+        in: formData
+        name: alamat_pengiriman
+        required: true
+        type: string
+      - description: Nama penerima
+        in: formData
+        name: nama_penerima
+        required: true
+        type: string
+      - description: Nomor telepon penerima
+        in: formData
+        name: no_telp_penerima
+        required: true
+        type: string
+      - description: Kurir pengiriman
+        in: formData
+        name: kurir
+        type: string
+      - description: Biaya pengiriman
+        in: formData
+        name: biaya_pengiriman
+        type: number
+      - description: Diskon
+        in: formData
+        name: diskon
+        type: number
+      - description: Catatan
+        in: formData
+        name: catatan
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Transaksi berhasil dibuat
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Keranjang kosong atau data tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Stok produk tidak mencukupi
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal membuat transaksi
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Buat transaksi baru dari keranjang
+      tags:
+      - transaksi
+  /api/transaksi/{id}:
+    get:
+      description: Mendapatkan detail transaksi berdasarkan ID
+      parameters:
+      - description: ID Transaksi
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail transaksi
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Transaksi tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data transaksi
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Dapatkan transaksi berdasarkan ID
+      tags:
+      - transaksi
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate data transaksi (hanya admin)
+      parameters:
+      - description: ID Transaksi
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Metode pembayaran
+        in: formData
+        name: metode_pembayaran
+        type: string
+      - description: Status pembayaran
+        in: formData
+        name: status_pembayaran
+        type: string
+      - description: Status transaksi
+        in: formData
+        name: status_transaksi
+        type: string
+      - description: Alamat pengiriman
+        in: formData
+        name: alamat_pengiriman
+        type: string
+      - description: Nama penerima
+        in: formData
+        name: nama_penerima
+        type: string
+      - description: No telepon penerima
+        in: formData
+        name: no_telp_penerima
+        type: string
+      - description: Kurir
+        in: formData
+        name: kurir
+        type: string
+      - description: No resi
+        in: formData
+        name: no_resi
+        type: string
+      - description: Biaya pengiriman
+        in: formData
+        name: biaya_pengiriman
+        type: number
+      - description: Diskon
+        in: formData
+        name: diskon
+        type: number
+      - description: Catatan
+        in: formData
+        name: catatan
+        type: string
+      - description: Tanggal bayar (RFC3339)
+        in: formData
+        name: tanggal_bayar
+        type: string
+      - description: Tanggal kirim (RFC3339)
+        in: formData
+        name: tanggal_kirim
+        type: string
+      - description: Tanggal selesai (RFC3339)
+        in: formData
+        name: tanggal_selesai
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaksi berhasil diupdate
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Akses ditolak
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Transaksi tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengupdate transaksi
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update transaksi
+      tags:
+      - transaksi
+  /api/transaksi/my:
+    get:
+      description: Mendapatkan daftar transaksi milik user yang sedang login
+      parameters:
+      - description: 'Halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Limit per halaman (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: Filter status transaksi
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar transaksi user
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data transaksi
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Dapatkan transaksi user
+      tags:
+      - transaksi
+  /api/transaksi/stats:
+    get:
+      description: Mendapatkan statistik transaksi (hanya admin)
+      parameters:
+      - description: Tanggal mulai (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: Tanggal sampai (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Statistik transaksi
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Akses ditolak
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil statistik
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Dapatkan statistik transaksi
+      tags:
+      - transaksi
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      - application/x-www-form-urlencoded
+      description: Authenticate user with username and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/controllers.LoginResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Failed to generate token
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login user
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Invalidate user's JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            $ref: '#/definitions/controllers.LogoutResponse'
+        "400":
+          description: Invalid authorization header
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - auth
+  /auth/profile:
+    get:
+      description: Get authenticated user's profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile
+          schema:
+            $ref: '#/definitions/controllers.ProfileResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Failed to get user profile
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - auth
+  /auth/refresh-token:
+    post:
+      description: Generate a new JWT token using current valid token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token refreshed
+          schema:
+            $ref: '#/definitions/controllers.RefreshTokenResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Failed to generate token
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Refresh JWT token
+      tags:
+      - auth
+  /auth/universal-login:
+    post:
+      consumes:
+      - multipart/form-data
+      - application/x-www-form-urlencoded
+      description: Alternative login endpoint that accepts multiple content types
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/controllers.LoginResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Failed to generate token
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Universal login
+      tags:
+      - auth
 swagger: "2.0"

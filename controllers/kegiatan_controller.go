@@ -22,24 +22,40 @@ func NewKegiatanController(db *gorm.DB) *KegiatanController {
 
 // Request structs
 type CreateKegiatanRequest struct {
-	KegiatanNama       string    `form:"kegiatan_nama" binding:"required"`
-	KategoriKegiatanID uint      `form:"kategori_kegiatan_id" binding:"required"`
-	KegiatanTanggal    time.Time `form:"kegiatan_tanggal" binding:"required"`
-	KegiatanLokasi     string    `form:"kegiatan_lokasi"`
-	KegiatanPJ         string    `form:"kegiatan_pj"`
-	KegiatanDeskripsi  string    `form:"kegiatan_deskripsi"`
+	KegiatanNama       string    `form:"kegiatan_nama" binding:"required" example:"Kerja Bakti Mingguan"`
+	KategoriKegiatanID uint      `form:"kategori_kegiatan_id" binding:"required" example:"1"`
+	KegiatanTanggal    time.Time `form:"kegiatan_tanggal" binding:"required" example:"2024-01-15T08:00:00Z"`
+	KegiatanLokasi     string    `form:"kegiatan_lokasi" example:"Lapangan RT 01"`
+	KegiatanPJ         string    `form:"kegiatan_pj" example:"Budi Santoso"`
+	KegiatanDeskripsi  string    `form:"kegiatan_deskripsi" example:"Kerja bakti membersihkan lingkungan RT"`
 }
 
 type UpdateKegiatanRequest struct {
-	KegiatanNama       string    `form:"kegiatan_nama"`
-	KategoriKegiatanID uint      `form:"kategori_kegiatan_id"`
-	KegiatanTanggal    time.Time `form:"kegiatan_tanggal"`
-	KegiatanLokasi     string    `form:"kegiatan_lokasi"`
-	KegiatanPJ         string    `form:"kegiatan_pj"`
-	KegiatanDeskripsi  string    `form:"kegiatan_deskripsi"`
+	KegiatanNama       string    `form:"kegiatan_nama" example:"Kerja Bakti Rutin"`
+	KategoriKegiatanID uint      `form:"kategori_kegiatan_id" example:"2"`
+	KegiatanTanggal    time.Time `form:"kegiatan_tanggal" example:"2024-01-20T08:00:00Z"`
+	KegiatanLokasi     string    `form:"kegiatan_lokasi" example:"Taman RT 01"`
+	KegiatanPJ         string    `form:"kegiatan_pj" example:"Siti Aminah"`
+	KegiatanDeskripsi  string    `form:"kegiatan_deskripsi" example:"Kerja bakti menanam pohon di taman"`
 }
 
-// ✅ CREATE - Membuat kegiatan baru
+// CreateKegiatan godoc
+// @Summary      Membuat kegiatan baru
+// @Description  Membuat kegiatan baru dengan data yang diberikan
+// @Tags         kegiatan
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        kegiatan_nama formData string true "Nama kegiatan"
+// @Param        kategori_kegiatan_id formData integer true "ID kategori kegiatan"
+// @Param        kegiatan_tanggal formData string true "Tanggal kegiatan (format: RFC3339)"
+// @Param        kegiatan_lokasi formData string false "Lokasi kegiatan"
+// @Param        kegiatan_pj formData string false "Penanggung jawab kegiatan"
+// @Param        kegiatan_deskripsi formData string false "Deskripsi kegiatan"
+// @Security     BearerAuth
+// @Success      201  {object}  map[string]interface{}  "Kegiatan berhasil dibuat"
+// @Failure      400  {object}  map[string]interface{}  "Invalid request data"
+// @Failure      500  {object}  map[string]interface{}  "Gagal membuat kegiatan"
+// @Router       /api/kegiatan [post]
 func (kc *KegiatanController) CreateKegiatan(c *gin.Context) {
 	var req CreateKegiatanRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -141,7 +157,21 @@ func (kc *KegiatanController) CreateKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ READ - Mendapatkan semua kegiatan dengan filter
+// GetAllKegiatan godoc
+// @Summary      Mendapatkan semua kegiatan
+// @Description  Mendapatkan daftar semua kegiatan dengan filter dan pagination
+// @Tags         kegiatan
+// @Produce      json
+// @Param        page query int false "Halaman (default: 1)"
+// @Param        limit query int false "Limit per halaman (default: 10)"
+// @Param        search query string false "Kata kunci pencarian"
+// @Param        kategori_id query int false "Filter berdasarkan ID kategori"
+// @Param        tanggal_from query string false "Filter tanggal mulai (format: YYYY-MM-DD)"
+// @Param        tanggal_to query string false "Filter tanggal sampai (format: YYYY-MM-DD)"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Daftar kegiatan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data kegiatan"
+// @Router       /api/kegiatan [get]
 func (kc *KegiatanController) GetAllKegiatan(c *gin.Context) {
 	var kegiatan []models.Kegiatan
 
@@ -156,7 +186,7 @@ func (kc *KegiatanController) GetAllKegiatan(c *gin.Context) {
 	tanggalTo := c.Query("tanggal_to")
 	search := c.Query("search")
 
-	// Build query dengan GORM (AMAN - parameterized queries)
+	// Build query dengan GORM
 	query := kc.db.Model(&models.Kegiatan{}).Preload("KategoriKegiatan")
 
 	// Apply search filter
@@ -204,19 +234,30 @@ func (kc *KegiatanController) GetAllKegiatan(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": kegiatan,
-		// "pagination": gin.H{
-		// 	"page":  page,
-		// 	"limit": limit,
-		// 	"total": total,
-		// },
+		"pagination": gin.H{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		},
 	})
 }
 
-// ✅ READ - Mendapatkan kegiatan by ID
+// GetKegiatanByID godoc
+// @Summary      Mendapatkan kegiatan berdasarkan ID
+// @Description  Mendapatkan detail kegiatan berdasarkan ID
+// @Tags         kegiatan
+// @Produce      json
+// @Param        id   path      int  true  "ID Kegiatan"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Detail kegiatan"
+// @Failure      400  {object}  map[string]interface{}  "ID tidak valid"
+// @Failure      404  {object}  map[string]interface{}  "Kegiatan tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data kegiatan"
+// @Router       /api/kegiatan/{id} [get]
 func (kc *KegiatanController) GetKegiatanByID(c *gin.Context) {
 	id := c.Param("id")
 
-	// Validasi ID (AMAN - dikonversi ke uint)
+	// Validasi ID
 	kegiatanID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -244,11 +285,29 @@ func (kc *KegiatanController) GetKegiatanByID(c *gin.Context) {
 	})
 }
 
-// ✅ UPDATE - Mengupdate kegiatan
+// UpdateKegiatan godoc
+// @Summary      Mengupdate kegiatan
+// @Description  Mengupdate data kegiatan berdasarkan ID
+// @Tags         kegiatan
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id   path      int  true  "ID Kegiatan"
+// @Param        kegiatan_nama formData string false "Nama kegiatan"
+// @Param        kategori_kegiatan_id formData integer false "ID kategori kegiatan"
+// @Param        kegiatan_tanggal formData string false "Tanggal kegiatan (format: RFC3339)"
+// @Param        kegiatan_lokasi formData string false "Lokasi kegiatan"
+// @Param        kegiatan_pj formData string false "Penanggung jawab kegiatan"
+// @Param        kegiatan_deskripsi formData string false "Deskripsi kegiatan"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Kegiatan berhasil diupdate"
+// @Failure      400  {object}  map[string]interface{}  "Invalid request data"
+// @Failure      404  {object}  map[string]interface{}  "Kegiatan tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengupdate kegiatan"
+// @Router       /api/kegiatan/{id} [put]
 func (kc *KegiatanController) UpdateKegiatan(c *gin.Context) {
 	id := c.Param("id")
 
-	// Validasi ID (AMAN - dikonversi ke uint)
+	// Validasi ID
 	kegiatanID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -349,7 +408,7 @@ func (kc *KegiatanController) UpdateKegiatan(c *gin.Context) {
 		}
 	}
 
-	// Update fields menggunakan map (AMAN - GORM Updates dengan map)
+	// Update fields menggunakan map
 	updates := make(map[string]interface{})
 	
 	if req.KegiatanNama != "" {
@@ -395,11 +454,22 @@ func (kc *KegiatanController) UpdateKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ DELETE - Menghapus kegiatan
+// DeleteKegiatan godoc
+// @Summary      Menghapus kegiatan
+// @Description  Menghapus kegiatan berdasarkan ID
+// @Tags         kegiatan
+// @Produce      json
+// @Param        id   path      int  true  "ID Kegiatan"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Kegiatan berhasil dihapus"
+// @Failure      400  {object}  map[string]interface{}  "ID tidak valid"
+// @Failure      404  {object}  map[string]interface{}  "Kegiatan tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal menghapus kegiatan"
+// @Router       /api/kegiatan/{id} [delete]
 func (kc *KegiatanController) DeleteKegiatan(c *gin.Context) {
 	id := c.Param("id")
 
-	// Validasi ID (AMAN - dikonversi ke uint)
+	// Validasi ID
 	kegiatanID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -422,7 +492,7 @@ func (kc *KegiatanController) DeleteKegiatan(c *gin.Context) {
 		return
 	}
 
-	// Delete menggunakan GORM Delete (AMAN)
+	// Delete
 	if err := kc.db.Delete(&kegiatan).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal menghapus kegiatan",
@@ -436,13 +506,22 @@ func (kc *KegiatanController) DeleteKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ GET - Mendapatkan kegiatan mendatang
+// GetKegiatanMendatang godoc
+// @Summary      Mendapatkan kegiatan mendatang
+// @Description  Mendapatkan daftar kegiatan yang akan datang (tanggal >= hari ini)
+// @Tags         kegiatan
+// @Produce      json
+// @Param        limit query int false "Jumlah data (default: 5)"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Daftar kegiatan mendatang"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data kegiatan"
+// @Router       /api/kegiatan/mendatang [get]
 func (kc *KegiatanController) GetKegiatanMendatang(c *gin.Context) {
 	var kegiatan []models.Kegiatan
 
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "5"))
 
-	// Query kegiatan dengan tanggal >= hari ini (AMAN)
+	// Query kegiatan dengan tanggal >= hari ini
 	if err := kc.db.
 		Preload("KategoriKegiatan").
 		Where("kegiatan_tanggal >= ?", time.Now().Format("2006-01-02")).
@@ -461,7 +540,18 @@ func (kc *KegiatanController) GetKegiatanMendatang(c *gin.Context) {
 	})
 }
 
-// ✅ GET - Mendapatkan kegiatan by bulan dan tahun
+// GetKegiatanByBulanTahun godoc
+// @Summary      Mendapatkan kegiatan per bulan dan tahun
+// @Description  Mendapatkan daftar kegiatan berdasarkan bulan dan tahun tertentu
+// @Tags         kegiatan
+// @Produce      json
+// @Param        bulan   path      int  true  "Bulan (1-12)"
+// @Param        tahun   path      int  true  "Tahun (2000-2100)"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Daftar kegiatan bulanan"
+// @Failure      400  {object}  map[string]interface{}  "Parameter tidak valid"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data kegiatan"
+// @Router       /api/kegiatan/bulan/{bulan}/tahun/{tahun} [get]
 func (kc *KegiatanController) GetKegiatanByBulanTahun(c *gin.Context) {
 	bulan := c.Param("bulan")
 	tahun := c.Param("tahun")
@@ -489,7 +579,7 @@ func (kc *KegiatanController) GetKegiatanByBulanTahun(c *gin.Context) {
 
 	var kegiatan []models.Kegiatan
 
-	// Query kegiatan by bulan dan tahun (AMAN - parameterized)
+	// Query kegiatan by bulan dan tahun
 	if err := kc.db.
 		Preload("KategoriKegiatan").
 		Where("kegiatan_tanggal BETWEEN ? AND ?", awalBulan.Format("2006-01-02"), akhirBulan.Format("2006-01-02")).
@@ -509,13 +599,21 @@ func (kc *KegiatanController) GetKegiatanByBulanTahun(c *gin.Context) {
 	})
 }
 
-// ✅ GET - Statistik kegiatan per bulan
+// GetStatistikKegiatan godoc
+// @Summary      Mendapatkan statistik kegiatan
+// @Description  Mendapatkan statistik jumlah kegiatan per bulan (6 bulan terakhir)
+// @Tags         kegiatan
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Statistik kegiatan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil statistik"
+// @Router       /api/kegiatan/statistik [get]
 func (kc *KegiatanController) GetStatistikKegiatan(c *gin.Context) {
 	type StatistikBulanan struct {
-		Bulan         string `form:"bulan"`
-		Tahun         int    `form:"tahun"`
-		BulanAngka    int    `form:"bulan_angka"`
-		TotalKegiatan int    `form:"total_kegiatan"`
+		Bulan         string `json:"bulan" example:"January 2024"`
+		Tahun         int    `json:"tahun" example:"2024"`
+		BulanAngka    int    `json:"bulan_angka" example:"1"`
+		TotalKegiatan int    `json:"total_kegiatan" example:"5"`
 	}
 
 	var statistik []StatistikBulanan
@@ -531,7 +629,7 @@ func (kc *KegiatanController) GetStatistikKegiatan(c *gin.Context) {
 		awalBulan := time.Date(tahun, time.Month(bulan), 1, 0, 0, 0, 0, time.UTC)
 		akhirBulan := awalBulan.AddDate(0, 1, -1)
 
-		// Hitung total kegiatan per bulan (AMAN - parameterized query)
+		// Hitung total kegiatan per bulan
 		kc.db.Model(&models.Kegiatan{}).
 			Where("kegiatan_tanggal BETWEEN ? AND ?", awalBulan, akhirBulan).
 			Count(&total)
@@ -549,7 +647,17 @@ func (kc *KegiatanController) GetStatistikKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ GET - Pencarian kegiatan
+// SearchKegiatan godoc
+// @Summary      Mencari kegiatan
+// @Description  Mencari kegiatan berdasarkan kata kunci
+// @Tags         kegiatan
+// @Produce      json
+// @Param        q   query     string  true  "Kata kunci pencarian"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Hasil pencarian kegiatan"
+// @Failure      400  {object}  map[string]interface{}  "Parameter pencarian harus diisi"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mencari kegiatan"
+// @Router       /api/kegiatan/search [get]
 func (kc *KegiatanController) SearchKegiatan(c *gin.Context) {
 	search := strings.TrimSpace(c.Query("q"))
 
@@ -562,7 +670,7 @@ func (kc *KegiatanController) SearchKegiatan(c *gin.Context) {
 
 	var kegiatan []models.Kegiatan
 
-	// Execute search query dengan GORM (AMAN - parameterized)
+	// Execute search query
 	if err := kc.db.
 		Preload("KategoriKegiatan").
 		Where("kegiatan_nama LIKE ? OR kegiatan_lokasi LIKE ? OR kegiatan_pj LIKE ? OR kegiatan_deskripsi LIKE ?",

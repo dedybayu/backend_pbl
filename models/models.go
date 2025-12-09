@@ -309,8 +309,6 @@ type Keranjang struct {
 	UserID      uint      `gorm:"not null;index" json:"user_id"`
 	ProdukID    uint      `gorm:"not null;index" json:"produk_id"`
 	Jumlah      int       `gorm:"not null;default:1;check:jumlah > 0" json:"jumlah"`
-	HargaSatuan float64   `gorm:"type:decimal(15,2)" json:"harga_satuan"`
-	Subtotal    float64   `gorm:"type:decimal(15,2)" json:"subtotal"`
 	Status      string    `gorm:"type:enum('active','checked_out','removed');default:'active';index" json:"status"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -358,8 +356,6 @@ type DetailTransaksi struct {
 	DetailTransaksiID uint      `gorm:"primaryKey;autoIncrement" json:"detail_transaksi_id"`
 	TransaksiID       uint      `gorm:"not null;index" json:"transaksi_id"`
 	ProdukID          uint      `gorm:"not null;index" json:"produk_id"`
-	ProdukNama        string    `gorm:"size:100" json:"produk_nama"`
-	ProdukFoto        string    `gorm:"size:255" json:"produk_foto"`
 	Jumlah            int       `gorm:"not null;check:jumlah > 0" json:"jumlah"`
 	HargaSatuan       float64   `gorm:"type:decimal(15,2)" json:"harga_satuan"`
 	Subtotal          float64   `gorm:"type:decimal(15,2)" json:"subtotal"`
