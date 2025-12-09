@@ -306,14 +306,14 @@ func (pc *ProdukController) UpdateProduk(c *gin.Context) {
 		}
 
 		// Check duplicate name (exclude current)
-		var existingProduk models.Produk
-		if err := pc.db.Where("produk_nama = ? AND produk_id != ?", req.ProdukNama, produkID).
-			First(&existingProduk).Error; err == nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Produk dengan nama tersebut sudah ada",
-			})
-			return
-		}
+		// var existingProduk models.Produk
+		// if err := pc.db.Where("produk_nama = ? AND produk_id != ?", req.ProdukNama, produkID).
+		// 	First(&existingProduk).Error; err == nil {
+		// 	c.JSON(http.StatusBadRequest, gin.H{
+		// 		"error": "Produk dengan nama tersebut sudah ada",
+		// 	})
+		// 	return
+		// }
 	}
 
 	// Validasi stok jika diupdate
