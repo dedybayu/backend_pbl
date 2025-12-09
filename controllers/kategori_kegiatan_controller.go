@@ -22,14 +22,25 @@ func NewKategoriKegiatanController(db *gorm.DB) *KategoriKegiatanController {
 
 // Request structs
 type CreateKategoriKegiatanRequest struct {
-	KategoriKegiatanNama string `form:"kategori_kegiatan_nama" binding:"required"`
+	KategoriKegiatanNama string `form:"kategori_kegiatan_nama" binding:"required" example:"Bakti Sosial"`
 }
 
 type UpdateKategoriKegiatanRequest struct {
-	KategoriKegiatanNama string `form:"kategori_kegiatan_nama" binding:"required"`
+	KategoriKegiatanNama string `form:"kategori_kegiatan_nama" binding:"required" example:"Kerja Bakti"`
 }
 
-// ✅ CREATE - Membuat kategori kegiatan baru
+// CreateKategoriKegiatan godoc
+// @Summary      Membuat kategori kegiatan baru
+// @Description  Membuat kategori kegiatan baru dengan nama yang unik
+// @Tags         kategori-kegiatan
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        kategori_kegiatan_nama formData string true "Nama kategori kegiatan"
+// @Security     BearerAuth
+// @Success      201  {object}  map[string]interface{}  "Kategori kegiatan berhasil dibuat"
+// @Failure      400  {object}  map[string]interface{}  "Invalid request data"
+// @Failure      500  {object}  map[string]interface{}  "Gagal membuat kategori kegiatan"
+// @Router       /api/kategori-kegiatan [post]
 func (kc *KategoriKegiatanController) CreateKategoriKegiatan(c *gin.Context) {
 	var req CreateKategoriKegiatanRequest
 	if err := c.ShouldBind(&req); err != nil {
@@ -59,7 +70,7 @@ func (kc *KategoriKegiatanController) CreateKategoriKegiatan(c *gin.Context) {
 		return
 	}
 
-	// Check if kategori dengan nama yang sama sudah ada (AMAN - menggunakan GORM Where dengan parameter)
+	// Check if kategori dengan nama yang sama sudah ada
 	var existingKategori models.KategoriKegiatan
 	if err := kc.db.Where("kategori_kegiatan_nama = ?", req.KategoriKegiatanNama).First(&existingKategori).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -89,36 +100,33 @@ func (kc *KategoriKegiatanController) CreateKategoriKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ READ - Mendapatkan semua kategori kegiatan
+// GetAllKategoriKegiatan godoc
+// @Summary      Mendapatkan semua kategori kegiatan
+// @Description  Mendapatkan daftar semua kategori kegiatan tanpa pagination limit
+// @Tags         kategori-kegiatan
+// @Produce      json
+// @Param        search query string false "Kata kunci pencarian"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Daftar kategori kegiatan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data kategori kegiatan"
+// @Router       /api/kategori-kegiatan [get]
 func (kc *KategoriKegiatanController) GetAllKategoriKegiatan(c *gin.Context) {
 	var kategori []models.KategoriKegiatan
 
-	// Pagination parameters (AMAN - dikonversi ke integer)
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset := (page - 1) * limit
-
-	// Search parameter (AMAN - digunakan sebagai parameter dalam Where)
+	// Search
 	search := strings.TrimSpace(c.Query("search"))
 
-	// Build query dengan GORM (AMAN - parameterized queries)
 	query := kc.db.Model(&models.KategoriKegiatan{})
 
-	// Apply search filter jika ada
 	if search != "" {
 		query = query.Where("kategori_kegiatan_nama LIKE ?", "%"+search+"%")
 	}
 
-	// Get total count for pagination
-	var total int64
-	query.Count(&total)
-
-	// Execute query dengan preload kegiatan dan pagination
-	if err := query.Preload("Kegiatans").
-		Offset(offset).
-		// Limit(limit).
+	// Tidak ada pagination limit, hanya order by
+	if err := query.
 		Order("created_at DESC").
 		Find(&kategori).Error; err != nil {
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal mengambil data kategori kegiatan",
 		})
@@ -127,19 +135,26 @@ func (kc *KategoriKegiatanController) GetAllKategoriKegiatan(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": kategori,
-		// "pagination": gin.H{
-		// 	"page":  page,
-		// 	"limit": limit,
-		// 	"total": total,
-		// },
+		"total": len(kategori),
 	})
 }
 
-// ✅ READ - Mendapatkan kategori kegiatan by ID (AMAN - GORM First dengan ID)
+// GetKategoriKegiatanByID godoc
+// @Summary      Mendapatkan kategori kegiatan berdasarkan ID
+// @Description  Mendapatkan detail kategori kegiatan beserta daftar kegiatan terkait
+// @Tags         kategori-kegiatan
+// @Produce      json
+// @Param        id   path      int  true  "ID Kategori Kegiatan"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Detail kategori kegiatan"
+// @Failure      400  {object}  map[string]interface{}  "ID tidak valid"
+// @Failure      404  {object}  map[string]interface{}  "Kategori kegiatan tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data kategori kegiatan"
+// @Router       /api/kategori-kegiatan/{id} [get]
 func (kc *KategoriKegiatanController) GetKategoriKegiatanByID(c *gin.Context) {
 	id := c.Param("id")
 
-	// Validasi ID (AMAN - dikonversi ke uint)
+	// Validasi ID
 	kategoriID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -167,11 +182,24 @@ func (kc *KategoriKegiatanController) GetKategoriKegiatanByID(c *gin.Context) {
 	})
 }
 
-// ✅ UPDATE - Mengupdate kategori kegiatan
+// UpdateKategoriKegiatan godoc
+// @Summary      Mengupdate kategori kegiatan
+// @Description  Mengupdate nama kategori kegiatan berdasarkan ID
+// @Tags         kategori-kegiatan
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id   path      int  true  "ID Kategori Kegiatan"
+// @Param        kategori_kegiatan_nama formData string true "Nama kategori kegiatan baru"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Kategori kegiatan berhasil diupdate"
+// @Failure      400  {object}  map[string]interface{}  "Invalid request data"
+// @Failure      404  {object}  map[string]interface{}  "Kategori kegiatan tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengupdate kategori kegiatan"
+// @Router       /api/kategori-kegiatan/{id} [put]
 func (kc *KategoriKegiatanController) UpdateKategoriKegiatan(c *gin.Context) {
 	id := c.Param("id")
 
-	// Validasi ID (AMAN - dikonversi ke uint)
+	// Validasi ID
 	kategoriID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -222,7 +250,7 @@ func (kc *KategoriKegiatanController) UpdateKategoriKegiatan(c *gin.Context) {
 		return
 	}
 
-	// Check if kategori dengan nama yang sama sudah ada (exclude current) - AMAN
+	// Check if kategori dengan nama yang sama sudah ada (exclude current)
 	var existingKategori models.KategoriKegiatan
 	if err := kc.db.Where("kategori_kegiatan_nama = ? AND kategori_kegiatan_id != ?", req.KategoriKegiatanNama, kategoriID).First(&existingKategori).Error; err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -231,7 +259,7 @@ func (kc *KategoriKegiatanController) UpdateKategoriKegiatan(c *gin.Context) {
 		return
 	}
 
-	// Update kategori menggunakan GORM Save (AMAN)
+	// Update kategori
 	kategori.KategoriKegiatanNama = req.KategoriKegiatanNama
 	kategori.UpdatedAt = time.Now()
 
@@ -257,11 +285,22 @@ func (kc *KategoriKegiatanController) UpdateKategoriKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ DELETE - Menghapus kategori kegiatan
+// DeleteKategoriKegiatan godoc
+// @Summary      Menghapus kategori kegiatan
+// @Description  Menghapus kategori kegiatan berdasarkan ID, hanya jika tidak memiliki kegiatan terkait
+// @Tags         kategori-kegiatan
+// @Produce      json
+// @Param        id   path      int  true  "ID Kategori Kegiatan"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Kategori kegiatan berhasil dihapus"
+// @Failure      400  {object}  map[string]interface{}  "Tidak dapat menghapus kategori yang memiliki kegiatan"
+// @Failure      404  {object}  map[string]interface{}  "Kategori kegiatan tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal menghapus kategori kegiatan"
+// @Router       /api/kategori-kegiatan/{id} [delete]
 func (kc *KategoriKegiatanController) DeleteKategoriKegiatan(c *gin.Context) {
 	id := c.Param("id")
 
-	// Validasi ID (AMAN - dikonversi ke uint)
+	// Validasi ID
 	kategoriID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -295,7 +334,7 @@ func (kc *KategoriKegiatanController) DeleteKategoriKegiatan(c *gin.Context) {
 		return
 	}
 
-	// Delete menggunakan GORM Delete (AMAN)
+	// Delete
 	if err := kc.db.Delete(&kategori).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Gagal menghapus kategori kegiatan",
@@ -309,7 +348,17 @@ func (kc *KategoriKegiatanController) DeleteKategoriKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ GET - Search kategori kegiatan by nama (AMAN - parameterized query)
+// SearchKategoriKegiatan godoc
+// @Summary      Mencari kategori kegiatan
+// @Description  Mencari kategori kegiatan berdasarkan nama
+// @Tags         kategori-kegiatan
+// @Produce      json
+// @Param        q   query     string  true  "Kata kunci pencarian"
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Hasil pencarian kategori kegiatan"
+// @Failure      400  {object}  map[string]interface{}  "Parameter pencarian harus diisi"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mencari kategori kegiatan"
+// @Router       /api/kategori-kegiatan/search [get]
 func (kc *KategoriKegiatanController) SearchKategoriKegiatan(c *gin.Context) {
 	search := strings.TrimSpace(c.Query("q"))
 
@@ -322,11 +371,10 @@ func (kc *KategoriKegiatanController) SearchKategoriKegiatan(c *gin.Context) {
 
 	var kategori []models.KategoriKegiatan
 
-	// Execute search query dengan GORM (AMAN - parameterized)
+	// Execute search query
 	if err := kc.db.
 		Where("kategori_kegiatan_nama LIKE ?", "%"+search+"%").
 		Preload("Kegiatans").
-		Limit(20).
 		Find(&kategori).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal mencari kategori kegiatan",
@@ -341,7 +389,15 @@ func (kc *KategoriKegiatanController) SearchKategoriKegiatan(c *gin.Context) {
 	})
 }
 
-// ✅ GET - Mendapatkan kategori kegiatan dengan statistik (AMAN - menggunakan GORM Model dan Joins)
+// GetKategoriKegiatanWithStats godoc
+// @Summary      Mendapatkan kategori kegiatan dengan statistik
+// @Description  Mendapatkan kategori kegiatan beserta jumlah kegiatan di setiap kategori
+// @Tags         kategori-kegiatan
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Kategori kegiatan dengan statistik"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil statistik kategori kegiatan"
+// @Router       /api/kategori-kegiatan/stats [get]
 func (kc *KategoriKegiatanController) GetKategoriKegiatanWithStats(c *gin.Context) {
 	type KategoriWithStats struct {
 		models.KategoriKegiatan
@@ -350,7 +406,7 @@ func (kc *KategoriKegiatanController) GetKategoriKegiatanWithStats(c *gin.Contex
 
 	var results []KategoriWithStats
 
-	// Query aman menggunakan GORM Joins
+	// Query menggunakan GORM Joins
 	if err := kc.db.
 		Model(&models.KategoriKegiatan{}).
 		Select("kategori_kegiatan.*, COUNT(kegiatans.kegiatan_id) as total_kegiatan").
@@ -369,14 +425,22 @@ func (kc *KategoriKegiatanController) GetKategoriKegiatanWithStats(c *gin.Contex
 	})
 }
 
-// ✅ GET - Mendapatkan kategori kegiatan dropdown (simple list)
+// GetKategoriKegiatanDropdown godoc
+// @Summary      Mendapatkan dropdown kategori kegiatan
+// @Description  Mendapatkan daftar kategori kegiatan sederhana untuk dropdown/select
+// @Tags         kategori-kegiatan
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Dropdown kategori kegiatan"
+// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data dropdown"
+// @Router       /api/kategori-kegiatan/dropdown [get]
 func (kc *KategoriKegiatanController) GetKategoriKegiatanDropdown(c *gin.Context) {
 	var kategori []struct {
 		KategoriKegiatanID   uint   `json:"kategori_kegiatan_id"`
 		KategoriKegiatanNama string `json:"kategori_kegiatan_nama"`
 	}
 
-	// Query aman - hanya mengambil field yang diperlukan
+	// Query - hanya mengambil field yang diperlukan
 	if err := kc.db.
 		Model(&models.KategoriKegiatan{}).
 		Select("kategori_kegiatan_id, kategori_kegiatan_nama").

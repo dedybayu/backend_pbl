@@ -206,37 +206,24 @@ definitions:
         $ref: '#/definitions/models.Agama'
       agama_id:
         type: integer
-      agamas:
-        items:
-          $ref: '#/definitions/models.Agama'
-        type: array
       created_at:
         type: string
       keluarga:
-        $ref: '#/definitions/models.Keluarga'
+        allOf:
+        - $ref: '#/definitions/models.Keluarga'
+        description: Relasi many-to-one
       keluarga_id:
         type: integer
-      keluargas:
-        items:
-          $ref: '#/definitions/models.Keluarga'
-        type: array
       pekerjaan:
         $ref: '#/definitions/models.Pekerjaan'
       pekerjaan_id:
         type: integer
-      pekerjaans:
-        items:
-          $ref: '#/definitions/models.Pekerjaan'
-        type: array
       rumah:
         $ref: '#/definitions/models.Rumah'
       rumah_id:
         type: integer
-      rumahs:
-        items:
-          $ref: '#/definitions/models.Rumah'
-        type: array
-      tagihanIurans:
+      tagihan_iurans:
+        description: Relasi one-to-many
         items:
           $ref: '#/definitions/models.TagihanIuran'
         type: array
@@ -268,6 +255,257 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/kategori-kegiatan:
+    get:
+      description: Mendapatkan daftar semua kategori kegiatan tanpa pagination limit
+      parameters:
+      - description: Kata kunci pencarian
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan semua kategori kegiatan
+      tags:
+      - kategori-kegiatan
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membuat kategori kegiatan baru dengan nama yang unik
+      parameters:
+      - description: Nama kategori kegiatan
+        in: formData
+        name: kategori_kegiatan_nama
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Kategori kegiatan berhasil dibuat
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal membuat kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Membuat kategori kegiatan baru
+      tags:
+      - kategori-kegiatan
+  /api/kategori-kegiatan/{id}:
+    delete:
+      description: Menghapus kategori kegiatan berdasarkan ID, hanya jika tidak memiliki
+        kegiatan terkait
+      parameters:
+      - description: ID Kategori Kegiatan
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kategori kegiatan berhasil dihapus
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Tidak dapat menghapus kategori yang memiliki kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Kategori kegiatan tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menghapus kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Menghapus kategori kegiatan
+      tags:
+      - kategori-kegiatan
+    get:
+      description: Mendapatkan detail kategori kegiatan beserta daftar kegiatan terkait
+      parameters:
+      - description: ID Kategori Kegiatan
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Kategori kegiatan tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan kategori kegiatan berdasarkan ID
+      tags:
+      - kategori-kegiatan
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate nama kategori kegiatan berdasarkan ID
+      parameters:
+      - description: ID Kategori Kegiatan
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nama kategori kegiatan baru
+        in: formData
+        name: kategori_kegiatan_nama
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kategori kegiatan berhasil diupdate
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Kategori kegiatan tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengupdate kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mengupdate kategori kegiatan
+      tags:
+      - kategori-kegiatan
+  /api/kategori-kegiatan/dropdown:
+    get:
+      description: Mendapatkan daftar kategori kegiatan sederhana untuk dropdown/select
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dropdown kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data dropdown
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan dropdown kategori kegiatan
+      tags:
+      - kategori-kegiatan
+  /api/kategori-kegiatan/search:
+    get:
+      description: Mencari kategori kegiatan berdasarkan nama
+      parameters:
+      - description: Kata kunci pencarian
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hasil pencarian kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parameter pencarian harus diisi
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mencari kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mencari kategori kegiatan
+      tags:
+      - kategori-kegiatan
+  /api/kategori-kegiatan/stats:
+    get:
+      description: Mendapatkan kategori kegiatan beserta jumlah kegiatan di setiap
+        kategori
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kategori kegiatan dengan statistik
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil statistik kategori kegiatan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan kategori kegiatan dengan statistik
+      tags:
+      - kategori-kegiatan
   /api/produk:
     get:
       description: Mendapatkan semua produk

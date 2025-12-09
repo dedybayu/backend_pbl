@@ -4,6 +4,386 @@
         "contact": {}
     },
     "paths": {
+        "/api/kategori-kegiatan": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan daftar semua kategori kegiatan tanpa pagination limit",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Mendapatkan semua kategori kegiatan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Kata kunci pencarian",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Membuat kategori kegiatan baru dengan nama yang unik",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Membuat kategori kegiatan baru",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Nama kategori kegiatan",
+                        "name": "kategori_kegiatan_nama",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Kategori kegiatan berhasil dibuat",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal membuat kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kategori-kegiatan/dropdown": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan daftar kategori kegiatan sederhana untuk dropdown/select",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Mendapatkan dropdown kategori kegiatan",
+                "responses": {
+                    "200": {
+                        "description": "Dropdown kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data dropdown",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kategori-kegiatan/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mencari kategori kegiatan berdasarkan nama",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Mencari kategori kegiatan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Kata kunci pencarian",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hasil pencarian kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Parameter pencarian harus diisi",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mencari kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kategori-kegiatan/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan kategori kegiatan beserta jumlah kegiatan di setiap kategori",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Mendapatkan kategori kegiatan dengan statistik",
+                "responses": {
+                    "200": {
+                        "description": "Kategori kegiatan dengan statistik",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil statistik kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kategori-kegiatan/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan detail kategori kegiatan beserta daftar kegiatan terkait",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Mendapatkan kategori kegiatan berdasarkan ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Kategori Kegiatan",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Kategori kegiatan tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengupdate nama kategori kegiatan berdasarkan ID",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Mengupdate kategori kegiatan",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Kategori Kegiatan",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nama kategori kegiatan baru",
+                        "name": "kategori_kegiatan_nama",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Kategori kegiatan berhasil diupdate",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Kategori kegiatan tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengupdate kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus kategori kegiatan berdasarkan ID, hanya jika tidak memiliki kegiatan terkait",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kategori-kegiatan"
+                ],
+                "summary": "Menghapus kategori kegiatan",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Kategori Kegiatan",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Kategori kegiatan berhasil dihapus",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Tidak dapat menghapus kategori yang memiliki kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Kategori kegiatan tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menghapus kategori kegiatan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/produk": {
             "get": {
                 "description": "Mendapatkan semua produk",
@@ -882,26 +1262,19 @@
                 "agama_id": {
                     "type": "integer"
                 },
-                "agamas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Agama"
-                    }
-                },
                 "created_at": {
                     "type": "string"
                 },
                 "keluarga": {
-                    "$ref": "#/definitions/models.Keluarga"
+                    "description": "Relasi many-to-one",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Keluarga"
+                        }
+                    ]
                 },
                 "keluarga_id": {
                     "type": "integer"
-                },
-                "keluargas": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Keluarga"
-                    }
                 },
                 "pekerjaan": {
                     "$ref": "#/definitions/models.Pekerjaan"
@@ -909,25 +1282,14 @@
                 "pekerjaan_id": {
                     "type": "integer"
                 },
-                "pekerjaans": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Pekerjaan"
-                    }
-                },
                 "rumah": {
                     "$ref": "#/definitions/models.Rumah"
                 },
                 "rumah_id": {
                     "type": "integer"
                 },
-                "rumahs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Rumah"
-                    }
-                },
-                "tagihanIurans": {
+                "tagihan_iurans": {
+                    "description": "Relasi one-to-many",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.TagihanIuran"

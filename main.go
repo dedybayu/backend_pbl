@@ -91,6 +91,7 @@ func main() {
 	keluargaController := controllers.NewKeluargaController(db)
 	wargaController := controllers.NewWargaController(db)
 	rumahController := controllers.NewRumahController(db)
+	kategoriKegiatanController := controllers.NewKategoriKegiatanController(db)
 	kegiatanController := controllers.NewKegiatanController(db)
 	mutasiKeluargaController := controllers.NewMutasiKeluargaController(db)
 	broadcastController := controllers.NewBroadcastController(db)
@@ -128,6 +129,7 @@ func main() {
 		KeluargaController:            keluargaController,
 		WargaController:               wargaController,
 		RumahController:               rumahController,
+		KategoriKegiatanController:    kategoriKegiatanController,
 		KegiatanController:            kegiatanController,
 		BroadcastController:           broadcastController,
 		MutasiKeluargaController:      mutasiKeluargaController,
