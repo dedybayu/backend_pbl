@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
-	// "strings"
 	"time"
 
 	"rt-management/models"
@@ -20,16 +20,17 @@ func NewKeranjangController(db *gorm.DB) *KeranjangController {
 	return &KeranjangController{db: db}
 }
 
-// Request structs
-type CreateKeranjangRequest struct {
-	ProdukID uint `json:"produk_id" binding:"required" example:"1"`
-	Jumlah   int  `json:"jumlah" binding:"required,min=1" example:"2"`
+// Form data structs
+type CreateKeranjangForm struct {
+	ProdukID uint `form:"produk_id" binding:"required"`
+	Jumlah   int  `form:"jumlah" binding:"required,min=1"`
 }
 
-type UpdateKeranjangRequest struct {
-	Jumlah int `json:"jumlah" binding:"required,min=1" example:"3"`
+type UpdateKeranjangForm struct {
+	Jumlah int `form:"jumlah" binding:"required,min=1"`
 }
 
+// Response structs (tetap sama)
 type KeranjangItemResponse struct {
 	KeranjangID  uint          `json:"keranjang_id" example:"1"`
 	UserID       uint          `json:"user_id" example:"1"`
@@ -51,31 +52,35 @@ type CartSummaryResponse struct {
 }
 
 // AddToCart godoc
-// @Summary      Tambah produk ke keranjang
-// @Description  Menambahkan produk ke keranjang belanja user
+// @Summary      Tambah produk ke keranjang (Form Data)
+// @Description  Menambahkan produk ke keranjang belanja user menggunakan form data
 // @Tags         keranjang
-// @Accept       json
+// @Accept       multipart/form-data
 // @Produce      json
-// @Param        request body CreateKeranjangRequest true "Data produk yang akan ditambahkan"
+// @Param        produk_id formData int true "ID Produk" minimum(1)
+// @Param        jumlah formData int true "Jumlah Produk" minimum(1)
 // @Security     BearerAuth
 // @Success      201  {object}  map[string]interface{}  "Produk berhasil ditambahkan ke keranjang"
-// @Failure      400  {object}  map[string]interface{}  "Invalid request data"
+// @Failure      400  {object}  map[string]interface{}  "Invalid form data"
 // @Failure      404  {object}  map[string]interface{}  "Produk tidak ditemukan"
 // @Failure      409  {object}  map[string]interface{}  "Stok produk tidak mencukupi"
 // @Failure      500  {object}  map[string]interface{}  "Gagal menambahkan ke keranjang"
 // @Router       /api/keranjang [post]
 func (kc *KeranjangController) AddToCart(c *gin.Context) {
-	var req CreateKeranjangRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var form CreateKeranjangForm
+	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
+			"error":   "Invalid form data",
 			"details": err.Error(),
 		})
 		return
 	}
 
+	// Debug log
+	fmt.Printf("Form data received - ProdukID: %d, Jumlah: %d\n", form.ProdukID, form.Jumlah)
+
 	// Validasi jumlah
-	if req.Jumlah <= 0 {
+	if form.Jumlah <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Jumlah harus lebih dari 0",
 		})
@@ -91,7 +96,7 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 
 	// Cek apakah produk exists
 	var produk models.Produk
-	if err := kc.db.First(&produk, req.ProdukID).Error; err != nil {
+	if err := kc.db.First(&produk, form.ProdukID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Produk tidak ditemukan",
@@ -105,12 +110,12 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	}
 
 	// Cek stok produk
-	if produk.ProdukStok < req.Jumlah {
+	if produk.ProdukStok < form.Jumlah {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": "Stok produk tidak mencukupi",
 			"details": gin.H{
 				"stok_tersedia": produk.ProdukStok,
-				"jumlah_diminta": req.Jumlah,
+				"jumlah_diminta": form.Jumlah,
 			},
 		})
 		return
@@ -118,11 +123,11 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 
 	// Cek apakah produk sudah ada di keranjang user dengan status active
 	var existingKeranjang models.Keranjang
-	err := kc.db.Where("user_id = ? AND produk_id = ? AND status = 'active'", userID, req.ProdukID).First(&existingKeranjang).Error
+	err := kc.db.Where("user_id = ? AND produk_id = ? AND status = 'active'", userID, form.ProdukID).First(&existingKeranjang).Error
 	
 	if err == nil {
 		// Jika sudah ada, update jumlah
-		newJumlah := existingKeranjang.Jumlah + req.Jumlah
+		newJumlah := existingKeranjang.Jumlah + form.Jumlah
 		
 		// Validasi stok untuk jumlah baru
 		if produk.ProdukStok < newJumlah {
@@ -177,8 +182,8 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	// Jika belum ada, buat keranjang baru
 	keranjang := models.Keranjang{
 		UserID:    userID.(uint),
-		ProdukID:  req.ProdukID,
-		Jumlah:    req.Jumlah,
+		ProdukID:  form.ProdukID,
+		Jumlah:    form.Jumlah,
 		Status:    "active",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -221,15 +226,7 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	})
 }
 
-// GetCartItems godoc
-// @Summary      Dapatkan item keranjang
-// @Description  Mendapatkan semua item di keranjang user dengan status active
-// @Tags         keranjang
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  CartSummaryResponse  "Daftar item keranjang"
-// @Failure      500  {object}  map[string]interface{}  "Gagal mengambil data keranjang"
-// @Router       /api/keranjang [get]
+// GetCartItems (tetap sama, tidak perlu perubahan)
 func (kc *KeranjangController) GetCartItems(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
@@ -293,16 +290,16 @@ func (kc *KeranjangController) GetCartItems(c *gin.Context) {
 }
 
 // UpdateCartItem godoc
-// @Summary      Update item keranjang
-// @Description  Mengupdate jumlah item di keranjang
+// @Summary      Update item keranjang (Form Data)
+// @Description  Mengupdate jumlah item di keranjang menggunakan form data
 // @Tags         keranjang
-// @Accept       json
+// @Accept       multipart/form-data
 // @Produce      json
 // @Param        id   path      int  true  "ID Keranjang"
-// @Param        request body UpdateKeranjangRequest true "Data update jumlah"
+// @Param        jumlah formData int true "Jumlah baru" minimum(1)
 // @Security     BearerAuth
 // @Success      200  {object}  map[string]interface{}  "Item keranjang berhasil diupdate"
-// @Failure      400  {object}  map[string]interface{}  "Invalid request data"
+// @Failure      400  {object}  map[string]interface{}  "Invalid form data"
 // @Failure      404  {object}  map[string]interface{}  "Item keranjang tidak ditemukan"
 // @Failure      409  {object}  map[string]interface{}  "Stok produk tidak mencukupi"
 // @Failure      500  {object}  map[string]interface{}  "Gagal mengupdate item keranjang"
@@ -319,17 +316,17 @@ func (kc *KeranjangController) UpdateCartItem(c *gin.Context) {
 		return
 	}
 
-	var req UpdateKeranjangRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var form UpdateKeranjangForm
+	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
+			"error":   "Invalid form data",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	// Validasi jumlah
-	if req.Jumlah <= 0 {
+	if form.Jumlah <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Jumlah harus lebih dari 0",
 		})
@@ -378,19 +375,19 @@ func (kc *KeranjangController) UpdateCartItem(c *gin.Context) {
 	}
 
 	// Cek stok produk
-	if keranjang.Produk.ProdukStok < req.Jumlah {
+	if keranjang.Produk.ProdukStok < form.Jumlah {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": "Stok produk tidak mencukupi",
 			"details": gin.H{
 				"stok_tersedia": keranjang.Produk.ProdukStok,
-				"jumlah_diminta": req.Jumlah,
+				"jumlah_diminta": form.Jumlah,
 			},
 		})
 		return
 	}
 
 	// Update keranjang
-	keranjang.Jumlah = req.Jumlah
+	keranjang.Jumlah = form.Jumlah
 	keranjang.UpdatedAt = time.Now()
 
 	if err := kc.db.Save(&keranjang).Error; err != nil {
@@ -425,18 +422,7 @@ func (kc *KeranjangController) UpdateCartItem(c *gin.Context) {
 	})
 }
 
-// RemoveFromCart godoc
-// @Summary      Hapus item dari keranjang
-// @Description  Menghapus item dari keranjang (soft delete dengan mengubah status)
-// @Tags         keranjang
-// @Produce      json
-// @Param        id   path      int  true  "ID Keranjang"
-// @Security     BearerAuth
-// @Success      200  {object}  map[string]interface{}  "Item berhasil dihapus dari keranjang"
-// @Failure      400  {object}  map[string]interface{}  "ID tidak valid"
-// @Failure      404  {object}  map[string]interface{}  "Item keranjang tidak ditemukan"
-// @Failure      500  {object}  map[string]interface{}  "Gagal menghapus item"
-// @Router       /api/keranjang/{id} [delete]
+// RemoveFromCart (tetap sama)
 func (kc *KeranjangController) RemoveFromCart(c *gin.Context) {
 	id := c.Param("id")
 
@@ -496,15 +482,7 @@ func (kc *KeranjangController) RemoveFromCart(c *gin.Context) {
 	})
 }
 
-// ClearCart godoc
-// @Summary      Kosongkan keranjang
-// @Description  Menghapus semua item dari keranjang user
-// @Tags         keranjang
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  map[string]interface{}  "Keranjang berhasil dikosongkan"
-// @Failure      500  {object}  map[string]interface{}  "Gagal mengosongkan keranjang"
-// @Router       /api/keranjang/clear [delete]
+// ClearCart (tetap sama)
 func (kc *KeranjangController) ClearCart(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
@@ -535,15 +513,7 @@ func (kc *KeranjangController) ClearCart(c *gin.Context) {
 	})
 }
 
-// GetCartCount godoc
-// @Summary      Hitung jumlah item keranjang
-// @Description  Mendapatkan jumlah total item di keranjang user
-// @Tags         keranjang
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  map[string]interface{}  "Jumlah item keranjang"
-// @Failure      500  {object}  map[string]interface{}  "Gagal menghitung jumlah item"
-// @Router       /api/keranjang/count [get]
+// GetCartCount (tetap sama)
 func (kc *KeranjangController) GetCartCount(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
@@ -584,16 +554,7 @@ func (kc *KeranjangController) GetCartCount(c *gin.Context) {
 	})
 }
 
-// CheckoutPreview godoc
-// @Summary      Preview checkout
-// @Description  Mendapatkan ringkasan untuk checkout dari keranjang
-// @Tags         keranjang
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  map[string]interface{}  "Ringkasan checkout"
-// @Failure      400  {object}  map[string]interface{}  "Keranjang kosong"
-// @Failure      500  {object}  map[string]interface{}  "Gagal membuat preview checkout"
-// @Router       /api/keranjang/checkout-preview [get]
+// CheckoutPreview (tetap sama)
 func (kc *KeranjangController) CheckoutPreview(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
