@@ -1487,6 +1487,146 @@ paths:
       summary: Produk terbaru
       tags:
       - Produk
+  /api/rumah/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data rumah berdasarkan ID
+      parameters:
+      - description: ID Rumah
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rumah berhasil dihapus
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Rumah tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menghapus rumah
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Menghapus data rumah
+      tags:
+      - rumah
+    get:
+      consumes:
+      - application/json
+      description: Mengambil detail rumah termasuk data warga berdasarkan ID rumah
+      parameters:
+      - description: ID Rumah
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail rumah
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Rumah tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mengambil data rumah berdasarkan ID
+      tags:
+      - rumah
+    put:
+      consumes:
+      - multipart/form-data
+      description: Memperbarui informasi rumah berdasarkan ID
+      parameters:
+      - description: ID Rumah
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Alamat rumah
+        in: formData
+        name: rumah_alamat
+        type: string
+      - description: Status rumah
+        enum:
+        - tersedia
+        - ditempati
+        in: formData
+        name: rumah_status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rumah berhasil diperbarui
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Data request tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Rumah tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal memperbarui rumah
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Memperbarui data rumah
+      tags:
+      - rumah
+  /api/rumah/status/{status}:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar rumah yang difilter berdasarkan status
+      parameters:
+      - description: Status rumah
+        enum:
+        - tersedia
+        - ditempati
+        in: path
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Daftar rumah berdasarkan status
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Status tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data rumah
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mengambil data rumah berdasarkan status
+      tags:
+      - rumah
   /api/transaksi:
     get:
       description: Mendapatkan daftar semua transaksi dengan filter
@@ -1972,28 +2112,30 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get list of houses with optional filtering by status or warga ID
+      description: Mengambil daftar rumah dengan filter opsional berdasarkan status
+        atau ID warga
       parameters:
-      - description: Page number (disabled by default)
+      - description: Nomor halaman (dinonaktifkan secara default)
         in: query
         name: page
         type: integer
-      - description: Items per page (disabled by default, use 0 for no limit)
+      - description: Jumlah item per halaman (dinonaktifkan secara default, gunakan
+          0 untuk tanpa batas)
         in: query
         name: limit
         type: integer
-      - description: Filter by status
+      - description: Filter berdasarkan status
         enum:
         - tersedia
         - ditempati
         in: query
         name: status
         type: string
-      - description: Filter by warga ID
+      - description: Filter berdasarkan ID warga
         in: query
         name: warga_id
         type: string
-      - description: Get all records without pagination
+      - description: Ambil semua data tanpa pagination
         in: query
         name: all
         type: boolean
@@ -2001,29 +2143,29 @@ paths:
       - application/json
       responses:
         "200":
-          description: List of houses
+          description: Daftar rumah
           schema:
             additionalProperties: true
             type: object
         "500":
-          description: Failed to get houses
+          description: Gagal mengambil data rumah
           schema:
             additionalProperties: true
             type: object
-      summary: Get all houses
+      summary: Mengambil semua data rumah
       tags:
-      - houses
+      - rumah
     post:
       consumes:
       - multipart/form-data
-      description: Create a new house with address and status
+      description: Membuat data rumah baru dengan alamat dan status
       parameters:
-      - description: House address
+      - description: Alamat rumah
         in: formData
         name: rumah_alamat
         required: true
         type: string
-      - description: House status
+      - description: Status rumah
         enum:
         - tersedia
         - ditempati
@@ -2034,161 +2176,21 @@ paths:
       - application/json
       responses:
         "201":
-          description: House created successfully
+          description: Rumah berhasil dibuat
           schema:
             additionalProperties: true
             type: object
         "400":
-          description: Invalid request data
+          description: Data request tidak valid
           schema:
             additionalProperties: true
             type: object
         "500":
-          description: Failed to create house
+          description: Gagal membuat rumah
           schema:
             additionalProperties: true
             type: object
-      summary: Create a new house
+      summary: Membuat rumah baru
       tags:
-      - houses
-  /rumah/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete house by ID
-      parameters:
-      - description: House ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: House deleted successfully
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: House not found
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Failed to delete house
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Delete a house
-      tags:
-      - houses
-    get:
-      consumes:
-      - application/json
-      description: Get house details including warga data by house ID
-      parameters:
-      - description: House ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: House details
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: House not found
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Get house by ID
-      tags:
-      - houses
-    put:
-      consumes:
-      - multipart/form-data
-      description: Update house information by ID
-      parameters:
-      - description: House ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: House address
-        in: formData
-        name: rumah_alamat
-        type: string
-      - description: House status
-        enum:
-        - tersedia
-        - ditempati
-        in: formData
-        name: rumah_status
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: House updated successfully
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid request data
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: House not found
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Failed to update house
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Update a house
-      tags:
-      - houses
-  /rumah/status/{status}:
-    get:
-      consumes:
-      - application/json
-      description: Get list of houses filtered by status
-      parameters:
-      - description: House status
-        enum:
-        - tersedia
-        - ditempati
-        in: path
-        name: status
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of houses by status
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Invalid status
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Failed to get houses
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Get houses by status
-      tags:
-      - houses
+      - rumah
 swagger: "2.0"

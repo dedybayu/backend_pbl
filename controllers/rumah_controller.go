@@ -31,23 +31,23 @@ type UpdateRumahRequest struct {
 	RumahStatus string `form:"rumah_status"`
 }
 
-// CreateRumah creates a new house
-// @Summary      Create a new house
-// @Description  Create a new house with address and status
-// @Tags         houses
+// CreateRumah membuat data rumah baru
+// @Summary      Membuat rumah baru
+// @Description  Membuat data rumah baru dengan alamat dan status
+// @Tags         rumah
 // @Accept       multipart/form-data
 // @Produce      json
-// @Param        rumah_alamat formData string true "House address"
-// @Param        rumah_status formData string false "House status" Enums(tersedia, ditempati)
-// @Success      201 {object} map[string]interface{} "House created successfully"
-// @Failure      400 {object} map[string]interface{} "Invalid request data"
-// @Failure      500 {object} map[string]interface{} "Failed to create house"
+// @Param        rumah_alamat formData string true "Alamat rumah"
+// @Param        rumah_status formData string false "Status rumah" Enums(tersedia, ditempati)
+// @Success      201 {object} map[string]interface{} "Rumah berhasil dibuat"
+// @Failure      400 {object} map[string]interface{} "Data request tidak valid"
+// @Failure      500 {object} map[string]interface{} "Gagal membuat rumah"
 // @Router       /rumah [post]
 func (rc *RumahController) CreateRumah(c *gin.Context) {
 	var req CreateRumahRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
+			"error":   "Data request tidak valid",
 			"details": err.Error(),
 		})
 		return
@@ -93,19 +93,19 @@ func (rc *RumahController) CreateRumah(c *gin.Context) {
 	})
 }
 
-// GetAllRumah retrieves all houses with optional filtering
-// @Summary      Get all houses
-// @Description  Get list of houses with optional filtering by status or warga ID
-// @Tags         houses
+// GetAllRumah mengambil semua data rumah dengan filter opsional
+// @Summary      Mengambil semua data rumah
+// @Description  Mengambil daftar rumah dengan filter opsional berdasarkan status atau ID warga
+// @Tags         rumah
 // @Accept       json
 // @Produce      json
-// @Param        page    query int    false "Page number (disabled by default)"
-// @Param        limit   query int    false "Items per page (disabled by default, use 0 for no limit)"
-// @Param        status  query string false "Filter by status" Enums(tersedia, ditempati)
-// @Param        warga_id query string false "Filter by warga ID"
-// @Param        all     query bool   false "Get all records without pagination"
-// @Success      200 {object} map[string]interface{} "List of houses"
-// @Failure      500 {object} map[string]interface{} "Failed to get houses"
+// @Param        page    query int    false "Nomor halaman (dinonaktifkan secara default)"
+// @Param        limit   query int    false "Jumlah item per halaman (dinonaktifkan secara default, gunakan 0 untuk tanpa batas)"
+// @Param        status  query string false "Filter berdasarkan status" Enums(tersedia, ditempati)
+// @Param        warga_id query string false "Filter berdasarkan ID warga"
+// @Param        all     query bool   false "Ambil semua data tanpa pagination"
+// @Success      200 {object} map[string]interface{} "Daftar rumah"
+// @Failure      500 {object} map[string]interface{} "Gagal mengambil data rumah"
 // @Router       /rumah [get]
 func (rc *RumahController) GetAllRumah(c *gin.Context) {
 	var rumah []models.Rumah
@@ -185,22 +185,22 @@ func (rc *RumahController) GetAllRumah(c *gin.Context) {
 			"has_prev": page > 1,
 		}
 	} else {
-		response["message"] = "All records retrieved (pagination disabled)"
+		response["message"] = "Semua data berhasil diambil (pagination dinonaktifkan)"
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// GetRumahByID retrieves a house by ID
-// @Summary      Get house by ID
-// @Description  Get house details including warga data by house ID
-// @Tags         houses
+// GetRumahByID mengambil data rumah berdasarkan ID
+// @Summary      Mengambil data rumah berdasarkan ID
+// @Description  Mengambil detail rumah termasuk data warga berdasarkan ID rumah
+// @Tags         rumah
 // @Accept       json
 // @Produce      json
-// @Param        id path string true "House ID"
-// @Success      200 {object} map[string]interface{} "House details"
-// @Failure      404 {object} map[string]interface{} "House not found"
-// @Router       /rumah/{id} [get]
+// @Param        id path string true "ID Rumah"
+// @Success      200 {object} map[string]interface{} "Detail rumah"
+// @Failure      404 {object} map[string]interface{} "Rumah tidak ditemukan"
+// @Router       /api/rumah/{id} [get]
 func (rc *RumahController) GetRumahByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -223,20 +223,20 @@ func (rc *RumahController) GetRumahByID(c *gin.Context) {
 	})
 }
 
-// UpdateRumah updates a house by ID
-// @Summary      Update a house
-// @Description  Update house information by ID
-// @Tags         houses
+// UpdateRumah memperbarui data rumah berdasarkan ID
+// @Summary      Memperbarui data rumah
+// @Description  Memperbarui informasi rumah berdasarkan ID
+// @Tags         rumah
 // @Accept       multipart/form-data
 // @Produce      json
-// @Param        id path string true "House ID"
-// @Param        rumah_alamat formData string false "House address"
-// @Param        rumah_status formData string false "House status" Enums(tersedia, ditempati)
-// @Success      200 {object} map[string]interface{} "House updated successfully"
-// @Failure      400 {object} map[string]interface{} "Invalid request data"
-// @Failure      404 {object} map[string]interface{} "House not found"
-// @Failure      500 {object} map[string]interface{} "Failed to update house"
-// @Router       /rumah/{id} [put]
+// @Param        id path string true "ID Rumah"
+// @Param        rumah_alamat formData string false "Alamat rumah"
+// @Param        rumah_status formData string false "Status rumah" Enums(tersedia, ditempati)
+// @Success      200 {object} map[string]interface{} "Rumah berhasil diperbarui"
+// @Failure      400 {object} map[string]interface{} "Data request tidak valid"
+// @Failure      404 {object} map[string]interface{} "Rumah tidak ditemukan"
+// @Failure      500 {object} map[string]interface{} "Gagal memperbarui rumah"
+// @Router       /api/rumah/{id} [put]
 func (rc *RumahController) UpdateRumah(c *gin.Context) {
 	id := c.Param("id")
 
@@ -251,7 +251,7 @@ func (rc *RumahController) UpdateRumah(c *gin.Context) {
 	var req UpdateRumahRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid request data",
+			"error":   "Data request tidak valid",
 			"details": err.Error(),
 		})
 		return
@@ -274,29 +274,29 @@ func (rc *RumahController) UpdateRumah(c *gin.Context) {
 
 	if err := rc.db.Model(&rumah).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Gagal update rumah",
+			"error":   "Gagal memperbarui rumah",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Rumah berhasil diupdate",
+		"message": "Rumah berhasil diperbarui",
 		"data":    rumah,
 	})
 }
 
-// DeleteRumah deletes a house by ID
-// @Summary      Delete a house
-// @Description  Delete house by ID
-// @Tags         houses
+// DeleteRumah menghapus data rumah berdasarkan ID
+// @Summary      Menghapus data rumah
+// @Description  Menghapus data rumah berdasarkan ID
+// @Tags         rumah
 // @Accept       json
 // @Produce      json
-// @Param        id path string true "House ID"
-// @Success      200 {object} map[string]interface{} "House deleted successfully"
-// @Failure      404 {object} map[string]interface{} "House not found"
-// @Failure      500 {object} map[string]interface{} "Failed to delete house"
-// @Router       /rumah/{id} [delete]
+// @Param        id path string true "ID Rumah"
+// @Success      200 {object} map[string]interface{} "Rumah berhasil dihapus"
+// @Failure      404 {object} map[string]interface{} "Rumah tidak ditemukan"
+// @Failure      500 {object} map[string]interface{} "Gagal menghapus rumah"
+// @Router       /api/rumah/{id} [delete]
 func (rc *RumahController) DeleteRumah(c *gin.Context) {
 	id := c.Param("id")
 
@@ -327,17 +327,17 @@ func (rc *RumahController) DeleteRumah(c *gin.Context) {
 	})
 }
 
-// GetRumahByStatus retrieves houses by status
-// @Summary      Get houses by status
-// @Description  Get list of houses filtered by status
-// @Tags         houses
+// GetRumahByStatus mengambil data rumah berdasarkan status
+// @Summary      Mengambil data rumah berdasarkan status
+// @Description  Mengambil daftar rumah yang difilter berdasarkan status
+// @Tags         rumah
 // @Accept       json
 // @Produce      json
-// @Param        status path string true "House status" Enums(tersedia, ditempati)
-// @Success      200 {object} map[string]interface{} "List of houses by status"
-// @Failure      400 {object} map[string]interface{} "Invalid status"
-// @Failure      500 {object} map[string]interface{} "Failed to get houses"
-// @Router       /rumah/status/{status} [get]
+// @Param        status path string true "Status rumah" Enums(tersedia, ditempati)
+// @Success      200 {object} map[string]interface{} "Daftar rumah berdasarkan status"
+// @Failure      400 {object} map[string]interface{} "Status tidak valid"
+// @Failure      500 {object} map[string]interface{} "Gagal mengambil data rumah"
+// @Router       /api/rumah/status/{status} [get]
 func (rc *RumahController) GetRumahByStatus(c *gin.Context) {
 	status := c.Param("status")
 

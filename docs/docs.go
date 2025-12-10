@@ -1747,6 +1747,210 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/rumah/status/{status}": {
+            "get": {
+                "description": "Mengambil daftar rumah yang difilter berdasarkan status",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rumah"
+                ],
+                "summary": "Mengambil data rumah berdasarkan status",
+                "parameters": [
+                    {
+                        "enum": [
+                            "tersedia",
+                            "ditempati"
+                        ],
+                        "type": "string",
+                        "description": "Status rumah",
+                        "name": "status",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar rumah berdasarkan status",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Status tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data rumah",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/rumah/{id}": {
+            "get": {
+                "description": "Mengambil detail rumah termasuk data warga berdasarkan ID rumah",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rumah"
+                ],
+                "summary": "Mengambil data rumah berdasarkan ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Rumah",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail rumah",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Rumah tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Memperbarui informasi rumah berdasarkan ID",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rumah"
+                ],
+                "summary": "Memperbarui data rumah",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Rumah",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alamat rumah",
+                        "name": "rumah_alamat",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
+                            "tersedia",
+                            "ditempati"
+                        ],
+                        "type": "string",
+                        "description": "Status rumah",
+                        "name": "rumah_status",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rumah berhasil diperbarui",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Data request tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Rumah tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal memperbarui rumah",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Menghapus data rumah berdasarkan ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rumah"
+                ],
+                "summary": "Menghapus data rumah",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID Rumah",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rumah berhasil dihapus",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Rumah tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menghapus rumah",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/transaksi": {
             "get": {
                 "security": [
@@ -2474,7 +2678,7 @@ const docTemplate = `{
         },
         "/rumah": {
             "get": {
-                "description": "Get list of houses with optional filtering by status or warga ID",
+                "description": "Mengambil daftar rumah dengan filter opsional berdasarkan status atau ID warga",
                 "consumes": [
                     "application/json"
                 ],
@@ -2482,19 +2686,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "houses"
+                    "rumah"
                 ],
-                "summary": "Get all houses",
+                "summary": "Mengambil semua data rumah",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Page number (disabled by default)",
+                        "description": "Nomor halaman (dinonaktifkan secara default)",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Items per page (disabled by default, use 0 for no limit)",
+                        "description": "Jumlah item per halaman (dinonaktifkan secara default, gunakan 0 untuk tanpa batas)",
                         "name": "limit",
                         "in": "query"
                     },
@@ -2504,33 +2708,33 @@ const docTemplate = `{
                             "ditempati"
                         ],
                         "type": "string",
-                        "description": "Filter by status",
+                        "description": "Filter berdasarkan status",
                         "name": "status",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Filter by warga ID",
+                        "description": "Filter berdasarkan ID warga",
                         "name": "warga_id",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "Get all records without pagination",
+                        "description": "Ambil semua data tanpa pagination",
                         "name": "all",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of houses",
+                        "description": "Daftar rumah",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "500": {
-                        "description": "Failed to get houses",
+                        "description": "Gagal mengambil data rumah",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -2539,7 +2743,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new house with address and status",
+                "description": "Membuat data rumah baru dengan alamat dan status",
                 "consumes": [
                     "multipart/form-data"
                 ],
@@ -2547,13 +2751,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "houses"
+                    "rumah"
                 ],
-                "summary": "Create a new house",
+                "summary": "Membuat rumah baru",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "House address",
+                        "description": "Alamat rumah",
                         "name": "rumah_alamat",
                         "in": "formData",
                         "required": true
@@ -2564,232 +2768,28 @@ const docTemplate = `{
                             "ditempati"
                         ],
                         "type": "string",
-                        "description": "House status",
+                        "description": "Status rumah",
                         "name": "rumah_status",
                         "in": "formData"
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "House created successfully",
+                        "description": "Rumah berhasil dibuat",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "400": {
-                        "description": "Invalid request data",
+                        "description": "Data request tidak valid",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "500": {
-                        "description": "Failed to create house",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/rumah/status/{status}": {
-            "get": {
-                "description": "Get list of houses filtered by status",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "houses"
-                ],
-                "summary": "Get houses by status",
-                "parameters": [
-                    {
-                        "enum": [
-                            "tersedia",
-                            "ditempati"
-                        ],
-                        "type": "string",
-                        "description": "House status",
-                        "name": "status",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of houses by status",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid status",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to get houses",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/rumah/{id}": {
-            "get": {
-                "description": "Get house details including warga data by house ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "houses"
-                ],
-                "summary": "Get house by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "House ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "House details",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "House not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
-            "put": {
-                "description": "Update house information by ID",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "houses"
-                ],
-                "summary": "Update a house",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "House ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "House address",
-                        "name": "rumah_alamat",
-                        "in": "formData"
-                    },
-                    {
-                        "enum": [
-                            "tersedia",
-                            "ditempati"
-                        ],
-                        "type": "string",
-                        "description": "House status",
-                        "name": "rumah_status",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "House updated successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request data",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "House not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to update house",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Delete house by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "houses"
-                ],
-                "summary": "Delete a house",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "House ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "House deleted successfully",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "House not found",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to delete house",
+                        "description": "Gagal membuat rumah",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
