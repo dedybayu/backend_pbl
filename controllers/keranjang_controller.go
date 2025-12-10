@@ -20,17 +20,17 @@ func NewKeranjangController(db *gorm.DB) *KeranjangController {
 	return &KeranjangController{db: db}
 }
 
-// Form data structs
+// Form data structs dengan string untuk form-data
 type CreateKeranjangForm struct {
-	ProdukID uint `form:"produk_id" binding:"required"`
-	Jumlah   int  `form:"jumlah" binding:"required,min=1"`
+	ProdukID string `form:"produk_id" binding:"required"`
+	Jumlah   string `form:"jumlah" binding:"required"`
 }
 
 type UpdateKeranjangForm struct {
-	Jumlah int `form:"jumlah" binding:"required,min=1"`
+	Jumlah string `form:"jumlah" binding:"required"`
 }
 
-// Response structs (tetap sama)
+// Response structs
 type KeranjangItemResponse struct {
 	KeranjangID  uint          `json:"keranjang_id" example:"1"`
 	UserID       uint          `json:"user_id" example:"1"`
@@ -51,14 +51,29 @@ type CartSummaryResponse struct {
 	TotalItem   int                     `json:"total_item" example:"2"`
 }
 
+// parseFormData untuk konversi string ke tipe data yang benar
+func parseKeranjangForm(form CreateKeranjangForm) (uint, int, error) {
+	produkID, err := strconv.ParseUint(form.ProdukID, 10, 32)
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid produk_id: %v", err)
+	}
+
+	jumlah, err := strconv.Atoi(form.Jumlah)
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid jumlah: %v", err)
+	}
+
+	return uint(produkID), jumlah, nil
+}
+
 // AddToCart godoc
 // @Summary      Tambah produk ke keranjang (Form Data)
 // @Description  Menambahkan produk ke keranjang belanja user menggunakan form data
 // @Tags         keranjang
 // @Accept       multipart/form-data
 // @Produce      json
-// @Param        produk_id formData int true "ID Produk" minimum(1)
-// @Param        jumlah formData int true "Jumlah Produk" minimum(1)
+// @Param        produk_id formData string true "ID Produk"
+// @Param        jumlah formData string true "Jumlah Produk"
 // @Security     BearerAuth
 // @Success      201  {object}  map[string]interface{}  "Produk berhasil ditambahkan ke keranjang"
 // @Failure      400  {object}  map[string]interface{}  "Invalid form data"
@@ -68,7 +83,31 @@ type CartSummaryResponse struct {
 // @Router       /api/keranjang [post]
 func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	var form CreateKeranjangForm
+	
+	// Gunakan ShouldBind untuk form-data
 	if err := c.ShouldBind(&form); err != nil {
+		// Coba dengan PostForm sebagai fallback
+		produkID := c.PostForm("produk_id")
+		jumlah := c.PostForm("jumlah")
+		
+		if produkID == "" || jumlah == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Invalid form data",
+				"details": "produk_id and jumlah are required",
+			})
+			return
+		}
+		
+		form.ProdukID = produkID
+		form.Jumlah = jumlah
+	}
+
+	// Debug log
+	fmt.Printf("Form data received - ProdukID: %s, Jumlah: %s\n", form.ProdukID, form.Jumlah)
+
+	// Parse form data
+	produkID, jumlah, err := parseKeranjangForm(form)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid form data",
 			"details": err.Error(),
@@ -76,11 +115,8 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 		return
 	}
 
-	// Debug log
-	fmt.Printf("Form data received - ProdukID: %d, Jumlah: %d\n", form.ProdukID, form.Jumlah)
-
 	// Validasi jumlah
-	if form.Jumlah <= 0 {
+	if jumlah <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Jumlah harus lebih dari 0",
 		})
@@ -96,7 +132,7 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 
 	// Cek apakah produk exists
 	var produk models.Produk
-	if err := kc.db.First(&produk, form.ProdukID).Error; err != nil {
+	if err := kc.db.First(&produk, produkID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Produk tidak ditemukan",
@@ -110,12 +146,12 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	}
 
 	// Cek stok produk
-	if produk.ProdukStok < form.Jumlah {
+	if produk.ProdukStok < jumlah {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": "Stok produk tidak mencukupi",
 			"details": gin.H{
 				"stok_tersedia": produk.ProdukStok,
-				"jumlah_diminta": form.Jumlah,
+				"jumlah_diminta": jumlah,
 			},
 		})
 		return
@@ -123,11 +159,11 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 
 	// Cek apakah produk sudah ada di keranjang user dengan status active
 	var existingKeranjang models.Keranjang
-	err := kc.db.Where("user_id = ? AND produk_id = ? AND status = 'active'", userID, form.ProdukID).First(&existingKeranjang).Error
+	err = kc.db.Where("user_id = ? AND produk_id = ? AND status = 'active'", userID, produkID).First(&existingKeranjang).Error
 	
 	if err == nil {
 		// Jika sudah ada, update jumlah
-		newJumlah := existingKeranjang.Jumlah + form.Jumlah
+		newJumlah := existingKeranjang.Jumlah + jumlah
 		
 		// Validasi stok untuk jumlah baru
 		if produk.ProdukStok < newJumlah {
@@ -158,7 +194,7 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 		kc.db.Preload("Produk").Preload("Produk.KategoriProduk").First(&existingKeranjang, existingKeranjang.KeranjangID)
 
 		// Hitung harga satuan dan subtotal dari produk
-		hargaSatuan := existingKeranjang.Produk.ProdukHarga
+		hargaSatuan := float64(existingKeranjang.Produk.ProdukHarga)
 		subtotal := float64(existingKeranjang.Jumlah) * hargaSatuan
 
 		c.JSON(http.StatusOK, gin.H{
@@ -182,8 +218,8 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	// Jika belum ada, buat keranjang baru
 	keranjang := models.Keranjang{
 		UserID:    userID.(uint),
-		ProdukID:  form.ProdukID,
-		Jumlah:    form.Jumlah,
+		ProdukID:  produkID,
+		Jumlah:    jumlah,
 		Status:    "active",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -206,7 +242,7 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	}
 
 	// Hitung harga satuan dan subtotal dari produk
-	hargaSatuan := keranjang.Produk.ProdukHarga
+	hargaSatuan := float64(keranjang.Produk.ProdukHarga)
 	subtotal := float64(keranjang.Jumlah) * hargaSatuan
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -226,7 +262,7 @@ func (kc *KeranjangController) AddToCart(c *gin.Context) {
 	})
 }
 
-// GetCartItems (tetap sama, tidak perlu perubahan)
+// GetCartItems
 func (kc *KeranjangController) GetCartItems(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
@@ -259,7 +295,7 @@ func (kc *KeranjangController) GetCartItems(c *gin.Context) {
 	
 	for _, item := range keranjang {
 		// Hitung harga satuan dan subtotal dari produk
-		hargaSatuan := item.Produk.ProdukHarga
+		hargaSatuan := float64(item.Produk.ProdukHarga)
 		subtotal := float64(item.Jumlah) * hargaSatuan
 		
 		totalHarga += subtotal
@@ -296,7 +332,7 @@ func (kc *KeranjangController) GetCartItems(c *gin.Context) {
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        id   path      int  true  "ID Keranjang"
-// @Param        jumlah formData int true "Jumlah baru" minimum(1)
+// @Param        jumlah formData string true "Jumlah baru"
 // @Security     BearerAuth
 // @Success      200  {object}  map[string]interface{}  "Item keranjang berhasil diupdate"
 // @Failure      400  {object}  map[string]interface{}  "Invalid form data"
@@ -317,16 +353,35 @@ func (kc *KeranjangController) UpdateCartItem(c *gin.Context) {
 	}
 
 	var form UpdateKeranjangForm
+	
+	// Gunakan ShouldBind untuk form-data
 	if err := c.ShouldBind(&form); err != nil {
+		// Coba dengan PostForm sebagai fallback
+		jumlah := c.PostForm("jumlah")
+		
+		if jumlah == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   "Invalid form data",
+				"details": "jumlah is required",
+			})
+			return
+		}
+		
+		form.Jumlah = jumlah
+	}
+
+	// Parse jumlah
+	jumlah, err := strconv.Atoi(form.Jumlah)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid form data",
-			"details": err.Error(),
+			"error":   "Invalid jumlah format",
+			"details": "jumlah must be a valid number",
 		})
 		return
 	}
 
 	// Validasi jumlah
-	if form.Jumlah <= 0 {
+	if jumlah <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Jumlah harus lebih dari 0",
 		})
@@ -375,19 +430,19 @@ func (kc *KeranjangController) UpdateCartItem(c *gin.Context) {
 	}
 
 	// Cek stok produk
-	if keranjang.Produk.ProdukStok < form.Jumlah {
+	if keranjang.Produk.ProdukStok < jumlah {
 		c.JSON(http.StatusConflict, gin.H{
 			"error": "Stok produk tidak mencukupi",
 			"details": gin.H{
 				"stok_tersedia": keranjang.Produk.ProdukStok,
-				"jumlah_diminta": form.Jumlah,
+				"jumlah_diminta": jumlah,
 			},
 		})
 		return
 	}
 
 	// Update keranjang
-	keranjang.Jumlah = form.Jumlah
+	keranjang.Jumlah = jumlah
 	keranjang.UpdatedAt = time.Now()
 
 	if err := kc.db.Save(&keranjang).Error; err != nil {
@@ -402,7 +457,7 @@ func (kc *KeranjangController) UpdateCartItem(c *gin.Context) {
 	kc.db.Preload("Produk").Preload("Produk.KategoriProduk").First(&keranjang, keranjangID)
 
 	// Hitung harga satuan dan subtotal dari produk
-	hargaSatuan := keranjang.Produk.ProdukHarga
+	hargaSatuan := float64(keranjang.Produk.ProdukHarga)
 	subtotal := float64(keranjang.Jumlah) * hargaSatuan
 
 	c.JSON(http.StatusOK, gin.H{
@@ -422,7 +477,7 @@ func (kc *KeranjangController) UpdateCartItem(c *gin.Context) {
 	})
 }
 
-// RemoveFromCart (tetap sama)
+// RemoveFromCart
 func (kc *KeranjangController) RemoveFromCart(c *gin.Context) {
 	id := c.Param("id")
 
@@ -482,7 +537,7 @@ func (kc *KeranjangController) RemoveFromCart(c *gin.Context) {
 	})
 }
 
-// ClearCart (tetap sama)
+// ClearCart
 func (kc *KeranjangController) ClearCart(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
@@ -508,12 +563,12 @@ func (kc *KeranjangController) ClearCart(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Keranjang berhasil dikosongkan",
+		"message":       "Keranjang berhasil dikosongkan",
 		"deleted_count": result.RowsAffected,
 	})
 }
 
-// GetCartCount (tetap sama)
+// GetCartCount
 func (kc *KeranjangController) GetCartCount(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
@@ -554,7 +609,7 @@ func (kc *KeranjangController) GetCartCount(c *gin.Context) {
 	})
 }
 
-// CheckoutPreview (tetap sama)
+// CheckoutPreview
 func (kc *KeranjangController) CheckoutPreview(c *gin.Context) {
 	// Get user ID dari token
 	userID, exists := c.Get("userID")
@@ -593,7 +648,7 @@ func (kc *KeranjangController) CheckoutPreview(c *gin.Context) {
 
 	for _, item := range keranjang {
 		// Hitung harga satuan dan subtotal dari produk
-		hargaSatuan := item.Produk.ProdukHarga
+		hargaSatuan := float64(item.Produk.ProdukHarga)
 		subtotal := float64(item.Jumlah) * hargaSatuan
 		
 		totalHarga += subtotal
@@ -619,19 +674,19 @@ func (kc *KeranjangController) CheckoutPreview(c *gin.Context) {
 		if item.Jumlah > item.Produk.ProdukStok {
 			stokValid = false
 			stokErrors = append(stokErrors, gin.H{
-				"produk_id":     item.ProdukID,
-				"produk_nama":   item.Produk.ProdukNama,
-				"stok_tersedia": item.Produk.ProdukStok,
+				"produk_id":      item.ProdukID,
+				"produk_nama":    item.Produk.ProdukNama,
+				"stok_tersedia":  item.Produk.ProdukStok,
 				"jumlah_diminta": item.Jumlah,
-				"kekurangan":    item.Jumlah - item.Produk.ProdukStok,
+				"kekurangan":     item.Jumlah - item.Produk.ProdukStok,
 			})
 		}
 	}
 
 	if !stokValid {
 		c.JSON(http.StatusConflict, gin.H{
-			"error": "Stok beberapa produk tidak mencukupi",
-			"stok_errors": stokErrors,
+			"error":        "Stok beberapa produk tidak mencukupi",
+			"stok_errors":  stokErrors,
 			"preview": gin.H{
 				"total_harga":  totalHarga,
 				"total_barang": totalBarang,
