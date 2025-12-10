@@ -1043,45 +1043,15 @@ const docTemplate = `{
             }
         },
         "/api/keranjang": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Mendapatkan semua item di keranjang user dengan status active",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "keranjang"
-                ],
-                "summary": "Dapatkan item keranjang",
-                "responses": {
-                    "200": {
-                        "description": "Daftar item keranjang",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.CartSummaryResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Gagal mengambil data keranjang",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Menambahkan produk ke keranjang belanja user",
+                "description": "Menambahkan produk ke keranjang belanja user menggunakan form data",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -1089,16 +1059,23 @@ const docTemplate = `{
                 "tags": [
                     "keranjang"
                 ],
-                "summary": "Tambah produk ke keranjang",
+                "summary": "Tambah produk ke keranjang (Form Data)",
                 "parameters": [
                     {
-                        "description": "Data produk yang akan ditambahkan",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.CreateKeranjangRequest"
-                        }
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "ID Produk",
+                        "name": "produk_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Jumlah Produk",
+                        "name": "jumlah",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1110,7 +1087,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request data",
+                        "description": "Invalid form data",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -1140,112 +1117,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/keranjang/checkout-preview": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Mendapatkan ringkasan untuk checkout dari keranjang",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "keranjang"
-                ],
-                "summary": "Preview checkout",
-                "responses": {
-                    "200": {
-                        "description": "Ringkasan checkout",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Keranjang kosong",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Gagal membuat preview checkout",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/api/keranjang/clear": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Menghapus semua item dari keranjang user",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "keranjang"
-                ],
-                "summary": "Kosongkan keranjang",
-                "responses": {
-                    "200": {
-                        "description": "Keranjang berhasil dikosongkan",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Gagal mengosongkan keranjang",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/api/keranjang/count": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Mendapatkan jumlah total item di keranjang user",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "keranjang"
-                ],
-                "summary": "Hitung jumlah item keranjang",
-                "responses": {
-                    "200": {
-                        "description": "Jumlah item keranjang",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Gagal menghitung jumlah item",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/api/keranjang/{id}": {
             "put": {
                 "security": [
@@ -1253,9 +1124,9 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Mengupdate jumlah item di keranjang",
+                "description": "Mengupdate jumlah item di keranjang menggunakan form data",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -1263,7 +1134,7 @@ const docTemplate = `{
                 "tags": [
                     "keranjang"
                 ],
-                "summary": "Update item keranjang",
+                "summary": "Update item keranjang (Form Data)",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1273,13 +1144,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Data update jumlah",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controllers.UpdateKeranjangRequest"
-                        }
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Jumlah baru",
+                        "name": "jumlah",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1291,7 +1161,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request data",
+                        "description": "Invalid form data",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -1313,60 +1183,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Gagal mengupdate item keranjang",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Menghapus item dari keranjang (soft delete dengan mengubah status)",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "keranjang"
-                ],
-                "summary": "Hapus item dari keranjang",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID Keranjang",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Item berhasil dihapus dari keranjang",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "ID tidak valid",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "Item keranjang tidak ditemukan",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Gagal menghapus item",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -2661,89 +2477,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "controllers.CartSummaryResponse": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controllers.KeranjangItemResponse"
-                    }
-                },
-                "total_barang": {
-                    "type": "integer",
-                    "example": 3
-                },
-                "total_harga": {
-                    "type": "number",
-                    "example": 150000
-                },
-                "total_item": {
-                    "type": "integer",
-                    "example": 2
-                }
-            }
-        },
-        "controllers.CreateKeranjangRequest": {
-            "type": "object",
-            "required": [
-                "jumlah",
-                "produk_id"
-            ],
-            "properties": {
-                "jumlah": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "example": 2
-                },
-                "produk_id": {
-                    "type": "integer",
-                    "example": 1
-                }
-            }
-        },
-        "controllers.KeranjangItemResponse": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "harga_satuan": {
-                    "type": "number",
-                    "example": 50000
-                },
-                "jumlah": {
-                    "type": "integer",
-                    "example": 2
-                },
-                "keranjang_id": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "produk": {
-                    "$ref": "#/definitions/models.Produk"
-                },
-                "produk_id": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "status": {
-                    "type": "string",
-                    "example": "active"
-                },
-                "subtotal": {
-                    "type": "number",
-                    "example": 100000
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "integer",
-                    "example": 1
-                }
-            }
-        },
         "controllers.LoginRequest": {
             "type": "object",
             "required": [
@@ -2810,19 +2543,6 @@ const docTemplate = `{
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                }
-            }
-        },
-        "controllers.UpdateKeranjangRequest": {
-            "type": "object",
-            "required": [
-                "jumlah"
-            ],
-            "properties": {
-                "jumlah": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "example": 3
                 }
             }
         },

@@ -1,63 +1,4 @@
 definitions:
-  controllers.CartSummaryResponse:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/controllers.KeranjangItemResponse'
-        type: array
-      total_barang:
-        example: 3
-        type: integer
-      total_harga:
-        example: 150000
-        type: number
-      total_item:
-        example: 2
-        type: integer
-    type: object
-  controllers.CreateKeranjangRequest:
-    properties:
-      jumlah:
-        example: 2
-        minimum: 1
-        type: integer
-      produk_id:
-        example: 1
-        type: integer
-    required:
-    - jumlah
-    - produk_id
-    type: object
-  controllers.KeranjangItemResponse:
-    properties:
-      created_at:
-        type: string
-      harga_satuan:
-        example: 50000
-        type: number
-      jumlah:
-        example: 2
-        type: integer
-      keranjang_id:
-        example: 1
-        type: integer
-      produk:
-        $ref: '#/definitions/models.Produk'
-      produk_id:
-        example: 1
-        type: integer
-      status:
-        example: active
-        type: string
-      subtotal:
-        example: 100000
-        type: number
-      updated_at:
-        type: string
-      user_id:
-        example: 1
-        type: integer
-    type: object
   controllers.LoginRequest:
     properties:
       password:
@@ -104,15 +45,6 @@ definitions:
       token:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
-    type: object
-  controllers.UpdateKeranjangRequest:
-    properties:
-      jumlah:
-        example: 3
-        minimum: 1
-        type: integer
-    required:
-    - jumlah
     type: object
   controllers.UserResponse:
     properties:
@@ -1078,36 +1010,23 @@ paths:
       tags:
       - kegiatan
   /api/keranjang:
-    get:
-      description: Mendapatkan semua item di keranjang user dengan status active
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Daftar item keranjang
-          schema:
-            $ref: '#/definitions/controllers.CartSummaryResponse'
-        "500":
-          description: Gagal mengambil data keranjang
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Dapatkan item keranjang
-      tags:
-      - keranjang
     post:
       consumes:
-      - application/json
-      description: Menambahkan produk ke keranjang belanja user
+      - multipart/form-data
+      description: Menambahkan produk ke keranjang belanja user menggunakan form data
       parameters:
-      - description: Data produk yang akan ditambahkan
-        in: body
-        name: request
+      - description: ID Produk
+        in: formData
+        minimum: 1
+        name: produk_id
         required: true
-        schema:
-          $ref: '#/definitions/controllers.CreateKeranjangRequest'
+        type: integer
+      - description: Jumlah Produk
+        in: formData
+        minimum: 1
+        name: jumlah
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -1117,7 +1036,7 @@ paths:
             additionalProperties: true
             type: object
         "400":
-          description: Invalid request data
+          description: Invalid form data
           schema:
             additionalProperties: true
             type: object
@@ -1138,62 +1057,26 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Tambah produk ke keranjang
+      summary: Tambah produk ke keranjang (Form Data)
       tags:
       - keranjang
   /api/keranjang/{id}:
-    delete:
-      description: Menghapus item dari keranjang (soft delete dengan mengubah status)
-      parameters:
-      - description: ID Keranjang
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Item berhasil dihapus dari keranjang
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: ID tidak valid
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: Item keranjang tidak ditemukan
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Gagal menghapus item
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Hapus item dari keranjang
-      tags:
-      - keranjang
     put:
       consumes:
-      - application/json
-      description: Mengupdate jumlah item di keranjang
+      - multipart/form-data
+      description: Mengupdate jumlah item di keranjang menggunakan form data
       parameters:
       - description: ID Keranjang
         in: path
         name: id
         required: true
         type: integer
-      - description: Data update jumlah
-        in: body
-        name: request
+      - description: Jumlah baru
+        in: formData
+        minimum: 1
+        name: jumlah
         required: true
-        schema:
-          $ref: '#/definitions/controllers.UpdateKeranjangRequest'
+        type: integer
       produces:
       - application/json
       responses:
@@ -1203,7 +1086,7 @@ paths:
             additionalProperties: true
             type: object
         "400":
-          description: Invalid request data
+          description: Invalid form data
           schema:
             additionalProperties: true
             type: object
@@ -1224,75 +1107,7 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Update item keranjang
-      tags:
-      - keranjang
-  /api/keranjang/checkout-preview:
-    get:
-      description: Mendapatkan ringkasan untuk checkout dari keranjang
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Ringkasan checkout
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Keranjang kosong
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Gagal membuat preview checkout
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Preview checkout
-      tags:
-      - keranjang
-  /api/keranjang/clear:
-    delete:
-      description: Menghapus semua item dari keranjang user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Keranjang berhasil dikosongkan
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Gagal mengosongkan keranjang
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Kosongkan keranjang
-      tags:
-      - keranjang
-  /api/keranjang/count:
-    get:
-      description: Mendapatkan jumlah total item di keranjang user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Jumlah item keranjang
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Gagal menghitung jumlah item
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Hitung jumlah item keranjang
+      summary: Update item keranjang (Form Data)
       tags:
       - keranjang
   /api/produk:
