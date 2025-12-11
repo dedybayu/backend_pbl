@@ -14,6 +14,7 @@ func SetupUserRoutes(api *gin.RouterGroup, userController *controllers.UserContr
 		// Public routes (butuh auth)
 		users.GET("", authMiddleware.RequireLevel(1, 2), userController.GetAllUsers)
 		users.GET("/profile", authMiddleware.Auth(), userController.GetUserProfile) // ✅ NEW: Get current user profile
+		users.GET("/image/:filename", authMiddleware.Auth(), userController.GetFotoProfileImage) 
 		users.GET("/:id", authMiddleware.RequireLevel(1, 2), userController.GetUserByID)
 
 		

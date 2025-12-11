@@ -21,7 +21,7 @@ func NewAuthController(db *gorm.DB, jwtUtils *utils.JWTUtils) *AuthController {
 	return &AuthController{db: db, jwtUtils: jwtUtils}
 }
 
-type UserResponse struct {
+type AuthUserResponse struct {
 	UserID      uint            `json:"user_id" example:"1"`
 	Username    string          `json:"username" example:"admin"`
 	LevelID     uint            `json:"level_id" example:"1"`
@@ -29,6 +29,7 @@ type UserResponse struct {
 	UserAlamat  string          `json:"user_alamat" example:"Jl. Contoh No. 123"`
 	UserNoTelp  string          `json:"user_no_telp" example:"081234567890"`
 	UserEmail   string          `json:"user_email" example:"admin@example.com"`
+	FotoProfile string          `json:"foto_profile" example:"profile.jpg"`
 	Level       models.Level    `json:"level"`
 	Warga       *models.Warga   `json:"warga,omitempty"` // hanya tampil jika tidak nil
 }
@@ -40,7 +41,7 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	Token     string       `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
-	User      UserResponse `json:"user"`
+	User      AuthUserResponse `json:"user"`
 	Level     models.Level `json:"level"`
 	LevelKode string       `json:"level_kode" example:"ADM"`
 }
@@ -139,7 +140,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	// Jika user tidak punya warga → user.Warga = nil (otomatis tidak tampil di JSON)
 	response := LoginResponse{
 		Token: token,
-		User: UserResponse{
+		User: AuthUserResponse{
 			UserID:      user.UserID,
 			Username:    user.Username,
 			LevelID:     user.LevelID,
@@ -211,7 +212,7 @@ func (ac *AuthController) UniversalLogin(c *gin.Context) {
 
 	c.JSON(http.StatusOK, LoginResponse{
 		Token: token,
-		User: UserResponse{
+		User: AuthUserResponse{
 			UserID:   user.UserID,
 			Username: user.Username,
 			LevelID:  user.LevelID,

@@ -291,7 +291,7 @@ func (pc *ProfileController) GetFotoProfileImage(c *gin.Context) {
 	}
 
 	// Gunakan helper function GetFileByFileName
-	file, err := helper.GetFileByFileName("profile_foto", filename)
+	file, err := helper.GetFileByFileName("foto_profile", filename)
 	if err != nil {
 		if os.IsNotExist(err) {
 			c.JSON(http.StatusNotFound, gin.H{

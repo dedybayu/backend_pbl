@@ -228,7 +228,7 @@ func seedWarga() error {
 			UserAlamat: faker.Sentence(),
 			UserNoTelp: phone,
 			UserEmail:  faker.Email(),
-			LevelID:    3, // misal level warga
+			LevelID:    6, // misal level warga
 		}
 
 		if err := DB.Create(&user).Error; err != nil {
