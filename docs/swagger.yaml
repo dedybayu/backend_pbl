@@ -1,53 +1,9 @@
 definitions:
-  controllers.LoginRequest:
+  controllers.AuthUserResponse:
     properties:
-      password:
-        example: password123
+      foto_profile:
+        example: profile.jpg
         type: string
-      username:
-        example: admin
-        type: string
-    required:
-    - password
-    - username
-    type: object
-  controllers.LoginResponse:
-    properties:
-      level:
-        $ref: '#/definitions/models.Level'
-      level_kode:
-        example: ADM
-        type: string
-      token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        type: string
-      user:
-        $ref: '#/definitions/controllers.UserResponse'
-    type: object
-  controllers.LogoutResponse:
-    properties:
-      message:
-        example: Logout successful
-        type: string
-    type: object
-  controllers.ProfileResponse:
-    properties:
-      level:
-        $ref: '#/definitions/models.Level'
-      user:
-        $ref: '#/definitions/models.User'
-    type: object
-  controllers.RefreshTokenResponse:
-    properties:
-      message:
-        example: Token refreshed successfully
-        type: string
-      token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        type: string
-    type: object
-  controllers.UserResponse:
-    properties:
       level:
         $ref: '#/definitions/models.Level'
       level_id:
@@ -75,6 +31,53 @@ definitions:
         allOf:
         - $ref: '#/definitions/models.Warga'
         description: hanya tampil jika tidak nil
+    type: object
+  controllers.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  controllers.LoginResponse:
+    properties:
+      level:
+        $ref: '#/definitions/models.Level'
+      level_kode:
+        example: ADM
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user:
+        $ref: '#/definitions/controllers.AuthUserResponse'
+    type: object
+  controllers.LogoutResponse:
+    properties:
+      message:
+        example: Logout successful
+        type: string
+    type: object
+  controllers.ProfileResponse:
+    properties:
+      level:
+        $ref: '#/definitions/models.Level'
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  controllers.RefreshTokenResponse:
+    properties:
+      message:
+        example: Token refreshed successfully
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
     type: object
   models.Agama:
     properties:
@@ -2193,4 +2196,378 @@ paths:
       summary: Membuat rumah baru
       tags:
       - rumah
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all users with their level information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - Users
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new user with all required fields
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Full name
+        in: formData
+        name: user_nama
+        required: true
+        type: string
+      - description: Address
+        in: formData
+        name: user_alamat
+        required: true
+        type: string
+      - description: Phone number
+        in: formData
+        name: user_no_telp
+        required: true
+        type: string
+      - description: Email address
+        in: formData
+        name: user_email
+        required: true
+        type: string
+      - description: Level ID
+        in: formData
+        name: level_id
+        required: true
+        type: integer
+      - description: Profile photo
+        in: formData
+        name: foto_profile
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Get detailed user information by user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Users
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update existing user information
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Username
+        in: formData
+        name: username
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        type: string
+      - description: Full name
+        in: formData
+        name: user_nama
+        type: string
+      - description: Address
+        in: formData
+        name: user_alamat
+        type: string
+      - description: Phone number
+        in: formData
+        name: user_no_telp
+        type: string
+      - description: Email address
+        in: formData
+        name: user_email
+        type: string
+      - description: Level ID
+        in: formData
+        name: level_id
+        type: integer
+      - description: Profile photo
+        in: formData
+        name: foto_profile
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user data
+      tags:
+      - Users
+  /users/foto-profile/{filename}:
+    get:
+      consumes:
+      - application/json
+      description: Get user's profile photo by filename
+      parameters:
+      - description: Profile photo filename
+        in: path
+        name: filename
+        required: true
+        type: string
+      produces:
+      - image/*
+      responses:
+        "200":
+          description: Profile photo file
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: File not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get profile photo
+      tags:
+      - Users
+  /users/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get current authenticated user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Users
+  /users/search:
+    get:
+      consumes:
+      - application/json
+      description: Search users by username, nama, email, or phone number
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search users
+      tags:
+      - Users
+  /users/total:
+    get:
+      consumes:
+      - application/json
+      description: Get total number of registered users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get total users count
+      tags:
+      - Users
 swagger: "2.0"
