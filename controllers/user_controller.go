@@ -120,7 +120,7 @@ func isValidUserID(id string) bool {
 // @Security BearerAuth
 // @Success 200 {object} map[string]interface{} "Success response"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /users [get]
+// @Router /api/users [get]
 func (uc *UserController) GetAllUsers(c *gin.Context) {
 	var users []models.User
 
@@ -159,7 +159,7 @@ func (uc *UserController) GetAllUsers(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Invalid user ID"
 // @Failure 404 {object} map[string]string "User not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /users/{id} [get]
+// @Router /api/users/{id} [get]
 func (uc *UserController) GetUserByID(c *gin.Context) {
 	userID := c.Param("id")
 
@@ -404,7 +404,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "User not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /users/{id} [put]
+// @Router /api/users/{id} [put]
 func (uc *UserController) UpdateUser(c *gin.Context) {
 	userID := c.Param("id")
 
@@ -628,7 +628,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "User not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /users/{id} [delete]
+// @Router /api/users/{id} [delete]
 func (uc *UserController) DeleteUser(c *gin.Context) {
 	userID := c.Param("id")
 
@@ -703,7 +703,7 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
 // @Success 200 {object} map[string]interface{} "Success response"
 // @Failure 401 {object} map[string]string "Unauthorized"
 // @Failure 404 {object} map[string]string "User not found"
-// @Router /users/profile [get]
+// @Router /api/users/profile [get]
 func (uc *UserController) GetUserProfile(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -743,7 +743,7 @@ func (uc *UserController) GetUserProfile(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {object} map[string]interface{} "Success response"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /users/total [get]
+// @Router /api/users/total [get]
 func (uc *UserController) GetTotalUser(c *gin.Context) {
 	var total int64
 
@@ -772,7 +772,7 @@ func (uc *UserController) GetTotalUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "File not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /users/foto-profile/{filename} [get]
+// @Router /api/users/foto-profile/{filename} [get]
 func (uc *UserController) GetFotoProfileImage(c *gin.Context) {
 	filename := c.Param("filename")
 	
@@ -830,7 +830,7 @@ func (uc *UserController) GetFotoProfileImage(c *gin.Context) {
 // @Param page query int false "Page number" default(1)
 // @Param limit query int false "Items per page" default(10)
 // @Success 200 {object} map[string]interface{} "Success response"
-// @Router /users/search [get]
+// @Router /api/users/search [get]
 func (uc *UserController) SearchUsers(c *gin.Context) {
 	query := sanitizeInput(strings.TrimSpace(c.Query("query")))
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))

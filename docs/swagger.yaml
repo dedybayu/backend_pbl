@@ -1955,6 +1955,311 @@ paths:
       summary: Dapatkan statistik transaksi
       tags:
       - transaksi
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all users with their level information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - Users
+  /api/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Get detailed user information by user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Users
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update existing user information
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Username
+        in: formData
+        name: username
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        type: string
+      - description: Full name
+        in: formData
+        name: user_nama
+        type: string
+      - description: Address
+        in: formData
+        name: user_alamat
+        type: string
+      - description: Phone number
+        in: formData
+        name: user_no_telp
+        type: string
+      - description: Email address
+        in: formData
+        name: user_email
+        type: string
+      - description: Level ID
+        in: formData
+        name: level_id
+        type: integer
+      - description: Profile photo
+        in: formData
+        name: foto_profile
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user data
+      tags:
+      - Users
+  /api/users/foto-profile/{filename}:
+    get:
+      consumes:
+      - application/json
+      description: Get user's profile photo by filename
+      parameters:
+      - description: Profile photo filename
+        in: path
+        name: filename
+        required: true
+        type: string
+      produces:
+      - image/*
+      responses:
+        "200":
+          description: Profile photo file
+          schema:
+            type: file
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: File not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get profile photo
+      tags:
+      - Users
+  /api/users/profile:
+    get:
+      consumes:
+      - application/json
+      description: Get current authenticated user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - Users
+  /api/users/search:
+    get:
+      consumes:
+      - application/json
+      description: Search users by username, nama, email, or phone number
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search users
+      tags:
+      - Users
+  /api/users/total:
+    get:
+      consumes:
+      - application/json
+      description: Get total number of registered users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get total users count
+      tags:
+      - Users
   /auth/login:
     post:
       consumes:
@@ -2197,29 +2502,6 @@ paths:
       tags:
       - rumah
   /users:
-    get:
-      consumes:
-      - application/json
-      description: Get a list of all users with their level information
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get all users
-      tags:
-      - Users
     post:
       consumes:
       - multipart/form-data
@@ -2287,287 +2569,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Create a new user
-      tags:
-      - Users
-  /users/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete user by ID
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User deleted successfully
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: User not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Delete user
-      tags:
-      - Users
-    get:
-      consumes:
-      - application/json
-      description: Get detailed user information by user ID
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response
-          schema:
-            $ref: '#/definitions/models.User'
-        "400":
-          description: Invalid user ID
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: User not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get user by ID
-      tags:
-      - Users
-    put:
-      consumes:
-      - multipart/form-data
-      description: Update existing user information
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Username
-        in: formData
-        name: username
-        type: string
-      - description: Password
-        in: formData
-        name: password
-        type: string
-      - description: Full name
-        in: formData
-        name: user_nama
-        type: string
-      - description: Address
-        in: formData
-        name: user_alamat
-        type: string
-      - description: Phone number
-        in: formData
-        name: user_no_telp
-        type: string
-      - description: Email address
-        in: formData
-        name: user_email
-        type: string
-      - description: Level ID
-        in: formData
-        name: level_id
-        type: integer
-      - description: Profile photo
-        in: formData
-        name: foto_profile
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User updated successfully
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: User not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Update user data
-      tags:
-      - Users
-  /users/foto-profile/{filename}:
-    get:
-      consumes:
-      - application/json
-      description: Get user's profile photo by filename
-      parameters:
-      - description: Profile photo filename
-        in: path
-        name: filename
-        required: true
-        type: string
-      produces:
-      - image/*
-      responses:
-        "200":
-          description: Profile photo file
-          schema:
-            type: file
-        "400":
-          description: Bad request
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: File not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Get profile photo
-      tags:
-      - Users
-  /users/profile:
-    get:
-      consumes:
-      - application/json
-      description: Get current authenticated user profile
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "404":
-          description: User not found
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get user profile
-      tags:
-      - Users
-  /users/search:
-    get:
-      consumes:
-      - application/json
-      description: Search users by username, nama, email, or phone number
-      parameters:
-      - description: Search query
-        in: query
-        name: query
-        type: string
-      - default: 1
-        description: Page number
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: Items per page
-        in: query
-        name: limit
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Search users
-      tags:
-      - Users
-  /users/total:
-    get:
-      consumes:
-      - application/json
-      description: Get total number of registered users
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Success response
-          schema:
-            additionalProperties: true
-            type: object
-        "500":
-          description: Internal server error
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get total users count
       tags:
       - Users
 swagger: "2.0"
