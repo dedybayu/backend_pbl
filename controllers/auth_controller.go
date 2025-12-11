@@ -148,6 +148,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 			UserAlamat:  user.UserAlamat,
 			UserNoTelp:  user.UserNoTelp,
 			UserEmail:   user.UserEmail,
+			FotoProfile: user.FotoProfile,
 			Level:       user.Level,
 			Warga:       user.Warga, // pointer, nil jika tidak punya
 		},
