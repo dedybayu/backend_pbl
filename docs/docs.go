@@ -2479,7 +2479,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/users/foto-profile/{filename}": {
+        "/api/users/image/{filename}": {
             "get": {
                 "description": "Get user's profile photo by filename",
                 "consumes": [

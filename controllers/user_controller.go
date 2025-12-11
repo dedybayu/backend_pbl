@@ -772,7 +772,7 @@ func (uc *UserController) GetTotalUser(c *gin.Context) {
 // @Failure 400 {object} map[string]string "Bad request"
 // @Failure 404 {object} map[string]string "File not found"
 // @Failure 500 {object} map[string]string "Internal server error"
-// @Router /api/users/foto-profile/{filename} [get]
+// @Router /api/users/image/{filename} [get]
 func (uc *UserController) GetFotoProfileImage(c *gin.Context) {
 	filename := c.Param("filename")
 	
@@ -784,7 +784,7 @@ func (uc *UserController) GetFotoProfileImage(c *gin.Context) {
 	}
 
 	// Gunakan helper function GetFileByFileName
-	file, err := helper.GetFileByFileName("profile_foto", filename)
+	file, err := helper.GetFileByFileName("foto_profile", filename)
 	if err != nil {
 		if os.IsNotExist(err) {
 			c.JSON(http.StatusNotFound, gin.H{

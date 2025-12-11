@@ -2134,7 +2134,7 @@ paths:
       summary: Update user data
       tags:
       - Users
-  /api/users/foto-profile/{filename}:
+  /api/users/image/{filename}:
     get:
       consumes:
       - application/json
