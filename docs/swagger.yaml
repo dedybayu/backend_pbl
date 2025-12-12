@@ -2416,6 +2416,222 @@ paths:
       summary: Universal login
       tags:
       - auth
+  /profile:
+    get:
+      consumes:
+      - application/json
+      description: Mendapatkan data lengkap profile user yang sedang login
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile retrieved successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to fetch profile
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan data profile user
+      tags:
+      - profile
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate data profile user (tanpa password)
+      parameters:
+      - description: Nama lengkap user
+        in: formData
+        name: nama
+        type: string
+      - description: Username user
+        in: formData
+        name: username
+        type: string
+      - description: Alamat user
+        in: formData
+        name: alamat
+        type: string
+      - description: Nomor telepon user
+        in: formData
+        name: no_telp
+        type: string
+      - description: Email user
+        in: formData
+        name: email
+        type: string
+      - description: Foto profile user
+        in: formData
+        name: foto_profile
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Username/email already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to update profile
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mengupdate data profile
+      tags:
+      - profile
+  /profile/change-password:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate password user dengan validasi password lama
+      parameters:
+      - description: Password saat ini
+        in: formData
+        name: current_password
+        required: true
+        type: string
+      - description: Password baru
+        in: formData
+        name: new_password
+        required: true
+        type: string
+      - description: Konfirmasi password baru
+        in: formData
+        name: confirm_password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to update password
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mengupdate password user
+      tags:
+      - profile
+  /profile/image/{filename}:
+    get:
+      description: Mengambil file gambar foto profile berdasarkan nama file
+      parameters:
+      - description: Nama file gambar
+        in: path
+        name: filename
+        required: true
+        type: string
+      produces:
+      - image/jpeg
+      - image/png
+      - image/gif
+      responses:
+        "200":
+          description: File gambar
+          schema:
+            type: file
+        "400":
+          description: Nama file tidak valid
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: File tidak ditemukan
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Gagal membuka file
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan gambar foto profile
+      tags:
+      - profile
   /rumah:
     get:
       consumes:
