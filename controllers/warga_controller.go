@@ -242,6 +242,7 @@ func (wc *WargaController) GetWargaByID(c *gin.Context) {
 		Preload("Pekerjaan").
 		Preload("Rumah").
 		Preload("TagihanIurans").
+		Preload("User").
 		First(&warga, wargaID).Error; err != nil {
 
 		log.Printf("❌ Error fetching resident %s: %v", wargaID, err)
