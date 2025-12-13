@@ -2901,6 +2901,714 @@
                 }
             }
         },
+        "/api/warga": {
+            "get": {
+                "description": "Get a list of all residents with their details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Get all residents",
+                "responses": {
+                    "200": {
+                        "description": "List of residents",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new resident and automatically create a user account for them",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Create new resident with user account",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Family ID",
+                        "name": "keluarga_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "House ID",
+                        "name": "rumah_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resident name",
+                        "name": "warga_nama",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resident NIK (16 digits)",
+                        "name": "warga_nik",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Phone number (used for both resident and user)",
+                        "name": "no_telp",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Place of birth",
+                        "name": "warga_tempat_lahir",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date of birth (YYYY-MM-DD)",
+                        "name": "warga_tanggal_lahir",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Gender (L/P)",
+                        "name": "warga_jenis_kelamin",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Active status (aktif/nonaktif)",
+                        "name": "warga_status_aktif",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Life status (hidup/meninggal)",
+                        "name": "warga_status_hidup",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Religion ID",
+                        "name": "agama_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Occupation ID",
+                        "name": "pekerjaan_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username for user account",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password for user account",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User address",
+                        "name": "user_alamat",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "user_email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile photo file",
+                        "name": "foto_profile",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Resident created successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict (NIK or username already exists)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/warga/keluarga/{keluarga_id}": {
+            "get": {
+                "description": "Get all residents belonging to a specific family",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Get residents by family ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Family ID",
+                        "name": "keluarga_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of residents in family",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid family ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/warga/rumah/{rumah_id}": {
+            "get": {
+                "description": "Get resident details by house ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Get resident by house ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "House ID",
+                        "name": "rumah_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resident details",
+                        "schema": {
+                            "$ref": "#/definitions/models.Warga"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid house ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No resident found for this house",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/warga/search": {
+            "get": {
+                "description": "Search residents by name or NIK",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Search residents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Query parameter is required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/warga/stats": {
+            "get": {
+                "description": "Get various statistics about residents",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Get resident statistics",
+                "responses": {
+                    "200": {
+                        "description": "Resident statistics",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/warga/total": {
+            "get": {
+                "description": "Get the total count of residents",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Get total number of residents",
+                "responses": {
+                    "200": {
+                        "description": "Total residents count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/warga/{id}": {
+            "get": {
+                "description": "Get resident details by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Get resident by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resident ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resident details",
+                        "schema": {
+                            "$ref": "#/definitions/models.Warga"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resident not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update resident information and optionally update associated user account",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Update resident and user account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resident ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Family ID",
+                        "name": "keluarga_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "House ID",
+                        "name": "rumah_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resident name",
+                        "name": "warga_nama",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resident NIK (16 digits)",
+                        "name": "warga_nik",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Phone number (used for both resident and user)",
+                        "name": "no_telp",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Place of birth",
+                        "name": "warga_tempat_lahir",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date of birth (YYYY-MM-DD)",
+                        "name": "warga_tanggal_lahir",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Gender (L/P)",
+                        "name": "warga_jenis_kelamin",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Active status (aktif/nonaktif)",
+                        "name": "warga_status_aktif",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Life status (hidup/meninggal)",
+                        "name": "warga_status_hidup",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Religion ID",
+                        "name": "agama_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Occupation ID",
+                        "name": "pekerjaan_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username for user account",
+                        "name": "username",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password for user account (optional)",
+                        "name": "password",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User address",
+                        "name": "user_alamat",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "user_email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile photo file",
+                        "name": "foto_profile",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resident updated successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resident not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict (NIK or username already exists)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete resident and automatically delete the associated user account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "warga"
+                ],
+                "summary": "Delete resident and associated user account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Resident ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resident and user deleted successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID format",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resident not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticate user with username and password",

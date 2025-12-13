@@ -2260,6 +2260,483 @@ paths:
       summary: Get total users count
       tags:
       - Users
+  /api/warga:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all residents with their details
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of residents
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all residents
+      tags:
+      - warga
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new resident and automatically create a user account for
+        them
+      parameters:
+      - description: Family ID
+        in: formData
+        name: keluarga_id
+        required: true
+        type: integer
+      - description: House ID
+        in: formData
+        name: rumah_id
+        type: integer
+      - description: Resident name
+        in: formData
+        name: warga_nama
+        required: true
+        type: string
+      - description: Resident NIK (16 digits)
+        in: formData
+        name: warga_nik
+        required: true
+        type: string
+      - description: Phone number (used for both resident and user)
+        in: formData
+        name: no_telp
+        required: true
+        type: string
+      - description: Place of birth
+        in: formData
+        name: warga_tempat_lahir
+        type: string
+      - description: Date of birth (YYYY-MM-DD)
+        in: formData
+        name: warga_tanggal_lahir
+        type: string
+      - description: Gender (L/P)
+        in: formData
+        name: warga_jenis_kelamin
+        required: true
+        type: string
+      - description: Active status (aktif/nonaktif)
+        in: formData
+        name: warga_status_aktif
+        type: string
+      - description: Life status (hidup/meninggal)
+        in: formData
+        name: warga_status_hidup
+        type: string
+      - description: Religion ID
+        in: formData
+        name: agama_id
+        type: integer
+      - description: Occupation ID
+        in: formData
+        name: pekerjaan_id
+        type: integer
+      - description: Username for user account
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Password for user account
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: User address
+        in: formData
+        name: user_alamat
+        required: true
+        type: string
+      - description: User email
+        in: formData
+        name: user_email
+        required: true
+        type: string
+      - description: Profile photo file
+        in: formData
+        name: foto_profile
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Resident created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict (NIK or username already exists)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create new resident with user account
+      tags:
+      - warga
+  /api/warga/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete resident and automatically delete the associated user account
+      parameters:
+      - description: Resident ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resident and user deleted successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Resident not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete resident and associated user account
+      tags:
+      - warga
+    get:
+      consumes:
+      - application/json
+      description: Get resident details by ID
+      parameters:
+      - description: Resident ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resident details
+          schema:
+            $ref: '#/definitions/models.Warga'
+        "400":
+          description: Invalid ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Resident not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get resident by ID
+      tags:
+      - warga
+    put:
+      consumes:
+      - multipart/form-data
+      description: Update resident information and optionally update associated user
+        account
+      parameters:
+      - description: Resident ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Family ID
+        in: formData
+        name: keluarga_id
+        type: integer
+      - description: House ID
+        in: formData
+        name: rumah_id
+        type: integer
+      - description: Resident name
+        in: formData
+        name: warga_nama
+        type: string
+      - description: Resident NIK (16 digits)
+        in: formData
+        name: warga_nik
+        type: string
+      - description: Phone number (used for both resident and user)
+        in: formData
+        name: no_telp
+        type: string
+      - description: Place of birth
+        in: formData
+        name: warga_tempat_lahir
+        type: string
+      - description: Date of birth (YYYY-MM-DD)
+        in: formData
+        name: warga_tanggal_lahir
+        type: string
+      - description: Gender (L/P)
+        in: formData
+        name: warga_jenis_kelamin
+        type: string
+      - description: Active status (aktif/nonaktif)
+        in: formData
+        name: warga_status_aktif
+        type: string
+      - description: Life status (hidup/meninggal)
+        in: formData
+        name: warga_status_hidup
+        type: string
+      - description: Religion ID
+        in: formData
+        name: agama_id
+        type: integer
+      - description: Occupation ID
+        in: formData
+        name: pekerjaan_id
+        type: integer
+      - description: Username for user account
+        in: formData
+        name: username
+        type: string
+      - description: Password for user account (optional)
+        in: formData
+        name: password
+        type: string
+      - description: User address
+        in: formData
+        name: user_alamat
+        type: string
+      - description: User email
+        in: formData
+        name: user_email
+        type: string
+      - description: Profile photo file
+        in: formData
+        name: foto_profile
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resident updated successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Resident not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict (NIK or username already exists)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update resident and user account
+      tags:
+      - warga
+  /api/warga/keluarga/{keluarga_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get all residents belonging to a specific family
+      parameters:
+      - description: Family ID
+        in: path
+        name: keluarga_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of residents in family
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid family ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get residents by family ID
+      tags:
+      - warga
+  /api/warga/rumah/{rumah_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get resident details by house ID
+      parameters:
+      - description: House ID
+        in: path
+        name: rumah_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resident details
+          schema:
+            $ref: '#/definitions/models.Warga'
+        "400":
+          description: Invalid house ID format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: No resident found for this house
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get resident by house ID
+      tags:
+      - warga
+  /api/warga/search:
+    get:
+      consumes:
+      - application/json
+      description: Search residents by name or NIK
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Search results
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Query parameter is required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Search residents
+      tags:
+      - warga
+  /api/warga/stats:
+    get:
+      consumes:
+      - application/json
+      description: Get various statistics about residents
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resident statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get resident statistics
+      tags:
+      - warga
+  /api/warga/total:
+    get:
+      consumes:
+      - application/json
+      description: Get the total count of residents
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Total residents count
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get total number of residents
+      tags:
+      - warga
   /auth/login:
     post:
       consumes:
