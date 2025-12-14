@@ -1879,6 +1879,352 @@ paths:
       summary: Mengambil data rumah berdasarkan status
       tags:
       - rumah
+  /api/tagihan-iuran:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data tagihan iuran dengan pagination dan filter
+      parameters:
+      - default: 1
+        description: Nomor halaman
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: Jumlah data per halaman
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Kata kunci pencarian
+        in: query
+        name: search
+        type: string
+      - description: Filter status (tertagih/lunas)
+        in: query
+        name: status
+        type: string
+      - description: Filter berdasarkan ID warga
+        in: query
+        name: warga_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data tagihan iuran berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data tagihan iuran
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan semua tagihan iuran
+      tags:
+      - Tagihan Iuran
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membuat data tagihan iuran baru
+      parameters:
+      - description: Nama tagihan iuran
+        in: formData
+        name: tagihan_iuran
+        required: true
+        type: string
+      - description: Nominal tagihan
+        in: formData
+        name: tagihan_iuran_nominal
+        required: true
+        type: number
+      - description: ID Warga
+        in: formData
+        name: warga_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tagihan iuran berhasil dibuat
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Data tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Tagihan iuran sudah ada
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal membuat tagihan iuran
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Membuat tagihan iuran baru
+      tags:
+      - Tagihan Iuran
+  /api/tagihan-iuran/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus tagihan iuran berdasarkan ID
+      parameters:
+      - description: ID Tagihan Iuran
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tagihan iuran berhasil dihapus
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Tagihan iuran tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menghapus tagihan iuran
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Menghapus tagihan iuran
+      tags:
+      - Tagihan Iuran
+    get:
+      consumes:
+      - application/json
+      description: Mendapatkan detail tagihan iuran berdasarkan ID
+      parameters:
+      - description: ID Tagihan Iuran
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data tagihan iuran berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Tagihan iuran tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data tagihan iuran
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan tagihan iuran berdasarkan ID
+      tags:
+      - Tagihan Iuran
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate data tagihan iuran berdasarkan ID
+      parameters:
+      - description: ID Tagihan Iuran
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nama tagihan iuran
+        in: formData
+        name: tagihan_iuran
+        type: string
+      - description: Nominal tagihan
+        in: formData
+        name: tagihan_iuran_nominal
+        type: number
+      - description: ID Warga
+        in: formData
+        name: warga_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tagihan iuran berhasil diupdate
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Data tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Tagihan iuran tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Tagihan iuran dengan nama tersebut sudah ada
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengupdate tagihan iuran
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mengupdate tagihan iuran
+      tags:
+      - Tagihan Iuran
+  /api/tagihan-iuran/{id}/bayar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Melakukan pembayaran untuk tagihan iuran berdasarkan ID
+      parameters:
+      - description: ID Tagihan Iuran
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status pembayaran (lunas/tertagih)
+        enum:
+        - lunas
+        - tertagih
+        in: formData
+        name: tagihan_iuran_status
+        required: true
+        type: string
+      - description: Jumlah yang dibayar
+        in: formData
+        name: jumlah_bayar
+        required: true
+        type: number
+      - description: Metode pembayaran
+        in: formData
+        name: metode_pembayaran
+        type: string
+      - description: Keterangan pembayaran
+        in: formData
+        name: keterangan
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pembayaran berhasil diproses
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Data tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Tagihan iuran tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "422":
+          description: Jumlah bayar tidak sesuai
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal memproses pembayaran
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Melakukan pembayaran iuran
+      tags:
+      - Tagihan Iuran
+  /api/tagihan-iuran/dropdown:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil data untuk dropdown tagihan iuran (id dan nama saja)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data dropdown berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data dropdown
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan dropdown tagihan iuran
+      tags:
+      - Tagihan Iuran
+  /api/tagihan-iuran/statistik:
+    get:
+      consumes:
+      - application/json
+      description: Mendapatkan statistik tagihan iuran (total, lunas, tertagih, total
+        nominal)
+      parameters:
+      - description: Filter berdasarkan ID warga
+        in: query
+        name: warga_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Statistik berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil statistik
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Mendapatkan statistik tagihan iuran
+      tags:
+      - Tagihan Iuran
   /api/transaksi:
     get:
       description: Mendapatkan daftar semua transaksi dengan filter

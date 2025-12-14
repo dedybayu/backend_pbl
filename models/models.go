@@ -39,14 +39,13 @@ type User struct {
 	Produk []*Produk `gorm:"foreignKey:UserID;references:UserID" json:"produk,omitempty"`
 }
 
-
 /* ============================
    PESAN WARGA
 ============================ */
 
 type PesanWarga struct {
-	PesanID   uint      `gorm:"primaryKey;autoIncrement" json:"pesan_id"`
-	PesanTeks string    `gorm:"type:text;not null" json:"pesan_teks"`
+	PesanID   uint   `gorm:"primaryKey;autoIncrement" json:"pesan_id"`
+	PesanTeks string `gorm:"type:text;not null" json:"pesan_teks"`
 
 	FromUserID uint `gorm:"not null;index" json:"from_user_id"`
 	ToUserID   uint `gorm:"not null;index" json:"to_user_id"`
@@ -58,8 +57,6 @@ type PesanWarga struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
-
-
 
 /* ============================
    KELUARGA
@@ -86,7 +83,7 @@ type Agama struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
-   Wargas []Warga `gorm:"foreignKey:AgamaID"`
+	Wargas []Warga `gorm:"foreignKey:AgamaID"`
 }
 
 type Pekerjaan struct {
@@ -95,7 +92,7 @@ type Pekerjaan struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 
-   Wargas []Warga `gorm:"foreignKey:PekerjaanID"`
+	Wargas []Warga `gorm:"foreignKey:PekerjaanID"`
 }
 
 /* ============================
@@ -109,7 +106,7 @@ type Rumah struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 
-   Wargas []Warga `gorm:"foreignKey:RumahID"`
+	Wargas []Warga `gorm:"foreignKey:RumahID"`
 }
 
 /* ============================
@@ -148,7 +145,6 @@ type Warga struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
-
 
 /* ============================
    KEGIATAN
@@ -279,15 +275,15 @@ type Pemasukan struct {
 //TODO konek sama warga
 
 type TagihanIuran struct {
-	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	TagihanIuran string    `gorm:"not null;size:100" json:"tagihan_iuran"`
-   TagihanIuranNominal float64   `gorm:"not null;type:decimal(15,2)" json:"tagihan_iuran_nominal"`
-   TagihanIuranStatus string    `gorm:"type:enum('tertagih','lunas');default:'tertagih'" json:"tagihan_iuran_status"`
-   WargaID      uint      `gorm:"not null" json:"warga_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID                  uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	TagihanIuran        string    `gorm:"not null;size:100" json:"tagihan_iuran"`
+	TagihanIuranNominal float64   `gorm:"not null;type:decimal(15,2)" json:"tagihan_iuran_nominal"`
+	TagihanIuranStatus  string    `gorm:"type:enum('tertagih','lunas');default:'tertagih'" json:"tagihan_iuran_status"`
+	WargaID             uint      `gorm:"not null" json:"warga_id"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
 
-   Warga Warga `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"warga"`
+	Warga Warga `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;" json:"warga"`
 }
 
 /* ============================
@@ -319,7 +315,6 @@ type Produk struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
-
 
 /* ============================
    KERANJANG (CART) - DIPERBAIKI
