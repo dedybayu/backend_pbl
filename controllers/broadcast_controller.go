@@ -418,11 +418,11 @@ func (bc *BroadcastController) GetAllBroadcast(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": broadcast,
-		// "pagination": gin.H{
-		// 	"page":  page,
-		// 	"limit": limit,
-		// 	"total": total,
-		// },
+		"pagination": gin.H{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		},
 	})
 }
 
