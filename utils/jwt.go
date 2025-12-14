@@ -35,7 +35,7 @@ func (j *JWTUtils) GenerateToken(userID uint, username string, levelID uint) (st
 		Username: username,
 		LevelID:  levelID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
