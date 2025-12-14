@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"rt-management/models"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -60,3 +61,39 @@ func (h *PesanRESTHandler) GetChatHistory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+
+// GET /api/pesan/users_chat?user_id=1
+func (h *PesanRESTHandler) GetUsersChat(c *gin.Context) {
+	userStr := c.Query("user_id")
+	userID, err := strconv.ParseUint(userStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+		return
+	}
+
+	// Struct hasil
+	var results []struct {
+		UserID      uint      `json:"user_id"`
+		Username    string    `json:"username"`
+		UserNama    string    `json:"user_nama"`
+		LastMessage string    `json:"pesan_terakhir"`
+		CreatedAt   time.Time `json:"jam"`
+	}
+
+	// Subquery: cari user lain yang pernah chat dengan kita + waktu pesan terakhir
+	subQuery := h.DB.Model(&models.PesanWarga{}).
+		Select("CASE WHEN from_user_id = ? THEN to_user_id ELSE from_user_id END as user_id, MAX(created_at) as last_time", userID).
+		Where("from_user_id = ? OR to_user_id = ?", userID, userID).
+		Group("user_id")
+
+	// Join dengan tabel users dan pesan terakhir
+	h.DB.Table("(?) as sub", subQuery).
+		Select("users.user_id, users.username, users.user_nama, pesan_wargas.pesan_teks as last_message, pesan_wargas.created_at").
+		Joins("join users on users.user_id = sub.user_id").
+		Joins("join pesan_wargas on ((pesan_wargas.from_user_id = ? AND pesan_wargas.to_user_id = sub.user_id) OR (pesan_wargas.from_user_id = sub.user_id AND pesan_wargas.to_user_id = ?)) AND pesan_wargas.created_at = sub.last_time", userID, userID).
+		Scan(&results)
+
+	c.JSON(http.StatusOK, results)
+}
+
+
