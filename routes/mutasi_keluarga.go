@@ -20,7 +20,7 @@ func SetupMutasiKeluargaRoutes(api *gin.RouterGroup, mutasiKeluargaController *c
 		
 		// Admin only routes
 		adminMutasi := mutasi.Group("")
-		adminMutasi.Use(authMiddleware.RequireLevel(1))
+		adminMutasi.Use(authMiddleware.RequireLevel(1, 2))
 		{
 			adminMutasi.POST("", mutasiKeluargaController.CreateMutasiKeluarga)
 			adminMutasi.PUT("/:id", mutasiKeluargaController.UpdateMutasiKeluarga)

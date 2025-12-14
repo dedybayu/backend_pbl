@@ -14,9 +14,9 @@ func SetupKategoriKegiatanRoutes(api *gin.RouterGroup, kategoriKegiatanControlle
 	kategori_kegiatan := api.Group("/kategori-kegiatan")
 	{
 		// Public routes (butuh auth)
-		kategori_kegiatan.GET("", authMiddleware.RequireLevel(1, 2), kategoriKegiatanController.GetAllKategoriKegiatan)
-		kategori_kegiatan.GET("/:id", authMiddleware.RequireLevel(1, 2), kategoriKegiatanController.GetKategoriKegiatanByID)
-		kategori_kegiatan.GET("/dropdown", authMiddleware.RequireLevel(1, 2), kategoriKegiatanController.GetKategoriKegiatanDropdown)
+		kategori_kegiatan.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kategoriKegiatanController.GetAllKategoriKegiatan)
+		kategori_kegiatan.GET("/:id", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kategoriKegiatanController.GetKategoriKegiatanByID)
+		kategori_kegiatan.GET("/dropdown", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kategoriKegiatanController.GetKategoriKegiatanDropdown)
 		
 		// Admin only routes
 		adminKategoriKegiatan := kategori_kegiatan.Group("")

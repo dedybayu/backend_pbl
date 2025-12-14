@@ -11,15 +11,15 @@ func SetupKegiatanRoutes(api *gin.RouterGroup, kegiatanController *controllers.K
 	kegiatan := api.Group("/kegiatan")
 	{
 		// Public routes (butuh auth)
-		kegiatan.GET("", authMiddleware.RequireLevel(1, 2), kegiatanController.GetAllKegiatan)
-		kegiatan.GET("/mendatang", authMiddleware.RequireLevel(1, 2), kegiatanController.GetKegiatanMendatang)
-		kegiatan.GET("/statistik", authMiddleware.RequireLevel(1, 2), kegiatanController.GetStatistikKegiatan)
-		kegiatan.GET("/search", authMiddleware.RequireLevel(1, 2), kegiatanController.SearchKegiatan)
-		kegiatan.GET("/:id", authMiddleware.RequireLevel(1, 2), kegiatanController.GetKegiatanByID)
+		kegiatan.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kegiatanController.GetAllKegiatan)
+		kegiatan.GET("/mendatang", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kegiatanController.GetKegiatanMendatang)
+		kegiatan.GET("/statistik", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kegiatanController.GetStatistikKegiatan)
+		kegiatan.GET("/search", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kegiatanController.SearchKegiatan)
+		kegiatan.GET("/:id", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), kegiatanController.GetKegiatanByID)
 		
 		// Admin only routes
 		adminKategoriKegiatan := kegiatan.Group("")
-		adminKategoriKegiatan.Use(authMiddleware.RequireLevel(1))
+		adminKategoriKegiatan.Use(authMiddleware.RequireLevel(1, 2, 3, 4, 5))
 		{
 			adminKategoriKegiatan.POST("", kegiatanController.CreateKegiatan)
 			adminKategoriKegiatan.PUT("/:id", kegiatanController.UpdateKegiatan)

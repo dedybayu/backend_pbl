@@ -19,7 +19,7 @@ func SetupTagihanIuranRoutes(api *gin.RouterGroup, tagihanIuranController *contr
 		
 		// Routes khusus admin (level 1)
 		adminTagihan := tagihan.Group("")
-		adminTagihan.Use(authMiddleware.RequireLevel(1))
+		adminTagihan.Use(authMiddleware.RequireLevel(1, 3))
 		{
 			adminTagihan.POST("", tagihanIuranController.CreateTagihanIuran)
 			adminTagihan.PUT("/:id", tagihanIuranController.UpdateTagihanIuran)

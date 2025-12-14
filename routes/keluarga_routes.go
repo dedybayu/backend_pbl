@@ -13,17 +13,17 @@ func SetupKeluargaRoutes(api *gin.RouterGroup, keluargaController *controllers.K
 	keluarga := api.Group("/keluarga")
 	{
 		// Public routes (butuh auth)
-		keluarga.GET("", authMiddleware.RequireLevel(1, 2), keluargaController.GetAllKeluarga)
-		keluarga.GET("/aktif", authMiddleware.RequireLevel(1, 2), keluargaController.GetKeluargaAktif) // ✅ NEW
-		keluarga.GET("/stats", authMiddleware.RequireLevel(1, 2), keluargaController.GetKeluargaStats)
-		keluarga.GET("/search", authMiddleware.RequireLevel(1, 2), keluargaController.SearchKeluarga)
-		keluarga.GET("/:id", authMiddleware.RequireLevel(1, 2), keluargaController.GetKeluargaByID)
-		keluarga.GET("/:id/details", authMiddleware.RequireLevel(1, 2), keluargaController.GetKeluargaWithDetails)
-		keluarga.GET("/total", authMiddleware.RequireLevel(1, 2), keluargaController.GetTotalKeluarga)
+		keluarga.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetAllKeluarga)
+		keluarga.GET("/aktif", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetKeluargaAktif) // ✅ NEW
+		keluarga.GET("/stats", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetKeluargaStats)
+		keluarga.GET("/search", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.SearchKeluarga)
+		keluarga.GET("/:id", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetKeluargaByID)
+		keluarga.GET("/:id/details", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetKeluargaWithDetails)
+		keluarga.GET("/total", authMiddleware.RequireLevel(1, 2, 3, 4, 5), keluargaController.GetTotalKeluarga)
 		
 		// Admin only routes
 		adminKeluarga := keluarga.Group("")
-		adminKeluarga.Use(authMiddleware.RequireLevel(1))
+		adminKeluarga.Use(authMiddleware.RequireLevel(1, 2))
 		{
 			adminKeluarga.POST("", keluargaController.CreateKeluarga)
 			adminKeluarga.PUT("/:id", keluargaController.UpdateKeluarga)

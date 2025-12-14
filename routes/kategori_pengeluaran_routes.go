@@ -12,10 +12,10 @@ func SetupKategoriPengeluaranRoutes(api *gin.RouterGroup, kategoriPengeluaranCon
 	kategori := api.Group("/kategori-pengeluaran")
 	{
 		// Public routes (butuh auth)
-		kategori.GET("", authMiddleware.RequireLevel(1, 2), kategoriPengeluaranController.GetAllKategoriPengeluaran)
-		kategori.GET("/dropdown", authMiddleware.RequireLevel(1, 2), kategoriPengeluaranController.GetKategoriPengeluaranDropdown)
-		kategori.GET("/:id", authMiddleware.RequireLevel(1, 2), kategoriPengeluaranController.GetKategoriPengeluaranByID)
-		
+		kategori.GET("", authMiddleware.RequireLevel(1, 2, 3), kategoriPengeluaranController.GetAllKategoriPengeluaran)
+		kategori.GET("/dropdown", authMiddleware.RequireLevel(1, 2, 3), kategoriPengeluaranController.GetKategoriPengeluaranDropdown)
+		kategori.GET("/:id", authMiddleware.RequireLevel(1, 2, 3), kategoriPengeluaranController.GetKategoriPengeluaranByID)
+
 		// Admin only routes
 		adminKategori := kategori.Group("")
 		adminKategori.Use(authMiddleware.RequireLevel(1))

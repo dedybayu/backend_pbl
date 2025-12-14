@@ -15,7 +15,7 @@ func SetupUserRoutes(api *gin.RouterGroup, userController *controllers.UserContr
 		users.GET("", authMiddleware.RequireLevel(1, 2), userController.GetAllUsers)
 		users.GET("/profile", authMiddleware.Auth(), userController.GetUserProfile) // ✅ NEW: Get current user profile
 		users.GET("/image/:filename", authMiddleware.Auth(), userController.GetFotoProfileImage) 
-		users.GET("/:id", authMiddleware.RequireLevel(1, 2), userController.GetUserByID)
+		users.GET("/:id", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), userController.GetUserByID)
 
 		
 		// Admin only routes

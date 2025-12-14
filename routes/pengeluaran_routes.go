@@ -12,16 +12,16 @@ func SetupPengeluaranRoutes(api *gin.RouterGroup, pengeluaranController *control
 	pengeluaran := api.Group("/pengeluaran")
 	{
 		// Public routes (butuh auth)
-		pengeluaran.GET("", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetAllPengeluaran)
-		pengeluaran.GET("/statistik", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetStatistikPengeluaran)
-		pengeluaran.GET("/laporan", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetLaporanPengeluaranBulanan)
-		pengeluaran.GET("/total-kategori", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetTotalNominalPerKategori)
-		pengeluaran.GET("/:id", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetPengeluaranByID)
-		pengeluaran.GET("/image/:filename", authMiddleware.RequireLevel(1, 2), pengeluaranController.GetPengeluaranBuktiImage)
+		pengeluaran.GET("", authMiddleware.RequireLevel(1, 3), pengeluaranController.GetAllPengeluaran)
+		pengeluaran.GET("/statistik", authMiddleware.RequireLevel(1, 3), pengeluaranController.GetStatistikPengeluaran)
+		pengeluaran.GET("/laporan", authMiddleware.RequireLevel(1, 3), pengeluaranController.GetLaporanPengeluaranBulanan)
+		pengeluaran.GET("/total-kategori", authMiddleware.RequireLevel(1, 3), pengeluaranController.GetTotalNominalPerKategori)
+		pengeluaran.GET("/:id", authMiddleware.RequireLevel(1, 3), pengeluaranController.GetPengeluaranByID)
+		pengeluaran.GET("/image/:filename", authMiddleware.RequireLevel(1, 3), pengeluaranController.GetPengeluaranBuktiImage)
 		
 		// Admin only routes
 		adminPengeluaran := pengeluaran.Group("")
-		adminPengeluaran.Use(authMiddleware.RequireLevel(1))
+		adminPengeluaran.Use(authMiddleware.RequireLevel(1, 3))
 		{
 			adminPengeluaran.POST("", pengeluaranController.CreatePengeluaran)
 			adminPengeluaran.PUT("/:id", pengeluaranController.UpdatePengeluaran)

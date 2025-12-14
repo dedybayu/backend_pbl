@@ -9,7 +9,7 @@ import (
 
 func SetupKeranjangRoutes(api *gin.RouterGroup, keranjangController *controllers.KeranjangController, authMiddleware *middleware.AuthMiddleware) {
 	keranjang := api.Group("/keranjang")
-	keranjang.Use(authMiddleware.RequireLevel(1)) // Semua endpoint keranjang butuh auth
+	keranjang.Use(authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6)) // Semua endpoint keranjang butuh auth
 	{
 		// Tambah ke keranjang
 		keranjang.POST("", keranjangController.AddToCart)

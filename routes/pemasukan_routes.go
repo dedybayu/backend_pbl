@@ -22,7 +22,7 @@ func SetupPemasukanRoutes(api *gin.RouterGroup, pemasukanController *controllers
 		
 		// Admin only routes
 		adminPemasukan := pemasukan.Group("")
-		adminPemasukan.Use(authMiddleware.RequireLevel(1))
+		adminPemasukan.Use(authMiddleware.RequireLevel(1, 3))
 		{
 			adminPemasukan.POST("", pemasukanController.CreatePemasukan)
 			adminPemasukan.PUT("/:id", pemasukanController.UpdatePemasukan)

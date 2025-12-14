@@ -12,16 +12,16 @@ func SetupWargaRoutes(api *gin.RouterGroup, wargaController *controllers.WargaCo
 	warga := api.Group("/warga")
 	{
 		// Public routes (butuh auth)
-		warga.GET("", authMiddleware.RequireLevel(1, 2), wargaController.GetAllWarga)
-		warga.GET("/total", authMiddleware.RequireLevel(1, 2), wargaController.GetTotalWarga)
-		warga.GET("/stats", authMiddleware.RequireLevel(1, 2), wargaController.GetWargaStats)
-		warga.GET("/search", authMiddleware.RequireLevel(1, 2), wargaController.SearchWarga)
-		warga.GET("/keluarga/:keluarga_id", authMiddleware.RequireLevel(1, 2), wargaController.GetWargaByKeluarga)
-		warga.GET("/:id", authMiddleware.RequireLevel(1, 2), wargaController.GetWargaByID)
+		warga.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5), wargaController.GetAllWarga)
+		warga.GET("/total", authMiddleware.RequireLevel(1, 2, 3, 4, 5), wargaController.GetTotalWarga)
+		warga.GET("/stats", authMiddleware.RequireLevel(1, 2, 3, 4, 5), wargaController.GetWargaStats)
+		warga.GET("/search", authMiddleware.RequireLevel(1, 2, 3, 4, 5), wargaController.SearchWarga)
+		warga.GET("/keluarga/:keluarga_id", authMiddleware.RequireLevel(1, 2, 3, 4, 5), wargaController.GetWargaByKeluarga)
+		warga.GET("/:id", authMiddleware.RequireLevel(1, 2, 3, 4, 5), wargaController.GetWargaByID)
 		
 		// Admin only routes
 		adminWarga := warga.Group("")
-		adminWarga.Use(authMiddleware.RequireLevel(1))
+		adminWarga.Use(authMiddleware.RequireLevel(1, 2))
 		{
 			adminWarga.POST("", wargaController.CreateWarga)
 			adminWarga.PUT("/:id", wargaController.UpdateWarga)
