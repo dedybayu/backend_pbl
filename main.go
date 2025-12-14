@@ -9,6 +9,7 @@ import (
 	"rt-management/middleware"
 	"rt-management/routes"
 	"rt-management/utils"
+	"rt-management/websocket"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -44,6 +45,11 @@ func main() {
 	if err != nil {
 		log.Fatal("❌ DB connection error:", err)
 	}
+
+	hub := websocket.NewHub()
+	go hub.Run()
+
+	pesanWSHandler := websocket.NewPesanWSHandler(db, hub)
 
 	// RUN MIGRATION ONLY
 	if *migrate {
@@ -160,6 +166,8 @@ func main() {
 	// Swagger UI: http://localhost:8080/swagger/index.html
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// WebSocket route (di luar /api)
+	r.GET("/ws/pesan", pesanWSHandler.Handle)
 
 	port := os.Getenv("PORT")
 	if port == "" {
