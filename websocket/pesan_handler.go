@@ -50,11 +50,6 @@ func (h *PesanWSHandler) Handle(c *gin.Context) {
 		return nil
 	})
 
-	if err != nil {
-		log.Println("❌ Upgrade error:", err)
-		return
-	}
-
 	client := &Client{
 		Conn: conn,
 		Send: make(chan []byte),
