@@ -21,6 +21,12 @@ func NewAuthMiddleware(jwtUtils *utils.JWTUtils) *AuthMiddleware {
 // Auth middleware untuk validasi JWT token
 func (m *AuthMiddleware) Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// ✅ WAJIB: skip OPTIONS (preflight)
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+		
 		// Skip auth untuk public endpoints
 		if m.isPublicEndpoint(c.Request.URL.Path) {
 			c.Next()

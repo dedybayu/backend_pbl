@@ -15,6 +15,338 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/agama": {
+            "get": {
+                "description": "Mengambil seluruh data agama dari database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Agama"
+                ],
+                "summary": "Mendapatkan semua data agama",
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mendapatkan data agama",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Agama"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data agama",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/broadcast": {
+            "get": {
+                "description": "Mendapatkan semua data broadcast dengan pagination dan search",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcast"
+                ],
+                "summary": "Mendapatkan semua data broadcast",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Nomor halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Jumlah data per halaman (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Kata kunci pencarian",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data broadcast berhasil diambil",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data broadcast",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Membuat data broadcast baru dengan form-data",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcast"
+                ],
+                "summary": "Membuat broadcast baru",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Nama broadcast (2-200 karakter)",
+                        "name": "broadcast_nama",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Deskripsi broadcast",
+                        "name": "broadcast_deskripsi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Foto broadcast (jpg, jpeg, png, max 5MB)",
+                        "name": "broadcast_foto",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Dokumen broadcast (pdf, doc, docx, max 10MB)",
+                        "name": "broadcast_dokumen",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Broadcast berhasil dibuat",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Data form tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal membuat broadcast",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/broadcast/{id}": {
+            "get": {
+                "description": "Mendapatkan detail data broadcast berdasarkan ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcast"
+                ],
+                "summary": "Mendapatkan broadcast berdasarkan ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Broadcast",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Data broadcast berhasil diambil",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Broadcast tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data broadcast",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Mengupdate data broadcast berdasarkan ID dengan form-data",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcast"
+                ],
+                "summary": "Mengupdate data broadcast",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Broadcast",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nama broadcast (2-200 karakter)",
+                        "name": "broadcast_nama",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Deskripsi broadcast",
+                        "name": "broadcast_deskripsi",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Foto broadcast baru (jpg, jpeg, png, max 5MB)",
+                        "name": "broadcast_foto",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Dokumen broadcast baru (pdf, doc, docx, max 10MB)",
+                        "name": "broadcast_dokumen",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Broadcast berhasil diupdate",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Data form tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Broadcast tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengupdate broadcast",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Menghapus data broadcast berdasarkan ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcast"
+                ],
+                "summary": "Menghapus broadcast",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID Broadcast",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Broadcast berhasil dihapus",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "ID tidak valid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Broadcast tidak ditemukan",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal menghapus broadcast",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/detail-transaksi/transaksi/{transaksi_id}": {
             "get": {
                 "security": [
@@ -1180,6 +1512,39 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Gagal mengupdate item keranjang",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/pekerjaan": {
+            "get": {
+                "description": "Mengambil seluruh data pekerjaan dari database",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pekerjaan"
+                ],
+                "summary": "Mendapatkan semua data pekerjaan",
+                "responses": {
+                    "200": {
+                        "description": "Berhasil mendapatkan data pekerjaan",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Pekerjaan"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Gagal mengambil data pekerjaan",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true

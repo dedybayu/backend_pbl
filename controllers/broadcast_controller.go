@@ -36,6 +36,21 @@ type UpdateBroadcastRequest struct {
 }
 
 // ✅ CREATE - Membuat broadcast baru dengan form-data
+
+// CreateBroadcast godoc
+// @Summary Membuat broadcast baru
+// @Description Membuat data broadcast baru dengan form-data
+// @Tags Broadcast
+// @Accept multipart/form-data
+// @Produce json
+// @Param broadcast_nama formData string true "Nama broadcast (2-200 karakter)"
+// @Param broadcast_deskripsi formData string false "Deskripsi broadcast"
+// @Param broadcast_foto formData file false "Foto broadcast (jpg, jpeg, png, max 5MB)"
+// @Param broadcast_dokumen formData file false "Dokumen broadcast (pdf, doc, docx, max 10MB)"
+// @Success 201 {object} map[string]interface{} "Broadcast berhasil dibuat"
+// @Failure 400 {object} map[string]interface{} "Data form tidak valid"
+// @Failure 500 {object} map[string]interface{} "Gagal membuat broadcast"
+// @Router /api/broadcast [post]
 func (bc *BroadcastController) CreateBroadcast(c *gin.Context) {
 	var req CreateBroadcastRequest
 	
@@ -136,6 +151,23 @@ func (bc *BroadcastController) CreateBroadcast(c *gin.Context) {
 }
 
 // ✅ UPDATE - Mengupdate broadcast dengan form-data
+
+// UpdateBroadcast godoc
+// @Summary Mengupdate data broadcast
+// @Description Mengupdate data broadcast berdasarkan ID dengan form-data
+// @Tags Broadcast
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path int true "ID Broadcast"
+// @Param broadcast_nama formData string false "Nama broadcast (2-200 karakter)"
+// @Param broadcast_deskripsi formData string false "Deskripsi broadcast"
+// @Param broadcast_foto formData file false "Foto broadcast baru (jpg, jpeg, png, max 5MB)"
+// @Param broadcast_dokumen formData file false "Dokumen broadcast baru (pdf, doc, docx, max 10MB)"
+// @Success 200 {object} map[string]interface{} "Broadcast berhasil diupdate"
+// @Failure 400 {object} map[string]interface{} "Data form tidak valid"
+// @Failure 404 {object} map[string]interface{} "Broadcast tidak ditemukan"
+// @Failure 500 {object} map[string]interface{} "Gagal mengupdate broadcast"
+// @Router /api/broadcast/{id} [put]
 func (bc *BroadcastController) UpdateBroadcast(c *gin.Context) {
 	id := c.Param("id")
 
@@ -270,6 +302,19 @@ func (bc *BroadcastController) UpdateBroadcast(c *gin.Context) {
 }
 
 // ✅ DELETE - Menghapus broadcast
+
+// DeleteBroadcast godoc
+// @Summary Menghapus broadcast
+// @Description Menghapus data broadcast berdasarkan ID
+// @Tags Broadcast
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Broadcast"
+// @Success 200 {object} map[string]interface{} "Broadcast berhasil dihapus"
+// @Failure 400 {object} map[string]interface{} "ID tidak valid"
+// @Failure 404 {object} map[string]interface{} "Broadcast tidak ditemukan"
+// @Failure 500 {object} map[string]interface{} "Gagal menghapus broadcast"
+// @Router /api/broadcast/{id} [delete]
 func (bc *BroadcastController) DeleteBroadcast(c *gin.Context) {
 	id := c.Param("id")
 
@@ -323,6 +368,19 @@ func (bc *BroadcastController) DeleteBroadcast(c *gin.Context) {
 }
 
 // ✅ READ - Mendapatkan semua broadcast
+
+// GetAllBroadcast godoc
+// @Summary Mendapatkan semua data broadcast
+// @Description Mendapatkan semua data broadcast dengan pagination dan search
+// @Tags Broadcast
+// @Accept json
+// @Produce json
+// @Param page query int false "Nomor halaman (default: 1)" minimum(1)
+// @Param limit query int false "Jumlah data per halaman (default: 10)" minimum(1) maximum(100)
+// @Param search query string false "Kata kunci pencarian"
+// @Success 200 {object} map[string]interface{} "Data broadcast berhasil diambil"
+// @Failure 500 {object} map[string]interface{} "Gagal mengambil data broadcast"
+// @Router /api/broadcast [get]
 func (bc *BroadcastController) GetAllBroadcast(c *gin.Context) {
 	var broadcast []models.Broadcast
 
@@ -369,6 +427,19 @@ func (bc *BroadcastController) GetAllBroadcast(c *gin.Context) {
 }
 
 // ✅ READ - Mendapatkan broadcast by ID
+
+// GetBroadcastByID godoc
+// @Summary Mendapatkan broadcast berdasarkan ID
+// @Description Mendapatkan detail data broadcast berdasarkan ID
+// @Tags Broadcast
+// @Accept json
+// @Produce json
+// @Param id path int true "ID Broadcast"
+// @Success 200 {object} map[string]interface{} "Data broadcast berhasil diambil"
+// @Failure 400 {object} map[string]interface{} "ID tidak valid"
+// @Failure 404 {object} map[string]interface{} "Broadcast tidak ditemukan"
+// @Failure 500 {object} map[string]interface{} "Gagal mengambil data broadcast"
+// @Router /api/broadcast/{id} [get]
 func (bc *BroadcastController) GetBroadcastByID(c *gin.Context) {
 	id := c.Param("id")
 

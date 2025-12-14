@@ -41,6 +41,27 @@ type User struct {
 
 
 /* ============================
+   PESAN WARGA
+============================ */
+
+type PesanWarga struct {
+	PesanID   uint      `gorm:"primaryKey;autoIncrement" json:"pesan_id"`
+	PesanTeks string    `gorm:"type:text;not null" json:"pesan_teks"`
+
+	FromUserID uint `gorm:"not null;index" json:"from_user_id"`
+	ToUserID   uint `gorm:"not null;index" json:"to_user_id"`
+
+	// Relasi ke User
+	FromUser *User `gorm:"foreignKey:FromUserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"from_user,omitempty"`
+	ToUser   *User `gorm:"foreignKey:ToUserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"to_user,omitempty"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+
+
+/* ============================
    KELUARGA
 ============================ */
 

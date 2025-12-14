@@ -335,6 +335,233 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/agama:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data agama dari database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Berhasil mendapatkan data agama
+          schema:
+            items:
+              $ref: '#/definitions/models.Agama'
+            type: array
+        "500":
+          description: Gagal mengambil data agama
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mendapatkan semua data agama
+      tags:
+      - Agama
+  /api/broadcast:
+    get:
+      consumes:
+      - application/json
+      description: Mendapatkan semua data broadcast dengan pagination dan search
+      parameters:
+      - description: 'Nomor halaman (default: 1)'
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: 'Jumlah data per halaman (default: 10)'
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Kata kunci pencarian
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data broadcast berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data broadcast
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mendapatkan semua data broadcast
+      tags:
+      - Broadcast
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membuat data broadcast baru dengan form-data
+      parameters:
+      - description: Nama broadcast (2-200 karakter)
+        in: formData
+        name: broadcast_nama
+        required: true
+        type: string
+      - description: Deskripsi broadcast
+        in: formData
+        name: broadcast_deskripsi
+        type: string
+      - description: Foto broadcast (jpg, jpeg, png, max 5MB)
+        in: formData
+        name: broadcast_foto
+        type: file
+      - description: Dokumen broadcast (pdf, doc, docx, max 10MB)
+        in: formData
+        name: broadcast_dokumen
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Broadcast berhasil dibuat
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Data form tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal membuat broadcast
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Membuat broadcast baru
+      tags:
+      - Broadcast
+  /api/broadcast/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Menghapus data broadcast berdasarkan ID
+      parameters:
+      - description: ID Broadcast
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Broadcast berhasil dihapus
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Broadcast tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal menghapus broadcast
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Menghapus broadcast
+      tags:
+      - Broadcast
+    get:
+      consumes:
+      - application/json
+      description: Mendapatkan detail data broadcast berdasarkan ID
+      parameters:
+      - description: ID Broadcast
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data broadcast berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Broadcast tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengambil data broadcast
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mendapatkan broadcast berdasarkan ID
+      tags:
+      - Broadcast
+    put:
+      consumes:
+      - multipart/form-data
+      description: Mengupdate data broadcast berdasarkan ID dengan form-data
+      parameters:
+      - description: ID Broadcast
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nama broadcast (2-200 karakter)
+        in: formData
+        name: broadcast_nama
+        type: string
+      - description: Deskripsi broadcast
+        in: formData
+        name: broadcast_deskripsi
+        type: string
+      - description: Foto broadcast baru (jpg, jpeg, png, max 5MB)
+        in: formData
+        name: broadcast_foto
+        type: file
+      - description: Dokumen broadcast baru (pdf, doc, docx, max 10MB)
+        in: formData
+        name: broadcast_dokumen
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Broadcast berhasil diupdate
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Data form tidak valid
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Broadcast tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Gagal mengupdate broadcast
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mengupdate data broadcast
+      tags:
+      - Broadcast
   /api/detail-transaksi/{id}:
     get:
       description: Mendapatkan detail transaksi berdasarkan ID detail
@@ -1110,6 +1337,28 @@ paths:
       summary: Update item keranjang (Form Data)
       tags:
       - keranjang
+  /api/pekerjaan:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil seluruh data pekerjaan dari database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Berhasil mendapatkan data pekerjaan
+          schema:
+            items:
+              $ref: '#/definitions/models.Pekerjaan'
+            type: array
+        "500":
+          description: Gagal mengambil data pekerjaan
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Mendapatkan semua data pekerjaan
+      tags:
+      - Pekerjaan
   /api/produk:
     get:
       description: Mendapatkan semua produk

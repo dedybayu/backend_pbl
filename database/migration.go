@@ -44,7 +44,7 @@ func Migrate() error {
 	// 1. Tabel master/induk (tanpa foreign key)
 	// 2. Tabel yang punya foreign key ke tabel #1
 	// 3. Tabel yang punya foreign key ke tabel #2, dst
-	
+
 	tables := []interface{}{
 		// ===== TABEL MASTER/INDUK (tanpa foreign key) =====
 		&models.Level{},
@@ -57,10 +57,10 @@ func Migrate() error {
 		&models.TagihanIuran{},
 		&models.KategoriProduk{},
 		&models.Rumah{}, // ✅ RUMAH DIPINDAHKAN KE SINI (tidak punya foreign key)
-		
+
 		// ===== TABEL YANG BUTUH TABEL MASTER =====
-		&models.User{},           // butuh Level
-		
+		&models.User{}, // butuh Level
+
 		// ===== TABEL YANG BUTUH USER & MASTER LAIN =====
 		&models.Warga{},          // butuh Keluarga, Agama, Pekerjaan, Rumah, User? (cek ini)
 		&models.Produk{},         // butuh KategoriProduk, User
@@ -69,10 +69,11 @@ func Migrate() error {
 		&models.Pemasukan{},      // butuh KategoriPemasukan
 		&models.Broadcast{},      // tidak punya foreign key
 		&models.MutasiKeluarga{}, // butuh Keluarga
-		
+		&models.PesanWarga{},     // butuh User
+
 		// ===== TABEL E-COMMERCE (butuh User & Produk) =====
-		&models.Keranjang{},      // butuh User, Produk
-		&models.Transaksi{},      // butuh User
+		&models.Keranjang{},       // butuh User, Produk
+		&models.Transaksi{},       // butuh User
 		&models.DetailTransaksi{}, // butuh Transaksi, Produk
 	}
 
@@ -102,26 +103,27 @@ func DropTables() error {
 
 	// ✅ URUTAN DROP YANG BENAR (berlawanan dengan migration):
 	// Child/tabel dependen dihapus dulu, parent belakangan
-	
+
 	tables := []interface{}{
 		// ===== TABEL CHILD/DEPENDEN (dihapus dulu) =====
 		&models.DetailTransaksi{}, // butuh Transaksi, Produk
 		&models.Transaksi{},       // butuh User
 		&models.Keranjang{},       // butuh User, Produk
-		
+
 		// ===== TABEL CHILD LAINNYA =====
-		&models.Produk{},           // butuh KategoriProduk, User
-		&models.Pemasukan{},        // butuh KategoriPemasukan
-		&models.Pengeluaran{},      // butuh KategoriPengeluaran
-		&models.MutasiKeluarga{},   // butuh Keluarga
+		&models.Produk{},         // butuh KategoriProduk, User
+		&models.Pemasukan{},      // butuh KategoriPemasukan
+		&models.Pengeluaran{},    // butuh KategoriPengeluaran
+		&models.MutasiKeluarga{}, // butuh Keluarga
 		&models.Broadcast{},
-		&models.Kegiatan{},         // butuh KategoriKegiatan
-		&models.Warga{},            // butuh Keluarga, Agama, Pekerjaan, Rumah
-		
+		&models.Kegiatan{},   // butuh KategoriKegiatan
+		&models.Warga{},      // butuh Keluarga, Agama, Pekerjaan, Rumah
+		&models.PesanWarga{}, // butuh User
+
 		// ===== TABEL DEPENDEN =====
-		&models.User{},             // butuh Level
-		&models.Rumah{},            // tidak punya foreign key
-		
+		&models.User{},  // butuh Level
+		&models.Rumah{}, // tidak punya foreign key
+
 		// ===== TABEL MASTER/PARENT (dihapus belakangan) =====
 		&models.KategoriProduk{},
 		&models.TagihanIuran{},

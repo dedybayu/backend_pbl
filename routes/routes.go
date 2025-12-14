@@ -30,6 +30,10 @@ type RouteConfig struct {
 	KeranjangController           *controllers.KeranjangController
 	TransaksiController           *controllers.TransaksiController
 	DetailTransaksiController     *controllers.DetailTransaksiController
+	AgamaController 			  *controllers.AgamaController
+	PekerjaanController           *controllers.PekerjaanController
+	PesanWargaController          *controllers.PesanWargaController
+
 	// FileImageController           *controllers.FileImageController
 	AuthMiddleware *middleware.AuthMiddleware
 }
@@ -122,6 +126,14 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 		// Setup transaksi routes
 		SetupTransaksiRoutes(api,config.TransaksiController, config.DetailTransaksiController, config.AuthMiddleware)
 
+		// Setup agama routes
+		SetupAgamaRoutes(api, config.AgamaController)
+
+		// Setup pekerjaan routes
+		SetupPekerjaanRoutes(api, config.PekerjaanController)
+
+		// Setup Pesan Warga routes
+		SetupPesanWargaRoutes(api, config.PesanWargaController)
 		// Setup file image routes
 		// SetupFileRoutes(api, config.FileImageController, config.AuthMiddleware)
 	}
