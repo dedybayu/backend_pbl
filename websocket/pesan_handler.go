@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"rt-management/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -35,6 +36,13 @@ type PesanPayload struct {
 
 func (h *PesanWSHandler) Handle(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn.SetReadLimit(5120)
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+
 	if err != nil {
 		log.Println("❌ Upgrade error:", err)
 		return
@@ -86,5 +94,6 @@ func (h *PesanWSHandler) Handle(c *gin.Context) {
 	}
 
 	h.Hub.Unregister <- client
+
 	conn.Close()
 }

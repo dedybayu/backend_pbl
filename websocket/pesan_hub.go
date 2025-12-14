@@ -1,13 +1,5 @@
 package websocket
 
-import "github.com/gorilla/websocket"
-
-type Client struct {
-	Conn *websocket.Conn
-	Send chan []byte
-	Hub  *Hub
-}
-
 type Hub struct {
 	Clients    map[*Client]bool
 	Broadcast  chan []byte
@@ -41,8 +33,8 @@ func (h *Hub) Run() {
 				select {
 				case client.Send <- message:
 				default:
-					delete(h.Clients, client)
 					close(client.Send)
+					delete(h.Clients, client)
 				}
 			}
 		}
