@@ -35,7 +35,14 @@ type PesanPayload struct {
 }
 
 func (h *PesanWSHandler) Handle(c *gin.Context) {
+	log.Println("🔥 WS HANDLE DIPANGGIL")
+
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("❌ Upgrade error:", err)
+		return
+	}
+
 	conn.SetReadLimit(5120)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error {
