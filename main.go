@@ -169,6 +169,13 @@ func main() {
 	// WebSocket route (di luar /api)
 	r.GET("/ws/pesan", pesanWSHandler.Handle)
 
+	// REST API untuk riwayat chat
+	pesanRESTHandler := websocket.NewPesanRESTHandler(db)
+	api := r.Group("/api")
+	{
+		api.GET("/pesan", pesanRESTHandler.GetChatHistory)
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
