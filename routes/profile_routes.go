@@ -21,4 +21,4 @@ func SetupProfileRoutes(api *gin.RouterGroup, profileController *controllers.Pro
 		authProfile.PUT("/change-password", profileController.UpdatePassword) // atau /change-password
 		authProfile.GET("/image/:filename", profileController.GetFotoProfileImage) // Perbaiki parameter
 	}
-}
+} 

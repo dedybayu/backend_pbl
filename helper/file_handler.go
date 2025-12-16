@@ -38,6 +38,8 @@ func DeleteOldPhoto(filename string, fieldName string) error {
 			fullPath = filepath.Join("storage", "images", "broadcast", filename)
 		case "foto_profile":
 			fullPath = filepath.Join("storage", "images", "profile", filename)
+		case "bukti_iuran":
+			fullPath = filepath.Join("storage", "images", "iuran", filename)
 		default:
 		}
 
@@ -109,6 +111,9 @@ func HandleFileImageUpload(c *gin.Context, fieldName string, oldPhotoPath string
 	case "foto_profile":
 		storageDir = "storage/images/profile"
 		filePrefix = "profile"
+	case "bukti_iuran":
+		storageDir = "storage/images/iuran"
+		filePrefix = "iuran"
 	default:
 		storageDir = "storage/images/default"
 		filePrefix = "default"
@@ -353,6 +358,8 @@ func GetFileByFileName(fieldName string, fileName string) (*os.File, error) {
 		storageDir = "storage/dokumen/pemasukan"
 	case "foto_profile":
 		storageDir = "storage/images/profile"
+	case "bukti_iuran":
+		storageDir = "storage/images/iuran"
 	default:
 		storageDir = "storage/images/default"
 	}

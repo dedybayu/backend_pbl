@@ -2323,7 +2323,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Mengambil seluruh data tagihan iuran dengan pagination dan filter",
+                "description": "Mendapatkan semua data tagihan iuran dengan filter opsional",
                 "consumes": [
                     "application/json"
                 ],
@@ -2333,57 +2333,38 @@ const docTemplate = `{
                 "tags": [
                     "Tagihan Iuran"
                 ],
-                "summary": "Mendapatkan semua tagihan iuran",
+                "summary": "Get all tagihan iuran",
                 "parameters": [
                     {
-                        "minimum": 1,
-                        "type": "integer",
-                        "default": 1,
-                        "description": "Nomor halaman",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "maximum": 100,
-                        "minimum": 1,
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Jumlah data per halaman",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
-                        "description": "Kata kunci pencarian",
-                        "name": "search",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter status (tertagih/lunas)",
+                        "description": "Filter by status (tertagih/lunas)",
                         "name": "status",
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "Filter berdasarkan ID warga",
+                        "type": "string",
+                        "description": "Filter by status verifikasi (menunggu/diterima/ditolak)",
+                        "name": "status_verifikasi",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by warga ID",
                         "name": "warga_id",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Data tagihan iuran berhasil diambil",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.TagihanIuranListResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal mengambil data tagihan iuran",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     }
                 }
@@ -2394,9 +2375,9 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Membuat data tagihan iuran baru",
+                "description": "Membuat tagihan iuran baru (Hanya admin/ketua RT)",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -2404,137 +2385,147 @@ const docTemplate = `{
                 "tags": [
                     "Tagihan Iuran"
                 ],
-                "summary": "Membuat tagihan iuran baru",
+                "summary": "Create new tagihan iuran",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Nama tagihan iuran",
-                        "name": "tagihan_iuran",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "number",
-                        "description": "Nominal tagihan",
-                        "name": "tagihan_iuran_nominal",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID Warga",
-                        "name": "warga_id",
-                        "in": "formData",
-                        "required": true
+                        "description": "Data tagihan iuran",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.CreateTagihanIuranRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Tagihan iuran berhasil dibuat",
+                        "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.TagihanIuranResponse"
                         }
                     },
                     "400": {
-                        "description": "Data tidak valid",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "409": {
-                        "description": "Tagihan iuran sudah ada",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal membuat tagihan iuran",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/api/tagihan-iuran/dropdown": {
+        "/api/tagihan-iuran/files/{filename}": {
             "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Mengambil data untuk dropdown tagihan iuran (id dan nama saja)",
+                "description": "Mendapatkan file bukti pembayaran tagihan iuran",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
-                    "application/json"
+                    "image/*",
+                    "application/octet-stream"
                 ],
                 "tags": [
                     "Tagihan Iuran"
                 ],
-                "summary": "Mendapatkan dropdown tagihan iuran",
-                "responses": {
-                    "200": {
-                        "description": "Data dropdown berhasil diambil",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "500": {
-                        "description": "Gagal mengambil data dropdown",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/api/tagihan-iuran/statistik": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Mendapatkan statistik tagihan iuran (total, lunas, tertagih, total nominal)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tagihan Iuran"
-                ],
-                "summary": "Mendapatkan statistik tagihan iuran",
+                "summary": "Get file bukti pembayaran",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Filter berdasarkan ID warga",
+                        "type": "string",
+                        "description": "Nama file bukti",
+                        "name": "filename",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File bukti pembayaran",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tagihan-iuran/warga/{warga_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mendapatkan data tagihan iuran berdasarkan ID warga",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tagihan Iuran"
+                ],
+                "summary": "Get tagihan iuran by warga ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Warga ID",
                         "name": "warga_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status (tertagih/lunas)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status verifikasi (menunggu/diterima/ditolak)",
+                        "name": "status_verifikasi",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Statistik berhasil diambil",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.TagihanIuranListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal mengambil statistik",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     }
                 }
@@ -2547,7 +2538,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Mendapatkan detail tagihan iuran berdasarkan ID",
+                "description": "Mendapatkan data tagihan iuran berdasarkan ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -2557,11 +2548,11 @@ const docTemplate = `{
                 "tags": [
                     "Tagihan Iuran"
                 ],
-                "summary": "Mendapatkan tagihan iuran berdasarkan ID",
+                "summary": "Get tagihan iuran by ID",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID Tagihan Iuran",
+                        "type": "string",
+                        "description": "Tagihan Iuran ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2569,31 +2560,27 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Data tagihan iuran berhasil diambil",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.TagihanIuranResponse"
                         }
                     },
                     "400": {
-                        "description": "ID tidak valid",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Tagihan iuran tidak ditemukan",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal mengambil data tagihan iuran",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     }
                 }
@@ -2604,9 +2591,9 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Mengupdate data tagihan iuran berdasarkan ID",
+                "description": "Mengupdate data tagihan iuran (Hanya admin/ketua RT)",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -2614,68 +2601,48 @@ const docTemplate = `{
                 "tags": [
                     "Tagihan Iuran"
                 ],
-                "summary": "Mengupdate tagihan iuran",
+                "summary": "Update tagihan iuran",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID Tagihan Iuran",
+                        "type": "string",
+                        "description": "Tagihan Iuran ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Nama tagihan iuran",
-                        "name": "tagihan_iuran",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "number",
-                        "description": "Nominal tagihan",
-                        "name": "tagihan_iuran_nominal",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID Warga",
-                        "name": "warga_id",
-                        "in": "formData"
+                        "description": "Data update tagihan iuran",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.UpdateTagihanIuranRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Tagihan iuran berhasil diupdate",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.TagihanIuranResponse"
                         }
                     },
                     "400": {
-                        "description": "Data tidak valid",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Tagihan iuran tidak ditemukan",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "409": {
-                        "description": "Tagihan iuran dengan nama tersebut sudah ada",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal mengupdate tagihan iuran",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     }
                 }
@@ -2686,7 +2653,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Menghapus tagihan iuran berdasarkan ID",
+                "description": "Menghapus data tagihan iuran (Hanya admin/ketua RT)",
                 "consumes": [
                     "application/json"
                 ],
@@ -2696,11 +2663,11 @@ const docTemplate = `{
                 "tags": [
                     "Tagihan Iuran"
                 ],
-                "summary": "Menghapus tagihan iuran",
+                "summary": "Delete tagihan iuran",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID Tagihan Iuran",
+                        "type": "string",
+                        "description": "Tagihan Iuran ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -2708,46 +2675,43 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Tagihan iuran berhasil dihapus",
+                        "description": "success: true, message: 'Tagihan iuran berhasil dihapus'",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "400": {
-                        "description": "ID tidak valid",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Tagihan iuran tidak ditemukan",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal menghapus tagihan iuran",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/api/tagihan-iuran/{id}/bayar": {
-            "post": {
+        "/api/tagihan-iuran/{id}/verifikasi": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Melakukan pembayaran untuk tagihan iuran berdasarkan ID",
+                "description": "Mengupdate status verifikasi tagihan iuran (Hanya admin/ketua RT)",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -2755,80 +2719,48 @@ const docTemplate = `{
                 "tags": [
                     "Tagihan Iuran"
                 ],
-                "summary": "Melakukan pembayaran iuran",
+                "summary": "Update status verifikasi tagihan iuran",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "ID Tagihan Iuran",
+                        "type": "string",
+                        "description": "Tagihan Iuran ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "enum": [
-                            "lunas",
-                            "tertagih"
-                        ],
-                        "type": "string",
-                        "description": "Status pembayaran (lunas/tertagih)",
-                        "name": "tagihan_iuran_status",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "number",
-                        "description": "Jumlah yang dibayar",
-                        "name": "jumlah_bayar",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Metode pembayaran",
-                        "name": "metode_pembayaran",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Keterangan pembayaran",
-                        "name": "keterangan",
-                        "in": "formData"
+                        "description": "Data update status verifikasi",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controllers.UpdateStatusVerifikasiRequest"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Pembayaran berhasil diproses",
+                        "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.TagihanIuranResponse"
                         }
                     },
                     "400": {
-                        "description": "Data tidak valid",
+                        "description": "Bad Request",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Tagihan iuran tidak ditemukan",
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "422": {
-                        "description": "Jumlah bayar tidak sesuai",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Gagal memproses pembayaran",
+                        "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/controllers.ErrorResponse"
                         }
                     }
                 }
@@ -5192,6 +5124,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/tagihan-iuran/{id}/bayar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Membayar tagihan iuran dengan mengupload bukti pembayaran",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tagihan Iuran"
+                ],
+                "summary": "Bayar tagihan iuran",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tagihan Iuran ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "File bukti pembayaran (jpg, jpeg, png, gif, webp)",
+                        "name": "bukti_iuran",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success: true, message: 'Pembayaran berhasil. Bukti pembayaran sedang diverifikasi.', data: {...}}",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "post": {
                 "security": [
@@ -5346,6 +5341,43 @@ const docTemplate = `{
                 }
             }
         },
+        "controllers.CreateTagihanIuranRequest": {
+            "type": "object",
+            "required": [
+                "tagihan_iuran",
+                "tagihan_iuran_nominal",
+                "warga_id"
+            ],
+            "properties": {
+                "tagihan_iuran": {
+                    "type": "string"
+                },
+                "tagihan_iuran_nominal": {
+                    "type": "number"
+                },
+                "warga_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controllers.ErrorResponse": {
+            "description": "Response untuk error",
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string",
+                    "example": "strconv.ParseUint: parsing \"abc\": invalid syntax"
+                },
+                "error": {
+                    "type": "string",
+                    "example": "ID tagihan iuran tidak valid"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
         "controllers.LoginRequest": {
             "type": "object",
             "required": [
@@ -5412,6 +5444,72 @@ const docTemplate = `{
                 "token": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "controllers.TagihanIuranListResponse": {
+            "description": "Response untuk list data tagihan iuran",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TagihanIuran"
+                    }
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "controllers.TagihanIuranResponse": {
+            "description": "Response untuk data tagihan iuran",
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.TagihanIuran"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Tagihan iuran berhasil dibuat"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "controllers.UpdateStatusVerifikasiRequest": {
+            "type": "object",
+            "required": [
+                "tagihan_iuran_status_verifikasi"
+            ],
+            "properties": {
+                "keterangan": {
+                    "type": "string"
+                },
+                "tagihan_iuran_status_verifikasi": {
+                    "type": "string",
+                    "enum": [
+                        "diterima",
+                        "ditolak",
+                        "menunggu"
+                    ]
+                }
+            }
+        },
+        "controllers.UpdateTagihanIuranRequest": {
+            "type": "object",
+            "properties": {
+                "tagihan_iuran": {
+                    "type": "string"
+                },
+                "tagihan_iuran_nominal": {
+                    "type": "number"
+                },
+                "warga_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -5647,6 +5745,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "tagihan_bukti": {
+                    "type": "string"
+                },
                 "tagihan_iuran": {
                     "type": "string"
                 },
@@ -5654,6 +5755,9 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "tagihan_iuran_status": {
+                    "type": "string"
+                },
+                "tagihan_iuran_status_verifikasi": {
                     "type": "string"
                 },
                 "updated_at": {
