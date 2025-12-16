@@ -21,22 +21,22 @@ func NewTagihanIuranController(db *gorm.DB) *TagihanIuranController {
 	return &TagihanIuranController{db: db}
 }
 
-// Struct untuk request
+// Struct untuk request form-data
 type CreateTagihanIuranRequest struct {
-	TagihanIuran        string  `json:"tagihan_iuran" binding:"required"`
-	TagihanIuranNominal float64 `json:"tagihan_iuran_nominal" binding:"required"`
-	WargaID             uint    `json:"warga_id" binding:"required"`
+	TagihanIuran        string  `form:"tagihan_iuran" binding:"required"`
+	TagihanIuranNominal float64 `form:"tagihan_iuran_nominal" binding:"required"`
+	WargaID             uint    `form:"warga_id" binding:"required"`
 }
 
 type UpdateTagihanIuranRequest struct {
-	TagihanIuran        string  `json:"tagihan_iuran"`
-	TagihanIuranNominal float64 `json:"tagihan_iuran_nominal"`
-	WargaID             uint    `json:"warga_id"`
+	TagihanIuran        string  `form:"tagihan_iuran"`
+	TagihanIuranNominal float64 `form:"tagihan_iuran_nominal"`
+	WargaID             uint    `form:"warga_id"`
 }
 
 type UpdateStatusVerifikasiRequest struct {
-	TagihanIuranStatusVerifikasi string `json:"tagihan_iuran_status_verifikasi" binding:"required,oneof=diterima ditolak menunggu"`
-	Keterangan                   string `json:"keterangan"`
+	TagihanIuranStatusVerifikasi string `form:"tagihan_iuran_status_verifikasi" binding:"required,oneof=diterima ditolak menunggu"`
+	Keterangan                   string `form:"keterangan"`
 }
 
 // TagihanIuranResponse represents the response structure for tagihan iuran
@@ -61,7 +61,6 @@ type ErrorResponse struct {
 	Error   string `json:"error" example:"ID tagihan iuran tidak valid"`
 	Details string `json:"details,omitempty" example:"strconv.ParseUint: parsing \"abc\": invalid syntax"`
 }
-
 
 // GetAll godoc
 // @Summary Get all tagihan iuran
@@ -169,9 +168,11 @@ func (tic *TagihanIuranController) GetByID(c *gin.Context) {
 // @Summary Create new tagihan iuran
 // @Description Membuat tagihan iuran baru (Hanya admin/ketua RT)
 // @Tags Tagihan Iuran
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
-// @Param request body CreateTagihanIuranRequest true "Data tagihan iuran"
+// @Param tagihan_iuran formData string true "Nama tagihan iuran"
+// @Param tagihan_iuran_nominal formData number true "Nominal tagihan"
+// @Param warga_id formData integer true "ID warga"
 // @Security BearerAuth
 // @Success 201 {object} TagihanIuranResponse
 // @Failure 400 {object} ErrorResponse
@@ -180,7 +181,7 @@ func (tic *TagihanIuranController) GetByID(c *gin.Context) {
 func (tic *TagihanIuranController) CreateTagihan(c *gin.Context) {
 	var req CreateTagihanIuranRequest
 	
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Data request tidak valid",
@@ -233,10 +234,12 @@ func (tic *TagihanIuranController) CreateTagihan(c *gin.Context) {
 // @Summary Update tagihan iuran
 // @Description Mengupdate data tagihan iuran (Hanya admin/ketua RT)
 // @Tags Tagihan Iuran
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
 // @Param id path string true "Tagihan Iuran ID"
-// @Param request body UpdateTagihanIuranRequest true "Data update tagihan iuran"
+// @Param tagihan_iuran formData string false "Nama tagihan iuran"
+// @Param tagihan_iuran_nominal formData number false "Nominal tagihan"
+// @Param warga_id formData integer false "ID warga"
 // @Security BearerAuth
 // @Success 200 {object} TagihanIuranResponse
 // @Failure 400 {object} ErrorResponse
@@ -256,7 +259,7 @@ func (tic *TagihanIuranController) UpdateTagihan(c *gin.Context) {
 	}
 	
 	var req UpdateTagihanIuranRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Data request tidak valid",
@@ -451,10 +454,11 @@ func (tic *TagihanIuranController) GetByWargaID(c *gin.Context) {
 // @Summary Update status verifikasi tagihan iuran
 // @Description Mengupdate status verifikasi tagihan iuran (Hanya admin/ketua RT)
 // @Tags Tagihan Iuran
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
 // @Param id path string true "Tagihan Iuran ID"
-// @Param request body UpdateStatusVerifikasiRequest true "Data update status verifikasi"
+// @Param tagihan_iuran_status_verifikasi formData string true "Status verifikasi (diterima/ditolak/menunggu)"
+// @Param keterangan formData string false "Keterangan verifikasi"
 // @Security BearerAuth
 // @Success 200 {object} TagihanIuranResponse
 // @Failure 400 {object} ErrorResponse
@@ -474,7 +478,7 @@ func (tic *TagihanIuranController) UpdateStatusVerifikasi(c *gin.Context) {
 	}
 	
 	var req UpdateStatusVerifikasiRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Data request tidak valid",
@@ -542,7 +546,7 @@ func (tic *TagihanIuranController) UpdateStatusVerifikasi(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /tagihan-iuran/{id}/bayar [post]
+// @Router /api/tagihan-iuran/{id}/bayar [post]
 func (tic *TagihanIuranController) BayarIuran(c *gin.Context) {
 	id := c.Param("id")
 	

@@ -32,19 +32,6 @@ definitions:
         - $ref: '#/definitions/models.Warga'
         description: hanya tampil jika tidak nil
     type: object
-  controllers.CreateTagihanIuranRequest:
-    properties:
-      tagihan_iuran:
-        type: string
-      tagihan_iuran_nominal:
-        type: number
-      warga_id:
-        type: integer
-    required:
-    - tagihan_iuran
-    - tagihan_iuran_nominal
-    - warga_id
-    type: object
   controllers.ErrorResponse:
     description: Response untuk error
     properties:
@@ -127,28 +114,6 @@ definitions:
       success:
         example: true
         type: boolean
-    type: object
-  controllers.UpdateStatusVerifikasiRequest:
-    properties:
-      keterangan:
-        type: string
-      tagihan_iuran_status_verifikasi:
-        enum:
-        - diterima
-        - ditolak
-        - menunggu
-        type: string
-    required:
-    - tagihan_iuran_status_verifikasi
-    type: object
-  controllers.UpdateTagihanIuranRequest:
-    properties:
-      tagihan_iuran:
-        type: string
-      tagihan_iuran_nominal:
-        type: number
-      warga_id:
-        type: integer
     type: object
   models.Agama:
     properties:
@@ -1990,15 +1955,24 @@ paths:
       - Tagihan Iuran
     post:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Membuat tagihan iuran baru (Hanya admin/ketua RT)
       parameters:
-      - description: Data tagihan iuran
-        in: body
-        name: request
+      - description: Nama tagihan iuran
+        in: formData
+        name: tagihan_iuran
         required: true
-        schema:
-          $ref: '#/definitions/controllers.CreateTagihanIuranRequest'
+        type: string
+      - description: Nominal tagihan
+        in: formData
+        name: tagihan_iuran_nominal
+        required: true
+        type: number
+      - description: ID warga
+        in: formData
+        name: warga_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -2091,7 +2065,7 @@ paths:
       - Tagihan Iuran
     put:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Mengupdate data tagihan iuran (Hanya admin/ketua RT)
       parameters:
       - description: Tagihan Iuran ID
@@ -2099,12 +2073,18 @@ paths:
         name: id
         required: true
         type: string
-      - description: Data update tagihan iuran
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/controllers.UpdateTagihanIuranRequest'
+      - description: Nama tagihan iuran
+        in: formData
+        name: tagihan_iuran
+        type: string
+      - description: Nominal tagihan
+        in: formData
+        name: tagihan_iuran_nominal
+        type: number
+      - description: ID warga
+        in: formData
+        name: warga_id
+        type: integer
       produces:
       - application/json
       responses:
@@ -2129,10 +2109,52 @@ paths:
       summary: Update tagihan iuran
       tags:
       - Tagihan Iuran
+  /api/tagihan-iuran/{id}/bayar:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Membayar tagihan iuran dengan mengupload bukti pembayaran
+      parameters:
+      - description: Tagihan Iuran ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: File bukti pembayaran (jpg, jpeg, png, gif, webp)
+        in: formData
+        name: bukti_iuran
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'success: true, message: ''Pembayaran berhasil. Bukti pembayaran
+            sedang diverifikasi.'', data: {...}}'
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Bayar tagihan iuran
+      tags:
+      - Tagihan Iuran
   /api/tagihan-iuran/{id}/verifikasi:
     put:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Mengupdate status verifikasi tagihan iuran (Hanya admin/ketua RT)
       parameters:
       - description: Tagihan Iuran ID
@@ -2140,12 +2162,15 @@ paths:
         name: id
         required: true
         type: string
-      - description: Data update status verifikasi
-        in: body
-        name: request
+      - description: Status verifikasi (diterima/ditolak/menunggu)
+        in: formData
+        name: tagihan_iuran_status_verifikasi
         required: true
-        schema:
-          $ref: '#/definitions/controllers.UpdateStatusVerifikasiRequest'
+        type: string
+      - description: Keterangan verifikasi
+        in: formData
+        name: keterangan
+        type: string
       produces:
       - application/json
       responses:
@@ -3807,48 +3832,6 @@ paths:
       summary: Membuat rumah baru
       tags:
       - rumah
-  /tagihan-iuran/{id}/bayar:
-    post:
-      consumes:
-      - multipart/form-data
-      description: Membayar tagihan iuran dengan mengupload bukti pembayaran
-      parameters:
-      - description: Tagihan Iuran ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: File bukti pembayaran (jpg, jpeg, png, gif, webp)
-        in: formData
-        name: bukti_iuran
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 'success: true, message: ''Pembayaran berhasil. Bukti pembayaran
-            sedang diverifikasi.'', data: {...}}'
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/controllers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/controllers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/controllers.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Bayar tagihan iuran
-      tags:
-      - Tagihan Iuran
   /users:
     post:
       consumes:
