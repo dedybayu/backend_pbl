@@ -23,7 +23,7 @@ func SetupWargaRoutes(api *gin.RouterGroup, wargaController *controllers.WargaCo
 		adminWarga := warga.Group("")
 		adminWarga.Use(authMiddleware.RequireLevel(1, 2))
 		{
-			adminWarga.POST("", wargaController.CreateWarga)
+			// adminWarga.POST("", wargaController.CreateWarga)
 			adminWarga.PUT("/:id", wargaController.UpdateWarga)
 			adminWarga.DELETE("/:id", wargaController.DeleteWarga)
 		}

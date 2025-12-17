@@ -64,10 +64,11 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 
 	// Setup auth routes
 	SetupAuthRoutes(router, config.AuthController, config.AuthMiddleware)
-	
+
 	// PUBLIC API (tanpa auth)
 	public := router.Group("/api")
-	{
+	{	
+		public.POST("/warga", config.WargaController.CreateWarga)
 		public.GET("/rumah", config.RumahController.GetAllRumah)
 		public.GET("/keluarga", config.KeluargaController.GetAllKeluarga)
 	}
