@@ -175,57 +175,52 @@ func (kc *KegiatanController) CreateKegiatan(c *gin.Context) {
 func (kc *KegiatanController) GetAllKegiatan(c *gin.Context) {
 	var kegiatan []models.Kegiatan
 
-	// Pagination parameters
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset := (page - 1) * limit
-
 	// Filter parameters
 	kategoriID := c.Query("kategori_id")
 	tanggalFrom := c.Query("tanggal_from")
 	tanggalTo := c.Query("tanggal_to")
 	search := c.Query("search")
 
-	// Build query dengan GORM
-	query := kc.db.Model(&models.Kegiatan{}).Preload("KategoriKegiatan")
+	// Build query
+	query := kc.db.Model(&models.Kegiatan{}).
+		Preload("KategoriKegiatan")
 
-	// Apply search filter
+	// Search
 	if search != "" {
 		searchSafe := strings.TrimSpace(search)
-		query = query.Where("kegiatan_nama LIKE ? OR kegiatan_lokasi LIKE ? OR kegiatan_pj LIKE ?", 
-			"%"+searchSafe+"%", "%"+searchSafe+"%", "%"+searchSafe+"%")
+		query = query.Where(
+			"kegiatan_nama LIKE ? OR kegiatan_lokasi LIKE ? OR kegiatan_pj LIKE ?",
+			"%"+searchSafe+"%",
+			"%"+searchSafe+"%",
+			"%"+searchSafe+"%",
+		)
 	}
 
-	// Apply kategori filter
+	// Filter kategori
 	if kategoriID != "" {
-		kategoriIDSafe, err := strconv.ParseUint(kategoriID, 10, 32)
-		if err == nil {
+		if kategoriIDSafe, err := strconv.ParseUint(kategoriID, 10, 32); err == nil {
 			query = query.Where("kategori_kegiatan_id = ?", kategoriIDSafe)
 		}
 	}
 
-	// Apply tanggal filter
+	// Filter tanggal
 	if tanggalFrom != "" {
-		if tanggalFromSafe, err := time.Parse("2006-01-02", tanggalFrom); err == nil {
-			query = query.Where("DATE(kegiatan_tanggal) >= ?", tanggalFromSafe.Format("2006-01-02"))
+		if t, err := time.Parse("2006-01-02", tanggalFrom); err == nil {
+			query = query.Where("DATE(kegiatan_tanggal) >= ?", t.Format("2006-01-02"))
 		}
 	}
 
 	if tanggalTo != "" {
-		if tanggalToSafe, err := time.Parse("2006-01-02", tanggalTo); err == nil {
-			query = query.Where("DATE(kegiatan_tanggal) <= ?", tanggalToSafe.Format("2006-01-02"))
+		if t, err := time.Parse("2006-01-02", tanggalTo); err == nil {
+			query = query.Where("DATE(kegiatan_tanggal) <= ?", t.Format("2006-01-02"))
 		}
 	}
 
-	// Get total count for pagination
-	var total int64
-	query.Count(&total)
-
-	// Execute query dengan pagination dan sorting
-	if err := query.Offset(offset).
-		// Limit(limit).
+	// EXECUTE (tanpa Offset & Limit)
+	if err := query.
 		Order("kegiatan_tanggal DESC, created_at DESC").
 		Find(&kegiatan).Error; err != nil {
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Gagal mengambil data kegiatan",
 		})
@@ -234,13 +229,9 @@ func (kc *KegiatanController) GetAllKegiatan(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": kegiatan,
-		// "pagination": gin.H{
-		// 	"page":  page,
-		// 	"limit": limit,
-		// 	"total": total,
-		// },
 	})
 }
+
 
 // GetKegiatanByID godoc
 // @Summary      Mendapatkan kegiatan berdasarkan ID
