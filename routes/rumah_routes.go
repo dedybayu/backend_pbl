@@ -36,7 +36,7 @@ func SetupRumahRoutes(api *gin.RouterGroup, rumahController *controllers.RumahCo
 	warga := api.Group("/rumah")
 	{
 		// Public routes (butuh auth)
-		warga.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), rumahController.GetAllRumah)
+		// warga.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), rumahController.GetAllRumah)
 		warga.GET("/:id", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), rumahController.GetRumahByID)
 		
 		// Admin only routes

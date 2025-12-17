@@ -13,7 +13,7 @@ func SetupKeluargaRoutes(api *gin.RouterGroup, keluargaController *controllers.K
 	keluarga := api.Group("/keluarga")
 	{
 		// Public routes (butuh auth)
-		keluarga.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetAllKeluarga)
+		// keluarga.GET("", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetAllKeluarga)
 		keluarga.GET("/aktif", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetKeluargaAktif) // ✅ NEW
 		keluarga.GET("/stats", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.GetKeluargaStats)
 		keluarga.GET("/search", authMiddleware.RequireLevel(1, 2, 3, 4, 5, 6), keluargaController.SearchKeluarga)

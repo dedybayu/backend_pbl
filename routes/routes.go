@@ -30,7 +30,7 @@ type RouteConfig struct {
 	KeranjangController           *controllers.KeranjangController
 	TransaksiController           *controllers.TransaksiController
 	DetailTransaksiController     *controllers.DetailTransaksiController
-	AgamaController 			  *controllers.AgamaController
+	AgamaController               *controllers.AgamaController
 	PekerjaanController           *controllers.PekerjaanController
 	PesanWargaController          *controllers.PesanWargaController
 
@@ -64,8 +64,15 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 
 	// Setup auth routes
 	SetupAuthRoutes(router, config.AuthController, config.AuthMiddleware)
+	
+	// PUBLIC API (tanpa auth)
+	public := router.Group("/api")
+	{
+		public.GET("/rumah", config.RumahController.GetAllRumah)
+		public.GET("/keluarga", config.KeluargaController.GetAllKeluarga)
+	}
 
-	// Protected API routes
+	// PROTECTED API (pakai auth)
 	api := router.Group("/api")
 	api.Use(config.AuthMiddleware.Auth()) // Semua endpoint di /api butuh auth
 	{
@@ -118,13 +125,13 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 		SetupProdukRoutes(api, config.ProdukController, config.AuthMiddleware)
 
 		// Setup profile routes
-		SetupProfileRoutes(api,config.ProfileController, config.AuthMiddleware)
+		SetupProfileRoutes(api, config.ProfileController, config.AuthMiddleware)
 
 		// Setup keranjang routes
-		SetupKeranjangRoutes(api,config.KeranjangController, config.AuthMiddleware)
+		SetupKeranjangRoutes(api, config.KeranjangController, config.AuthMiddleware)
 
 		// Setup transaksi routes
-		SetupTransaksiRoutes(api,config.TransaksiController, config.DetailTransaksiController, config.AuthMiddleware)
+		SetupTransaksiRoutes(api, config.TransaksiController, config.DetailTransaksiController, config.AuthMiddleware)
 
 		// Setup agama routes
 		SetupAgamaRoutes(api, config.AgamaController)
