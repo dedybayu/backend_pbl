@@ -33,6 +33,7 @@ type RouteConfig struct {
 	AgamaController               *controllers.AgamaController
 	PekerjaanController           *controllers.PekerjaanController
 	PesanWargaController          *controllers.PesanWargaController
+	DashboardController          *controllers.DashboardController
 
 	// FileImageController           *controllers.FileImageController
 	AuthMiddleware *middleware.AuthMiddleware
@@ -143,7 +144,8 @@ func SetupRoutes(router *gin.Engine, config *RouteConfig) {
 		// Setup Pesan Warga routes
 		SetupPesanWargaRoutes(api, config.PesanWargaController)
 		// Setup file image routes
-		// SetupFileRoutes(api, config.FileImageController, config.AuthMiddleware)
+		// SetupFileRoutes(api, config.FileImageController, config.AuthMiddleware)'
+		SetupDashboardRoutes(api, config.DashboardController)
 	}
 
 }

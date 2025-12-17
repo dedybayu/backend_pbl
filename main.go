@@ -115,6 +115,7 @@ func main() {
 	pekerjaanController := controllers.NewPekerjaanController(db)
 	detailTransaksiController := controllers.NewDetailTransaksiController(db)
 	pesanWargaController := controllers.NewPesanWargaController(db)
+	dashboardController := controllers.NewDashboardController(db)
 
 	// MIDDLEWARE
 	authMiddleware := middleware.NewAuthMiddleware(jwtUtils)
@@ -159,6 +160,7 @@ func main() {
 		AgamaController:               agamaController,
 		PekerjaanController:           pekerjaanController,
 		PesanWargaController:          pesanWargaController,
+		DashboardController:          dashboardController,
 		AuthMiddleware:                authMiddleware,
 	}
 
