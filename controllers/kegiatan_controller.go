@@ -218,7 +218,7 @@ func (kc *KegiatanController) GetAllKegiatan(c *gin.Context) {
 
 	// EXECUTE (tanpa Offset & Limit)
 	if err := query.
-		Order("kegiatan_tanggal DESC, created_at DESC").
+		Order("created_at DESC").
 		Find(&kegiatan).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
