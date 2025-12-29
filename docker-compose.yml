@@ -1,0 +1,29 @@
+# version: "3.8"
+
+# services:
+#   api:
+#     build: .
+#     container_name: rt-management-api
+#     env_file:
+#       - .env
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       - db
+#     restart: always
+
+#   db:
+#     image: mysql:8.0
+#     container_name: rt-management-db
+#     environment:
+#       MYSQL_DATABASE: rt_management
+#       MYSQL_ROOT_PASSWORD: root
+#       MYSQL_USER: dedybayu
+#       MYSQL_PASSWORD: dbsn
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - dbdata:/var/lib/mysql
+
+# volumes:
+#   dbdata:
